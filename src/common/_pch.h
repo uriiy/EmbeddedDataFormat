@@ -1,4 +1,5 @@
-//#pragma once
+#ifndef PCH_H
+#define PCH_H
 //#include <cstdio>
 //#include <cstdint>
 //#include "windows.h"
@@ -15,3 +16,7 @@
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 #define LOG_ERR() printf("err: %d %s %s ", __LINE__, __FILE__, __FUNCTION__)
+
+
+
+#endif //PCH_H

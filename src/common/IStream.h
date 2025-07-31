@@ -15,21 +15,21 @@ typedef struct Stream
 //-----------------------------------------------------------------------------
 static size_t StreamWrite(void* stream, void const* data, size_t count)
 {
-	size_t ret = fwrite(data, 1, count, stream);
-	fflush(stream);
+	size_t ret = fwrite(data, 1, count, (FILE*)stream);
+	fflush((FILE*)stream);
 	return ret;
 }
 //-----------------------------------------------------------------------------
 static size_t StreamRead(void* stream, void* dst, size_t count)
 {
-	size_t readed = fread(dst, 1, count, stream);
+	size_t readed = fread(dst, 1, count, (FILE*)stream);
 	if (readed == count)
 		return readed;
 
 	//if (feof(stream))
 	//	printf("Error reading : unexpected end of file\n");
 
-	if (ferror(stream))
+	if (ferror((FILE*)stream))
 		perror("Error reading ");
 
 	return readed;
@@ -37,7 +37,13 @@ static size_t StreamRead(void* stream, void* dst, size_t count)
 //-----------------------------------------------------------------------------
 static Stream_t FileOpen(FILE* f)
 {
-	return (Stream_t) { .Instance = f, StreamWrite, StreamRead };
+	Stream_t s =
+	{
+		.Instance = (void*)f,
+			.Write = StreamWrite,
+			.Read = StreamRead,
+	};
+	return s;
 }
 //-----------------------------------------------------------------------------
 

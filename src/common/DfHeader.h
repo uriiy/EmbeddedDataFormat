@@ -3,6 +3,10 @@
 
 #include "_pch.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define BLOCK_SIZE 1024
 
 typedef enum Options
@@ -25,5 +29,9 @@ typedef struct DfHeader
 DfHeader_t MakeHeaderDefault();
 DfHeader_t MakeHeaderFromBytes(const uint8_t* b);
 size_t HeaderToBytes(const DfHeader_t* h, uint8_t* b);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

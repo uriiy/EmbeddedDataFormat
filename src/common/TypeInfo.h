@@ -4,20 +4,10 @@
 #include "_pch.h"
 #include "PoType.h"
 
-typedef struct TypeInfo TypeInfo_t;
-/*
-typedef struct Dims
-{
-	uint8_t Count;
-	uint32_t* Item;
-} Dims_t;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-typedef struct Childs
-{
-	uint8_t Count;
-	TypeInfo_t* Item;
-} Childs_t;
-*/
 typedef struct TypeInfo
 {
 	PoType Type; /// PoType 
@@ -46,5 +36,8 @@ int ToBytes(const TypeInfo_t* t, uint8_t* buf);
 int ToString(const TypeInfo_t* t, uint8_t* buf, int noffset);
 size_t FromBytes(uint8_t** src, TypeInfo_t* t, uint8_t** mem);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

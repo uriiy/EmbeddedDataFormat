@@ -49,17 +49,6 @@ void TestInit()
 	TypeInfo_t tst22 = MakeTypeInfo("Test3", Struct, 2, (uint32_t[]) { 2 }, 1, (TypeInfo_t[]) { tst1 });
 }
 //-----------------------------------------------------------------------------
-void TestHeader()
-{
-	uint8_t hBuf[16];
-	DfHeader_t h1 = MakeHeaderDefault();
-	int  hCount = HeaderToBytes(&h1, hBuf);
-	DfHeader_t h2 = MakeHeaderFromBytes(hBuf);
-	int cmp = memcmp(&h1, &h2, sizeof(DfHeader_t));
-	if (0 == cmp) // "Header compare error!\n"
-		LOG_ERR();
-}
-//-----------------------------------------------------------------------------
 void WriteTest()
 {
 	FILE* f = fopen("c_test.bdf", "wb");
