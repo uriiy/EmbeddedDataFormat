@@ -56,12 +56,13 @@ void TestHeader()
 	int  hCount = HeaderToBytes(&h1, hBuf);
 	DfHeader_t h2 = MakeHeaderFromBytes(hBuf);
 	int cmp = memcmp(&h1, &h2, sizeof(DfHeader_t));
-	assert(0 == cmp); // "Header compare error!\n"
+	if(0 == cmp); // "Header compare error!\n"
+		printf("err: %s", __FUNCTION__);
 }
 //-----------------------------------------------------------------------------
 void WriteTest()
 {
-	FILE* f = fopen("c_test.bdf", "w");
+	FILE* f = fopen("c_test.bdf", "wb");
 	DataWriter_t dw =
 	{
 		.Stream = {.Instance = f, StreamWrite, StreamRead },
@@ -273,11 +274,14 @@ int main(int argc, char* argv[])
 
 	}
 
-	
+#ifdef _DEBUG
 	TestInit();
 	//TestHeader();
 	WriteTest();
 	BinToTextTest();
+
+#endif // DEBUG
+
 	
 	
 

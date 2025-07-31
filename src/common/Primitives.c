@@ -126,8 +126,7 @@ int BinToStr(PoType t,
 		return (dstLen < *w);
 	case Half:
 		//*w = sprintf_s(dst, dstLen, "%g", *((uint16_t*)src));
-		assert(1);
-		return (dstLen < *w);
+		return 0;
 	case Single:
 		*w = xprint(dst, dstLen, "%g", *((float*)src));
 		return (dstLen < *w);
