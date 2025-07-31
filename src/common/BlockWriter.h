@@ -3,8 +3,8 @@
 
 #include "_pch.h"
 #include "DfHeader.h"
-#include "Primitives.h"
 #include "IStream.h"
+#include "Primitives.h"
 
 typedef enum BlockType
 {
@@ -18,7 +18,7 @@ static uint8_t IsBlockType(BlockType t)
 	return btHeader == t || btVarInfo == t || btVarData == t;
 }
 
-typedef int (*WriteSep)(uint8_t** dst, size_t* dstLen,size_t* w);
+typedef int (*WriteSep)(uint8_t** dst, size_t* dstLen, size_t* w);
 
 
 //-----------------------------------------------------------------------------
@@ -98,8 +98,8 @@ static int SepRecBegin(uint8_t** dst, size_t* dstLen, size_t* w)
 {
 	if (1 > *dstLen)
 		return 1;
-	(*dstLen)-=3;
-	(*w)+=3;
+	(*dstLen) -= 3;
+	(*w) += 3;
 	(*dst)[0] = '\n';
 	(*dst)[1] = '=';
 	(*dst)[2] = ' ';

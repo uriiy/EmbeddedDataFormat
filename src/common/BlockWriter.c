@@ -11,7 +11,7 @@ size_t WriteHeaderBlock(const DfHeader_t* h, DataWriter_t* dw)
 	*((uint16_t*)&dw->Block[2]) = (uint16_t)data_len;
 	dw->BlockLen = 1 + 1 + 2 + data_len;
 	if (dw->BlockLen != (*dw->Stream.Write)(dw->Stream.Instance, dw->Block, dw->BlockLen))
-		printf("err: %s", __FUNCTION__);
+		LOG_ERR();
 	data_len = dw->BlockLen;
 	dw->BlockLen = 0;
 	dw->h = *h;
@@ -25,8 +25,8 @@ size_t WriteVarInfoBlock(const TypeInfo_t* t, DataWriter_t* dw)
 	size_t data_len = ToBytes(t, &dw->Block[4]);
 	*((uint16_t*)&dw->Block[2]) = (uint16_t)data_len;
 	dw->BlockLen = 1 + 1 + 2 + data_len;
-	if(dw->BlockLen != (*dw->Stream.Write)(dw->Stream.Instance, dw->Block, dw->BlockLen));
-		printf("err: %s", __FUNCTION__);
+	if (dw->BlockLen != (*dw->Stream.Write)(dw->Stream.Instance, dw->Block, dw->BlockLen))
+		LOG_ERR();
 	data_len = dw->BlockLen;
 	dw->BlockLen = 0;
 	dw->t = t;
@@ -39,10 +39,10 @@ size_t FlushBinBlock(Stream_t* s, BlockType t, uint8_t seq, uint8_t* src, size_t
 		return 0;
 	uint8_t h[4] = { t, seq++ };
 	*((uint16_t*)&h[2]) = (uint16_t)len;
-	if(sizeof(h) != (*s->Write)(s->Instance, h, sizeof(h)))
-		printf("err: %s", __FUNCTION__);
-	if(len != (*s->Write)(s->Instance, src, len))
-		printf("err: %s", __FUNCTION__);
+	if (sizeof(h) != (*s->Write)(s->Instance, h, sizeof(h)))
+		LOG_ERR();
+	if (len != (*s->Write)(s->Instance, src, len))
+		LOG_ERR();
 	return 1 + 1 + 2 + len;
 }
 //-----------------------------------------------------------------------------
@@ -50,8 +50,8 @@ size_t FlushTxtBlock(Stream_t* s, BlockType t, uint8_t seq, uint8_t* src, size_t
 {
 	if (0 == len)
 		return 0;
-	if(len != (*s->Write)(s->Instance, src, len))
-		printf("err: %s", __FUNCTION__);
+	if (len != (*s->Write)(s->Instance, src, len))
+		LOG_ERR();
 	return len;
 }
 //-----------------------------------------------------------------------------
