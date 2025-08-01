@@ -3,14 +3,13 @@
 
 #include "BlockWriter.h"
 
-#define BLOCK_SIZE 256
 //-----------------------------------------------------------------------------
 DataWriter_t MakeBinWriter(const char* file)
 {
 	FILE* f = fopen(file, "wb");
 	return (DataWriter_t)
 	{
-		.Stream = { .Instance = f, .Write = StreamWrite },
+		.Stream = FileOpen(f),
 			.Seq = 0,
 			.BlockLen = 0, .BufLen = 0,
 			.WritePrimitive = BinToBin,
@@ -30,7 +29,7 @@ DataWriter_t MakeTextWriter(const char* file)
 	FILE* f = fopen(file, "wb");
 	return (DataWriter_t)
 	{
-		.Stream = { .Instance = f, .Write = StreamWrite },
+		.Stream = FileOpen(f),
 			.Seq = 0,
 			.BlockLen = 0, .BufLen = 0,
 			.WritePrimitive = BinToStr,
@@ -50,7 +49,7 @@ DataWriter_t MakeBinReader(const char* file)
 	FILE* f = fopen(file, "rb");
 	return (DataWriter_t)
 	{
-		.Stream = { .Instance = f, .Read = StreamRead },
+		.Stream = FileOpen(f),
 			.Seq = 0,
 			.BlockLen = 0, .BufLen = 0,
 			.Seq = 0,

@@ -3,6 +3,7 @@
 
 #include "_pch.h"
 
+typedef size_t(*FWriteFn)(void*, const char* format, ...);
 typedef size_t(*WriteFn)(void*, void const*, size_t);
 typedef size_t(*ReadFn)(void*, void*, size_t);
 
@@ -11,11 +12,22 @@ typedef struct Stream
 	void* Instance;
 	WriteFn Write;
 	ReadFn Read;
+	FWriteFn FWrite;
 } Stream_t;
 //-----------------------------------------------------------------------------
 static size_t StreamWrite(void* stream, void const* data, size_t count)
 {
 	size_t ret = fwrite(data, 1, count, (FILE*)stream);
+	fflush((FILE*)stream);
+	return ret;
+}
+//-----------------------------------------------------------------------------
+static size_t StreamFWrite(void* stream, const char* format, ...)
+{
+	va_list arglist;
+	va_start(arglist, format);
+	size_t ret = vfprintf((FILE*)stream, format, arglist);
+	va_end(arglist);
 	fflush((FILE*)stream);
 	return ret;
 }
@@ -42,6 +54,7 @@ static Stream_t FileOpen(FILE* f)
 		.Instance = (void*)f,
 			.Write = StreamWrite,
 			.Read = StreamRead,
+			.FWrite = StreamFWrite,
 	};
 	return s;
 }

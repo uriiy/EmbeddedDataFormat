@@ -1,14 +1,12 @@
 #include "_pch.h"
 #include "BlockWriter.h"
 
-size_t WriteTxtHeaderBlock(const DfHeader_t* h, DataWriter_t* tw)
+//-----------------------------------------------------------------------------
+size_t WriteTxtHeaderBlock(const DfHeader_t* h, Stream_t* stream)
 {
-	size_t len = sprintf(tw->Block, "~ version=%d.%d.%d bs=%d encoding=%d flags=%d \n"
+	size_t len = (*stream->FWrite)(stream->Instance, "~ version=%d.%d.%d bs=%d encoding=%d flags=%d \n"
 		, h->VersMajor, h->VersMinor, h->VersPatch
 		, h->Blocksize, h->Encoding, h->Flags);
-	tw->BlockLen = len;
-	if (tw->BlockLen != (*tw->Stream.Write)(tw->Stream.Instance, tw->Block, tw->BlockLen))
-		LOG_ERR();
 	return len;
 }
 //-----------------------------------------------------------------------------
@@ -307,25 +305,3 @@ size_t ReadHeaderBlock(DataWriter_t* dr, DfHeader_t* h)
 	return -1;
 }
 //-----------------------------------------------------------------------------
-size_t ReadVarInfoBlock(DataWriter_t* dw, TypeInfo_t* t)
-{
-	/*
-	if (0 < ReadBlock(dw) && btVarInfo == dw->Block[0])
-	{
-		dw->t = FromBytes(&dw->Block[4], dw->Buf);
-		return 0;
-	}
-	*/
-	return -1;
-}
-//-----------------------------------------------------------------------------
-size_t ReadDataBlock(DataWriter_t* dr, uint8_t** dst)
-{
-	/*
-	if (0 < ReadBlock(dr) || btVarData != dr->Block[0])
-		return -1;
-	*dst = &dr->Block[4];
-	return dr->BlockLen - 4;
-	*/
-	return -1;
-}

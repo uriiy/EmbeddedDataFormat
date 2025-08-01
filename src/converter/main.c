@@ -137,7 +137,7 @@ void BinToText(const char* src, const char* dst)
 	DfHeader_t* h = (DfHeader_t*)br.Buf;
 	ReadHeaderBlock(&br, h);
 
-	size_t len = WriteTxtHeaderBlock(h, &tw);
+	size_t len = WriteTxtHeaderBlock(h, &tw.Stream);
 
 	while (-1 != ReadBlock(&br))
 	{
