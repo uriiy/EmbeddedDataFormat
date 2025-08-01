@@ -1,5 +1,5 @@
 ﻿#include "_pch.h"
-#include "BlockWriter.h"
+#include "edf.h"
 
 //-----------------------------------------------------------------------------
 void TestInit()
@@ -43,22 +43,7 @@ void TestInit()
 //-----------------------------------------------------------------------------
 void WriteTest()
 {
-	FILE* f = fopen("c_test.bdf", "wb");
-	DataWriter_t dw =
-	{
-		.Stream = {.Instance = f, StreamWrite, StreamRead },
-		.Seq = 0,
-		.BlockLen = 0, .BufLen = 0,
-		.WritePrimitive = BinToBin,
-		.Flush = FlushBinBlock,
-		.SepBeginStruct = NoWrite,
-		.SepEndStruct = NoWrite,
-		.SepBeginArray = NoWrite,
-		.SepEndArray = NoWrite,
-		.SepVar = NoWrite,
-		.SepRecBegin = NoWrite,
-		.SepRecEnd = NoWrite,
-	};
+	DataWriter_t dw = MakeBinWriter("c_test.bdf");
 
 	DfHeader_t h = MakeHeaderDefault();
 	WriteHeaderBlock(&h, &dw);
@@ -141,58 +126,18 @@ void WriteTest()
 	WriteDataBlock(&t, test, 4, &dw);
 	*/
 
-	FlushDataBlock(&dw);
-	fflush(f);
-	fclose(f);
-
+	Close(&dw);
 }
 //-----------------------------------------------------------------------------
 void BinToText(const char* src, const char* dst)
 {
-	FILE* fsrc = fopen(src, "rb");
-	FILE* fdst = fopen(dst, "wb");
-
-	DataWriter_t br =
-	{
-		.Stream = {.Instance = fsrc, .Read = StreamRead },
-		.Seq = 0,
-		.BlockLen = 0, .BufLen = 0,
-		.WritePrimitive = BinToBin,
-		.Flush = FlushBinBlock,
-		.SepBeginStruct = NoWrite,
-		.SepEndStruct = NoWrite,
-		.SepBeginArray = NoWrite,
-		.SepEndArray = NoWrite,
-		.SepVar = NoWrite,
-		.SepRecBegin = NoWrite,
-		.SepRecEnd = NoWrite,
-	};
-
-	DataWriter_t tw =
-	{
-		.Stream = {.Instance = fdst, .Write = StreamWrite },
-		.Seq = 0,
-		.BlockLen = 0, .BufLen = 0,
-		.WritePrimitive = BinToStr,
-		.Flush = FlushTxtBlock,
-		.SepBeginStruct = SepBeginStruct,
-		.SepEndStruct = SepEndStruct,
-		.SepBeginArray = SepBeginArray,
-		.SepEndArray = SepEndArray,
-		.SepVar = SepVar,
-		.SepRecBegin = SepRecBegin,
-		.SepRecEnd = SepRecEnd,
-	};
-
+	DataWriter_t br = MakeBinReader(src);
+	DataWriter_t tw = MakeTextWriter(dst);
 
 	DfHeader_t* h = (DfHeader_t*)br.Buf;
 	ReadHeaderBlock(&br, h);
 
-	size_t len = sprintf(br.Block, "~ version=%d.%d.%d bs=%d encoding=%d flags=%d \n"
-		, h->VersMajor, h->VersMinor, h->VersPatch
-		, h->Blocksize, h->Encoding, h->Flags);
-	fwrite(br.Block, 1, len, fdst);
-
+	size_t len = WriteTxtHeaderBlock(h, &tw);
 
 	while (-1 != ReadBlock(&br))
 	{
@@ -205,11 +150,7 @@ void BinToText(const char* src, const char* dst)
 			TypeInfo_t* t = tw.t = (TypeInfo_t*)&br.Buf;
 			uint8_t* mem = (uint8_t*)&br.Buf + sizeof(TypeInfo_t);
 			len = FromBytes(&src, t, &mem);
-			len = ToString(t, br.Block, 0);
-			fwrite("\n\n? ", 1, 4, fdst);
-			fwrite(br.Block, 1, len, fdst);
-			fflush(fdst);
-			tw.BlockLen = 0;
+			WriteTxtVarInfoBlock(t, &tw);
 		}
 		break;
 		case btVarData:
@@ -221,8 +162,8 @@ void BinToText(const char* src, const char* dst)
 		}
 	}
 
-	fclose(fsrc);
-	fclose(fdst);
+	Close(&br);
+	Close(&tw);
 }
 //-----------------------------------------------------------------------------
 void BinToTextTest()

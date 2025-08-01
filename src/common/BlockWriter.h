@@ -139,8 +139,12 @@ typedef struct DataWriter
 	WriteSep SepRecEnd;
 } DataWriter_t;
 //-----------------------------------------------------------------------------
+size_t WriteTxtHeaderBlock(const DfHeader_t* h, DataWriter_t* tw);
 size_t WriteHeaderBlock(const DfHeader_t* h, DataWriter_t* dw);
+
+size_t WriteTxtVarInfoBlock(const TypeInfo_t* t, DataWriter_t* tw);
 size_t WriteVarInfoBlock(const TypeInfo_t* t, DataWriter_t* dw);
+
 size_t WriteDataBlock(uint8_t* src, size_t srcLen, DataWriter_t* dw);
 size_t FlushBinBlock(Stream_t* s, BlockType t, uint8_t seq, uint8_t* src, size_t len);
 size_t FlushTxtBlock(Stream_t* s, BlockType t, uint8_t seq, uint8_t* src, size_t len);

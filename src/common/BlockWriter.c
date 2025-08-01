@@ -1,7 +1,16 @@
 #include "_pch.h"
 #include "BlockWriter.h"
 
-
+size_t WriteTxtHeaderBlock(const DfHeader_t* h, DataWriter_t* tw)
+{
+	size_t len = sprintf(tw->Block, "~ version=%d.%d.%d bs=%d encoding=%d flags=%d \n"
+		, h->VersMajor, h->VersMinor, h->VersPatch
+		, h->Blocksize, h->Encoding, h->Flags);
+	tw->BlockLen = len;
+	if (tw->BlockLen != (*tw->Stream.Write)(tw->Stream.Instance, tw->Block, tw->BlockLen))
+		LOG_ERR();
+	return len;
+}
 //-----------------------------------------------------------------------------
 size_t WriteHeaderBlock(const DfHeader_t* h, DataWriter_t* dw)
 {
@@ -16,6 +25,18 @@ size_t WriteHeaderBlock(const DfHeader_t* h, DataWriter_t* dw)
 	dw->BlockLen = 0;
 	dw->h = *h;
 	return data_len;
+}
+//-----------------------------------------------------------------------------
+size_t WriteTxtVarInfoBlock(const TypeInfo_t* t, DataWriter_t* tw)
+{
+	if (4 != (*tw->Stream.Write)(tw->Stream.Instance, "\n\n? ", 4))
+		LOG_ERR();
+	size_t len = ToString(t, tw->Block, 0);
+	tw->BlockLen = len;
+	if (tw->BlockLen != (*tw->Stream.Write)(tw->Stream.Instance, tw->Block, tw->BlockLen))
+		LOG_ERR();
+	tw->BlockLen = 0;
+	return len;
 }
 //-----------------------------------------------------------------------------
 size_t WriteVarInfoBlock(const TypeInfo_t* t, DataWriter_t* dw)
@@ -57,6 +78,8 @@ size_t FlushTxtBlock(Stream_t* s, BlockType t, uint8_t seq, uint8_t* src, size_t
 //-----------------------------------------------------------------------------
 size_t FlushDataBlock(DataWriter_t* dw)
 {
+	if (NULL == dw->Flush || 0 == dw->BlockLen)
+		return 0;
 	size_t ret = (*dw->Flush)(&dw->Stream, btVarData, dw->Seq, dw->Block, dw->BlockLen);
 	dw->Seq++;
 	dw->BlockLen = 0;

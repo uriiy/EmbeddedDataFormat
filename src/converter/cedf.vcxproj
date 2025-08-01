@@ -33,6 +33,7 @@
     <ClInclude Include="..\common\Primitives.h" />
     <ClInclude Include="..\common\TypeInfo.h" />
     <ClInclude Include="..\common\_pch.h" />
+    <ClInclude Include="edf.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
