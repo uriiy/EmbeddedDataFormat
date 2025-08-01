@@ -32,8 +32,8 @@ TypeInfo_t MakeTypeInfo(char* name, PoType type
 	, uint8_t childCount, TypeInfo_t* childs);
 
 uint32_t GetValueSize(const TypeInfo_t* t);
-int ToBytes(const TypeInfo_t* t, uint8_t* buf);
-int ToString(const TypeInfo_t* t, uint8_t* buf, int noffset);
+size_t ToBytes(const TypeInfo_t* t, uint8_t* buf);
+size_t ToString(const TypeInfo_t* t, uint8_t* buf, int noffset);
 size_t FromBytes(uint8_t** src, TypeInfo_t* t, uint8_t** mem);
 
 #ifdef __cplusplus

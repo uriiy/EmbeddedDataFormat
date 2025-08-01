@@ -1,13 +1,5 @@
-﻿// df_c.c : Этот файл содержит функцию "main". Здесь начинается и заканчивается выполнение программы.
-//
-#include "_pch.h"
+﻿#include "_pch.h"
 #include "BlockWriter.h"
-#include "DfHeader.h"
-#include "TypeInfo.h"
-
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
 
 //-----------------------------------------------------------------------------
 void TestInit()
@@ -196,7 +188,7 @@ void BinToText(const char* src, const char* dst)
 	DfHeader_t* h = (DfHeader_t*)br.Buf;
 	ReadHeaderBlock(&br, h);
 
-	int len = sprintf(br.Block, "~ version=%d.%d.%d bs=%d encoding=%d flags=%d \n"
+	size_t len = sprintf(br.Block, "~ version=%d.%d.%d bs=%d encoding=%d flags=%d \n"
 		, h->VersMajor, h->VersMinor, h->VersPatch
 		, h->Blocksize, h->Encoding, h->Flags);
 	fwrite(br.Block, 1, len, fdst);
@@ -222,7 +214,7 @@ void BinToText(const char* src, const char* dst)
 		break;
 		case btVarData:
 		{
-			int ret = WriteDataBlock(&br.Block[4], br.BlockLen - 4, &tw);
+			size_t ret = WriteDataBlock(&br.Block[4], br.BlockLen - 4, &tw);
 			FlushDataBlock(&tw);
 		}
 		break;
@@ -275,6 +267,3 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-//#ifdef __cplusplus
-//}
-//#endif

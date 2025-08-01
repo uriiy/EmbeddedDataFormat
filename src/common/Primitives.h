@@ -2,7 +2,7 @@
 #define PRIMITIVES_H
 
 #include "_pch.h"
-#include "TypeInfo.h"
+#include "PoType.h"
 
 typedef int (*WritePrimitivesFn)(PoType t,
 	uint8_t* src, size_t srcLen,

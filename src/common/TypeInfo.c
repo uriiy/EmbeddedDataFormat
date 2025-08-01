@@ -42,7 +42,7 @@ uint32_t GetValueSize(const TypeInfo_t* t)
 	return sz;
 }
 //-----------------------------------------------------------------------------
-int ToBytes(const TypeInfo_t* t, uint8_t* buf)
+size_t ToBytes(const TypeInfo_t* t, uint8_t* buf)
 {
 	uint8_t* ret = buf;
 
@@ -114,7 +114,7 @@ static int PrintType(PoType po, uint8_t* buf)
 	return 0;
 }
 //-----------------------------------------------------------------------------
-int ToString(const TypeInfo_t* t, uint8_t* buf, int noffset)
+size_t ToString(const TypeInfo_t* t, uint8_t* buf, int noffset)
 {
 	char* pbuf = buf;
 	pbuf += PrintOffset(noffset, pbuf);

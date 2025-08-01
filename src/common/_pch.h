@@ -1,16 +1,21 @@
 #ifndef PCH_H
 #define PCH_H
-//#include <cstdio>
-//#include <cstdint>
-//#include "windows.h"
+
+#ifdef __cplusplus
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#else
 #include "stdint.h"
 #include "stdio.h"
-//#include "uchar.h"
-#include "memory.h"
-#include "stdio.h"
 #include "string.h"
+#endif
+
+//#include "windows.h"
+//#include "uchar.h"
 //#include "assert.h"
-#include <stdarg.h>
+#include "memory.h"
+#include "stdarg.h"
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))

@@ -5,6 +5,7 @@
 #include "DfHeader.h"
 #include "IStream.h"
 #include "Primitives.h"
+#include "TypeInfo.h"
 
 typedef enum BlockType
 {
@@ -113,7 +114,7 @@ static int SepRecEnd(uint8_t** dst, size_t* dstLen, size_t* w)
 }
 
 //-----------------------------------------------------------------------------
-typedef int (*FlushBlock)(Stream_t* s, BlockType t, uint8_t seq, uint8_t* src, size_t len);
+typedef size_t(*FlushBlock)(Stream_t* s, BlockType t, uint8_t seq, uint8_t* src, size_t len);
 //-----------------------------------------------------------------------------
 
 typedef struct DataWriter

@@ -69,7 +69,7 @@ int BinToBin(PoType t,
 	return 0;
 }
 //-----------------------------------------------------------------------------
-static int xprint(char* buf, size_t bufLen, char* format, ...)
+static size_t xprint(char* buf, size_t bufLen, char* format, ...)
 {
 	va_list arglist;
 	va_start(arglist, format);
