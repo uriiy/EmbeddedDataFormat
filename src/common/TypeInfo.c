@@ -126,7 +126,7 @@ size_t ToString(const TypeInfo_t* t, uint8_t* buf, int noffset)
 		for (size_t i = 0; i < t->Dims.Count; i++)
 		{
 			*pbuf++ = '[';
-			int slen = sprintf(pbuf, "%u", t->Dims.Item[i]);
+			int slen = sprintf(pbuf, "%lu", t->Dims.Item[i]);
 			pbuf += slen;
 			*pbuf++ = ']';
 		}

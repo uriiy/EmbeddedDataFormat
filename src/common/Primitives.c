@@ -117,7 +117,7 @@ int BinToStr(PoType t,
 		*w = xprint(dst, dstLen, "%d", *((int32_t*)src));
 		return (dstLen < *w);
 	case UInt32:
-		*w = xprint(dst, dstLen, "%u", *((uint32_t*)src));
+		*w = xprint(dst, dstLen, "%lu", *((uint32_t*)src));
 		return (dstLen < *w);
 	case Int64:
 		*w = xprint(dst, dstLen, "%lld", *((int64_t*)src));
