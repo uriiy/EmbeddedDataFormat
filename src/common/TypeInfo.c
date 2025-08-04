@@ -75,7 +75,7 @@ size_t ToBytes(const TypeInfo_t* t, uint8_t* buf)
 	return ret - buf;
 }
 //-----------------------------------------------------------------------------
-static int PrintOffset(int noffset, uint8_t* buf)
+static int PrintOffset(int noffset, char* buf)
 {
 	const char offset[] = "  ";
 	for (uint8_t i = 0; i < noffset; i++)
@@ -88,7 +88,7 @@ static int PrintOffset(int noffset, uint8_t* buf)
 //-----------------------------------------------------------------------------
 #define POT_PRINT(t,buf) memcpy(buf, t, (sizeof t) - 1); return (sizeof t)-1
 
-static int PrintType(PoType po, uint8_t* buf)
+static int PrintType(PoType po, char* buf)
 {
 	switch (po)
 	{
@@ -116,7 +116,7 @@ static int PrintType(PoType po, uint8_t* buf)
 //-----------------------------------------------------------------------------
 size_t ToString(const TypeInfo_t* t, uint8_t* buf, int noffset)
 {
-	char* pbuf = buf;
+	char* pbuf = (char*)buf;
 	pbuf += PrintOffset(noffset, pbuf);
 	// TYPE
 	pbuf += PrintType(t->Type, pbuf);
@@ -126,7 +126,7 @@ size_t ToString(const TypeInfo_t* t, uint8_t* buf, int noffset)
 		for (size_t i = 0; i < t->Dims.Count; i++)
 		{
 			*pbuf++ = '[';
-			int slen = sprintf(pbuf, "%d", t->Dims.Item[i]);
+			int slen = sprintf(pbuf, "%u", t->Dims.Item[i]);
 			pbuf += slen;
 			*pbuf++ = ']';
 		}
@@ -149,14 +149,14 @@ size_t ToString(const TypeInfo_t* t, uint8_t* buf, int noffset)
 		for (size_t i = 0; i < t->Childs.Count; i++)
 		{
 			*pbuf++ = '\n';
-			pbuf += ToString(&t->Childs.Item[i], pbuf, noffset + 1);
+			pbuf += ToString(&t->Childs.Item[i], (uint8_t*)pbuf, noffset + 1);
 		}
 		(*pbuf++) = '\n';
 		pbuf += PrintOffset(noffset, pbuf);
 		(*pbuf++) = '}';
 	}
 	*pbuf++ = ';';
-	return pbuf - buf;
+	return (uint8_t*)pbuf - buf;
 }
 //-----------------------------------------------------------------------------
 size_t FromBytes(uint8_t** src, TypeInfo_t* t, uint8_t** mem)
@@ -167,7 +167,7 @@ size_t FromBytes(uint8_t** src, TypeInfo_t* t, uint8_t** mem)
 	memset(t, 0, sizeof(TypeInfo_t));
 
 	if (!IsPoType(psrc[0]))
-		return -1;
+		return (size_t)-1;
 
 
 	t->Type = *psrc++;

@@ -22,7 +22,7 @@ typedef struct EdfHeader
 	Options_t Flags;
 } EdfHeader_t;
 
-EdfHeader_t MakeHeaderDefault();
+EdfHeader_t MakeHeaderDefault(void);
 EdfHeader_t MakeHeaderFromBytes(const uint8_t* b);
 size_t HeaderToBytes(const EdfHeader_t* h, uint8_t* b);
 

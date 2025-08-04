@@ -33,10 +33,10 @@
     <ClCompile Include="EdfImpl.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="EdfWriter.c">
+    <ClCompile Include="..\common\EdfWriter.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="PoType.c">
+    <ClCompile Include="..\common\PoType.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>

@@ -56,7 +56,7 @@ size_t FlushBinBlock(Stream_t* s, BlockType t, uint8_t seq, uint8_t* src, size_t
 {
 	if (0 == len)
 		return 0;
-	uint8_t h[4] = { t, seq++ };
+	uint8_t h[4] = { t, seq };
 	*((uint16_t*)&h[2]) = (uint16_t)len;
 	if (sizeof(h) != (*s->Write)(s->Instance, h, sizeof(h)))
 		LOG_ERR();
@@ -292,7 +292,7 @@ size_t ReadBlock(DataWriter_t* dw)
 			}
 		}
 	} while (1 == len);
-	return -1;
+	return (size_t) - 1;
 }
 //-----------------------------------------------------------------------------
 size_t ReadHeaderBlock(DataWriter_t* dr, EdfHeader_t* h)
@@ -302,6 +302,6 @@ size_t ReadHeaderBlock(DataWriter_t* dr, EdfHeader_t* h)
 		*h = MakeHeaderFromBytes(&dr->Block[4]);
 		return 0;
 	}
-	return -1;
+	return (size_t) - 1;
 }
 //-----------------------------------------------------------------------------

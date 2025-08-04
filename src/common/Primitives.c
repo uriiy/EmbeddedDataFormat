@@ -50,6 +50,7 @@ int BinToBin(PoType t,
 		memcpy(dst, src, srcLen);
 		return 0;
 	case String:
+	{
 		size_t strlen = src[0];
 		size_t blength = 1;
 		*r = *w = 0;
@@ -64,16 +65,17 @@ int BinToBin(PoType t,
 			*r = *w = blength;
 			return 0;
 		}
-		return 0;
+	}
+	return 0;
 	}
 	return 0;
 }
 //-----------------------------------------------------------------------------
-static size_t xprint(char* buf, size_t bufLen, char* format, ...)
+static size_t xprint(const uint8_t* buf, size_t bufLen, char* format, ...)
 {
 	va_list arglist;
 	va_start(arglist, format);
-	bufLen = vsnprintf(buf, bufLen, format, arglist);
+	bufLen = vsnprintf((char*)buf, bufLen, format, arglist);
 	va_end(arglist);
 	return bufLen;
 }
@@ -83,7 +85,6 @@ int BinToStr(PoType t,
 	uint8_t* dst, size_t dstLen,
 	size_t* r, size_t* w)
 {
-	size_t writed = 0;
 	*r = GetSizeOf(t);
 	if (srcLen < *r)
 	{
