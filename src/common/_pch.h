@@ -17,6 +17,8 @@
 #include "memory.h"
 #include "stdarg.h"
 
+#include "edf_cfg.h"
+
 #ifndef MAX
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #endif 

@@ -1,5 +1,5 @@
 ﻿#include "_pch.h"
-#include "edf.h"
+#include "edf_cfg.h"
 
 //-----------------------------------------------------------------------------
 static void TestInit()
@@ -196,20 +196,15 @@ int main(int argc, char* argv[])
 	TestInit();
 	//TestHeader();
 	WriteTest();
-	//BinToTextTest();
-
-#endif // DEBUG
-
-
+	BinToTextTest();
+#else
 	if (2 < argc && NULL != argv[1] && 't' == *argv[2])
 	{
 		char fn[512];
 		FilenameToTdf(argv[1], fn);
 		BinToText(argv[1], fn);
-
 	}
-
-
+#endif // DEBUG
 	return 0;
 }
 

@@ -3,8 +3,6 @@
 
 #include "_pch.h"
 
-#define BLOCK_SIZE 1024
-
 typedef enum Options
 {
 	Default = 0,
