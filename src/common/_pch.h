@@ -25,6 +25,11 @@
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #endif 
 
+#ifndef UNUSED
+//#define UNUSED(x) ((x)=(x))
+#define UNUSED(x) (void)(x);
+#endif 
+
 #define LOG_ERR() printf("err: %d %s %s ", __LINE__, __FILE__, __FUNCTION__)
 
 

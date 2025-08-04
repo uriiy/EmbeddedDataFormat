@@ -18,23 +18,9 @@ typedef struct Stream
 int StreamOpen(Stream_t* w, const char* file, const char* mode);
 int StreamClose(Stream_t* w);
 //-----------------------------------------------------------------------------
-static inline size_t StreamWrite(Stream_t* s, void const* data, size_t count)
-{
-	return (s->Write)(s->Instance, data, count);
-}
-static inline size_t StreamWriteFmt(Stream_t* s, const char* format, ...)
-{
-	size_t ret = 0;
-	va_list argptr;
-	va_start(argptr, format);
-	ret += (s->FWrite)(s->Instance, format, argptr);
-	va_end(argptr);
-	return ret;
-}
-//-----------------------------------------------------------------------------
-static inline size_t StreamRead(Stream_t* s, void* data, size_t count)
-{
-	return (s->Read)(s->Instance, data, count);
-}
+#define StreamWrite(s, data, count) (((s)->Write)((s)->Instance, data, count))
+#define StreamRead(s, data, count) (((s)->Read)((s)->Instance, data, count))
+#define StreamWriteFmt(s,fmt,...) (((s)->FWrite)((s)->Instance, fmt, __VA_ARGS__))
+
 //-----------------------------------------------------------------------------
 #endif

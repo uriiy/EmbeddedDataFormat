@@ -8,6 +8,8 @@ size_t GetBString(const char* str, uint8_t* dst, size_t dst_len)
 		return 0;
 	size_t len = strlen(str);
 	len = MIN(0xFE, len);
+	if (len > dst_len)
+		return 0;
 	dst[0] = (uint8_t)len;
 	memcpy(dst + 1, str, len);
 	return len + 1;

@@ -86,8 +86,39 @@ static int PrintOffset(int noffset, char* buf)
 	return (sizeof(offset) - 1) * noffset;
 }
 //-----------------------------------------------------------------------------
+static int StreamPrintOffset(Stream_t* s, int noffset)
+{
+	const char offset[] = "  ";
+	for (uint8_t i = 0; i < noffset; i++)
+		StreamWrite(s, offset, sizeof(offset) - 1);
+	return (sizeof(offset) - 1) * noffset;
+}
+//-----------------------------------------------------------------------------
+#define POT_PRINT_S(s, t) StreamWrite(s, t, (sizeof t) - 1); return (sizeof t)-1
+static int StreamPrintType(Stream_t* s, PoType po)
+{
+	switch (po)
+	{
+	default: break;
+	case Struct: POT_PRINT_S(s, PoTypeStruct);
+	case Int8: POT_PRINT_S(s, PoTypeInt8);
+	case UInt8: POT_PRINT_S(s, PoTypeUInt8);
+	case Char: POT_PRINT_S(s, PoTypeChar);
+	case String: POT_PRINT_S(s, PoTypeString);
+	case UInt16: POT_PRINT_S(s, PoTypeUInt16);
+	case Int16: POT_PRINT_S(s, PoTypeUInt16);
+	case Half: POT_PRINT_S(s, PoTypeHalf);
+	case UInt32: POT_PRINT_S(s, PoTypeInt32);
+	case Int32: POT_PRINT_S(s, PoTypeUInt32);
+	case Single: POT_PRINT_S(s, PoTypeSingle);
+	case Int64: POT_PRINT_S(s, PoTypeInt64);
+	case UInt64: POT_PRINT_S(s, PoTypeUInt64);
+	case Double: POT_PRINT_S(s, PoTypeDouble);
+	}
+	return 0;
+}
+//-----------------------------------------------------------------------------
 #define POT_PRINT(t,buf) memcpy(buf, t, (sizeof t) - 1); return (sizeof t)-1
-
 static int PrintType(PoType po, char* buf)
 {
 	switch (po)
@@ -112,6 +143,41 @@ static int PrintType(PoType po, char* buf)
 	case Double: POT_PRINT(PoTypeDouble, buf);
 	}
 	return 0;
+}
+//-----------------------------------------------------------------------------
+size_t InfToString(const TypeInfo_t* t, Stream_t* s, int noffset)
+{
+	size_t len = 0;
+	len += StreamPrintOffset(s, noffset);
+	// TYPE
+	len += StreamPrintType(s, t->Type);
+	// DIMS
+	if (t->Dims.Count && t->Dims.Item)
+	{
+		for (size_t i = 0; i < t->Dims.Count; i++)
+			len += StreamWriteFmt(s, "[%lu]", t->Dims.Item[i]);
+	}
+	// NAME
+	size_t nameSize = t->Name ? strlen(t->Name) : 0;
+	nameSize = (255 < nameSize ? 255 : nameSize);
+	len += StreamWriteFmt(s, " \'%s\'", t->Name);
+	// CHILDS
+	if (Struct == t->Type && t->Childs.Item && t->Childs.Count)
+	{
+		len += StreamWrite(s, "\n", 1);
+		len += StreamPrintOffset(s, noffset);
+		len += StreamWrite(s, "{", 1);
+		for (size_t i = 0; i < t->Childs.Count; i++)
+		{
+			len += StreamWrite(s, "\n", 1);
+			len += InfToString(&t->Childs.Item[i], s, noffset + 1);
+		}
+		len += StreamWrite(s, "\n", 1);
+		len += StreamPrintOffset(s, noffset);
+		len += StreamWrite(s, "}", 1);
+	}
+	len += StreamWrite(s, ";", 1);
+	return len;
 }
 //-----------------------------------------------------------------------------
 size_t ToString(const TypeInfo_t* t, uint8_t* buf, int noffset)

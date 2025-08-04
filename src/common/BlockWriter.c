@@ -4,7 +4,7 @@
 //-----------------------------------------------------------------------------
 size_t WriteTxtHeaderBlock(const EdfHeader_t* h, Stream_t* stream)
 {
-	size_t len = (*stream->FWrite)(stream->Instance, "~ version=%d.%d.%d bs=%d encoding=%d flags=%d \n"
+	size_t len = StreamWriteFmt(stream, "~ version=%d.%d.%d bs=%d encoding=%d flags=%d \n"
 		, h->VersMajor, h->VersMinor, h->VersPatch
 		, h->Blocksize, h->Encoding, h->Flags);
 	return len;
@@ -27,12 +27,8 @@ size_t WriteHeaderBlock(const EdfHeader_t* h, DataWriter_t* dw)
 //-----------------------------------------------------------------------------
 size_t WriteTxtVarInfoBlock(const TypeInfo_t* t, DataWriter_t* tw)
 {
-	if (4 != (*tw->Stream.Write)(tw->Stream.Instance, "\n\n? ", 4))
-		LOG_ERR();
-	size_t len = ToString(t, tw->Block, 0);
-	tw->BlockLen = len;
-	if (tw->BlockLen != (*tw->Stream.Write)(tw->Stream.Instance, tw->Block, tw->BlockLen))
-		LOG_ERR();
+	size_t len = StreamWrite(&tw->Stream, "\n\n? ", 4);
+	len += InfToString(t, &tw->Stream, 0);
 	tw->BlockLen = 0;
 	return len;
 }
@@ -67,6 +63,9 @@ size_t FlushBinBlock(Stream_t* s, BlockType t, uint8_t seq, uint8_t* src, size_t
 //-----------------------------------------------------------------------------
 size_t FlushTxtBlock(Stream_t* s, BlockType t, uint8_t seq, uint8_t* src, size_t len)
 {
+	UNUSED(t);
+	UNUSED(seq);
+
 	if (0 == len)
 		return 0;
 	if (len != (*s->Write)(s->Instance, src, len))
@@ -292,7 +291,7 @@ size_t ReadBlock(DataWriter_t* dw)
 			}
 		}
 	} while (1 == len);
-	return (size_t) - 1;
+	return (size_t)-1;
 }
 //-----------------------------------------------------------------------------
 size_t ReadHeaderBlock(DataWriter_t* dr, EdfHeader_t* h)
@@ -302,6 +301,6 @@ size_t ReadHeaderBlock(DataWriter_t* dr, EdfHeader_t* h)
 		*h = MakeHeaderFromBytes(&dr->Block[4]);
 		return 0;
 	}
-	return (size_t) - 1;
+	return (size_t)-1;
 }
 //-----------------------------------------------------------------------------

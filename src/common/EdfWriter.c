@@ -4,6 +4,9 @@
 //-----------------------------------------------------------------------------
 int NoWrite(uint8_t** dst, size_t* dstLen, size_t* w)
 {
+	UNUSED(dst);
+	UNUSED(dstLen);
+	UNUSED(w);
 	return 0;
 }
 //-----------------------------------------------------------------------------
@@ -77,5 +80,8 @@ int SepRecBegin(uint8_t** dst, size_t* dstLen, size_t* w)
 //-----------------------------------------------------------------------------
 int SepRecEnd(uint8_t** dst, size_t* dstLen, size_t* w)
 {
+	UNUSED(dst);
+	UNUSED(dstLen);
+	UNUSED(w);
 	return 0;
 }

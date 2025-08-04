@@ -191,6 +191,16 @@ static void FilenameToTdf(const char* input, char* output)
 //-----------------------------------------------------------------------------
 int main(int argc, char* argv[])
 {
+#ifdef _DEBUG
+	LOG_ERR();
+	TestInit();
+	//TestHeader();
+	WriteTest();
+	//BinToTextTest();
+
+#endif // DEBUG
+
+
 	if (2 < argc && NULL != argv[1] && 't' == *argv[2])
 	{
 		char fn[512];
@@ -199,14 +209,6 @@ int main(int argc, char* argv[])
 
 	}
 
-#ifdef _DEBUG
-	LOG_ERR();
-	TestInit();
-	//TestHeader();
-	WriteTest();
-	BinToTextTest();
-
-#endif // DEBUG
 
 	return 0;
 }
