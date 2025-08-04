@@ -1,8 +1,8 @@
 #include "_pch.h"
-#include "BlockWriter.h"
+#include "EdfWriter.h"
 
 //-----------------------------------------------------------------------------
-size_t WriteTxtHeaderBlock(const DfHeader_t* h, Stream_t* stream)
+size_t WriteTxtHeaderBlock(const EdfHeader_t* h, Stream_t* stream)
 {
 	size_t len = (*stream->FWrite)(stream->Instance, "~ version=%d.%d.%d bs=%d encoding=%d flags=%d \n"
 		, h->VersMajor, h->VersMinor, h->VersPatch
@@ -10,7 +10,7 @@ size_t WriteTxtHeaderBlock(const DfHeader_t* h, Stream_t* stream)
 	return len;
 }
 //-----------------------------------------------------------------------------
-size_t WriteHeaderBlock(const DfHeader_t* h, DataWriter_t* dw)
+size_t WriteHeaderBlock(const EdfHeader_t* h, DataWriter_t* dw)
 {
 	dw->Block[0] = (uint8_t)btHeader;
 	dw->Block[1] = (uint8_t)dw->Seq++;
@@ -76,9 +76,9 @@ size_t FlushTxtBlock(Stream_t* s, BlockType t, uint8_t seq, uint8_t* src, size_t
 //-----------------------------------------------------------------------------
 size_t FlushDataBlock(DataWriter_t* dw)
 {
-	if (NULL == dw->Flush || 0 == dw->BlockLen)
+	if (NULL == dw->FlushBlock || 0 == dw->BlockLen)
 		return 0;
-	size_t ret = (*dw->Flush)(&dw->Stream, btVarData, dw->Seq, dw->Block, dw->BlockLen);
+	size_t ret = (*dw->FlushBlock)(&dw->Stream, btVarData, dw->Seq, dw->Block, dw->BlockLen);
 	dw->Seq++;
 	dw->BlockLen = 0;
 	return ret;
@@ -295,7 +295,7 @@ size_t ReadBlock(DataWriter_t* dw)
 	return -1;
 }
 //-----------------------------------------------------------------------------
-size_t ReadHeaderBlock(DataWriter_t* dr, DfHeader_t* h)
+size_t ReadHeaderBlock(DataWriter_t* dr, EdfHeader_t* h)
 {
 	if (0 < ReadBlock(dr) && btHeader == dr->Block[0] && 4 + 16 == dr->BlockLen)
 	{

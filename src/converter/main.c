@@ -2,7 +2,7 @@
 #include "edf.h"
 
 //-----------------------------------------------------------------------------
-void TestInit()
+static void TestInit()
 {
 	TypeInfo_t tst1 =
 	{
@@ -37,21 +37,21 @@ void TestInit()
 
 	size_t r = 0, w = 0;
 	//TypeInfo_t* rtst2 = FromBytes(buf, buf2,&r, &w);
-
-	TypeInfo_t tst22 = MakeTypeInfo("Test3", Struct, 2, (uint32_t[]) { 2 }, 1, (TypeInfo_t[]) { tst1 });
+	//TypeInfo_t tst22 = MakeTypeInfo("Test3", Struct, 2, (uint32_t[]) { 2 }, 1, (TypeInfo_t[]) { tst1 });
 }
 //-----------------------------------------------------------------------------
-void WriteTest()
+static void WriteTest()
 {
-	DataWriter_t dw = MakeBinWriter("c_test.bdf");
+	DataWriter_t dw;
+	int err = OpenBinWriter(&dw, "c_test.bdf");
 
-	DfHeader_t h = MakeHeaderDefault();
+	EdfHeader_t h = MakeHeaderDefault();
 	WriteHeaderBlock(&h, &dw);
 
 	TypeInfo_t t = { .Type = Int32, .Name = "weight variable" };
 	WriteVarInfoBlock(&t, &dw);
 
-	uint8_t test[100]; size_t len = 0;
+	uint8_t test[100] = {0}; size_t len = 0;
 	(*(int32_t*)test) = (int32_t)(0xFFFFFFFF);
 
 	WriteDataBlock(test, 4, &dw);
@@ -126,15 +126,17 @@ void WriteTest()
 	WriteDataBlock(&t, test, 4, &dw);
 	*/
 
-	Close(&dw);
+	EdfClose(&dw);
 }
 //-----------------------------------------------------------------------------
-void BinToText(const char* src, const char* dst)
+static void BinToText(const char* src, const char* dst)
 {
-	DataWriter_t br = MakeBinReader(src);
-	DataWriter_t tw = MakeTextWriter(dst);
+	DataWriter_t br = {0};
+	DataWriter_t tw = { 0 };
+	int errBr = OpenBinReader(&br, src);
+	int errTw = OpenTextWriter(&tw, dst);
 
-	DfHeader_t* h = (DfHeader_t*)br.Buf;
+	EdfHeader_t* h = (EdfHeader_t*)br.Buf;
 	ReadHeaderBlock(&br, h);
 
 	size_t len = WriteTxtHeaderBlock(h, &tw.Stream);
@@ -147,7 +149,8 @@ void BinToText(const char* src, const char* dst)
 		case btVarInfo:
 		{
 			uint8_t* src = &br.Block[4];
-			TypeInfo_t* t = tw.t = (TypeInfo_t*)&br.Buf;
+			TypeInfo_t* t = (TypeInfo_t*)&br.Buf;
+			tw.t = t;
 			uint8_t* mem = (uint8_t*)&br.Buf + sizeof(TypeInfo_t);
 			len = FromBytes(&src, t, &mem);
 			WriteTxtVarInfoBlock(t, &tw);
@@ -162,18 +165,18 @@ void BinToText(const char* src, const char* dst)
 		}
 	}
 
-	Close(&br);
-	Close(&tw);
+	EdfClose(&br);
+	EdfClose(&tw);
 }
 //-----------------------------------------------------------------------------
-void BinToTextTest()
+static void BinToTextTest()
 {
 	const char* src = "c_test.bdf";
 	const char* dst = "c_test.tdf";
 	BinToText(src, dst);
 }
 //-----------------------------------------------------------------------------
-void FilenameToTdf(const char* input, char* output)
+static void FilenameToTdf(const char* input, char* output)
 {
 	size_t len = strlen(input);
 	if (4 < len && 0 == strcmp(input + len - 4, ".bdf"))

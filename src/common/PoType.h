@@ -20,9 +20,6 @@ static const char PoTypeUInt64[] = "UInt64";
 static const char PoTypeInt64[] = "Int64";
 static const char PoTypeDouble[] = "Double";
 
-
-//typedef uint8_t PoType;
-
 //#pragma pack(1)
 typedef enum PoType
 {
@@ -45,39 +42,16 @@ typedef enum PoType
 	String,
 } PoType;
 
-static uint8_t GetSizeOf(enum PoType p)
-{
-	switch (p)
-	{
-	default: return 0;
-	case UInt8:
-	case Int8:
-	case Char:
-	case String:
-		return 1;
-	case UInt16:
-	case Int16:
-	case Half:
-		return 2;
-	case UInt32:
-	case Int32:
-	case Single:
-		return 4;
-	case UInt64:
-	case Int64:
-	case Double:
-		return 8;
-	}
-}
+uint8_t GetSizeOf(enum PoType p);
+uint8_t IsPoType(PoType p);
 
-static uint8_t IsPoType(PoType p)
+typedef enum BlockType
 {
-	if (Struct > p)
-		return 0;
-	if (String < p)
-		return 0;
-	return 1;
-}
+	btHeader = 126, //0xB0, ~
+	btVarInfo = 63, //0x3f, ?
+	btVarData = 61, //0x3d, =
+} BlockType;
 
+uint8_t IsBlockType(BlockType t);
 
 #endif

@@ -21,7 +21,7 @@
     <ClCompile Include="..\common\BlockWriter.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\DfHeader.c">
+    <ClCompile Include="..\common\EdfHeader.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="..\common\Primitives.c">
@@ -30,18 +30,27 @@
     <ClCompile Include="..\common\TypeInfo.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="EdfImpl.c">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="EdfWriter.c">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="PoType.c">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\_pch.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\BlockWriter.h">
+    <ClInclude Include="..\common\EdfWriter.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\DfHeader.h">
+    <ClInclude Include="..\common\EdfHeader.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\IStream.h">
+    <ClInclude Include="..\common\EdfStream.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="..\common\PoType.h">
@@ -53,7 +62,7 @@
     <ClInclude Include="..\common\TypeInfo.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="edf.h">
+    <ClInclude Include="..\common\edf.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

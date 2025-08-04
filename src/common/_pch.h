@@ -17,8 +17,13 @@
 #include "memory.h"
 #include "stdarg.h"
 
+#ifndef MAX
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#endif 
+
+#ifndef MIN
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#endif 
 
 #define LOG_ERR() printf("err: %d %s %s ", __LINE__, __FILE__, __FUNCTION__)
 

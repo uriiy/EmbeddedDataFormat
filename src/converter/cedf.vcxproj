@@ -20,20 +20,23 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\common\BlockWriter.c" />
-    <ClCompile Include="..\common\DfHeader.c" />
+    <ClCompile Include="..\common\EdfHeader.c" />
     <ClCompile Include="..\common\Primitives.c" />
     <ClCompile Include="..\common\TypeInfo.c" />
+    <ClCompile Include="EdfImpl.c" />
+    <ClCompile Include="..\common\EdfWriter.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="..\common\PoType.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\common\BlockWriter.h" />
-    <ClInclude Include="..\common\DfHeader.h" />
-    <ClInclude Include="..\common\IStream.h" />
+    <ClInclude Include="..\common\EdfWriter.h" />
+    <ClInclude Include="..\common\EdfHeader.h" />
+    <ClInclude Include="..\common\edf.h" />
+    <ClInclude Include="..\common\EdfStream.h" />
     <ClInclude Include="..\common\PoType.h" />
     <ClInclude Include="..\common\Primitives.h" />
     <ClInclude Include="..\common\TypeInfo.h" />
     <ClInclude Include="..\common\_pch.h" />
-    <ClInclude Include="edf.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
