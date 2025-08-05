@@ -28,14 +28,14 @@ static void TestInit()
 		}
 	};
 
-	uint8_t buf[256];
+	//uint8_t buf[256];
 
-	size_t sz = ToBytes(&tst2, buf);
+	//size_t sz = ToBytes(&tst2, buf);
 
 	uint8_t buf2[256];
 	memcpy(buf2, &tst2, sizeof(TypeInfo_t));
 
-	size_t r = 0, w = 0;
+	//size_t r = 0, w = 0;
 	//TypeInfo_t* rtst2 = FromBytes(buf, buf2,&r, &w);
 	//TypeInfo_t tst22 = MakeTypeInfo("Test3", Struct, 2, (uint32_t[]) { 2 }, 1, (TypeInfo_t[]) { tst1 });
 }
@@ -43,27 +43,28 @@ static void TestInit()
 static void WriteTest()
 {
 	DataWriter_t dw;
+	size_t writed = 0;
 	int err = OpenBinWriter(&dw, "c_test.bdf");
 
 	EdfHeader_t h = MakeHeaderDefault();
-	WriteHeaderBlock(&h, &dw);
+	err = EdfWriteHeader(&dw, &h, &writed);
 
 	TypeInfo_t t = { .Type = Int32, .Name = "weight variable" };
-	WriteVarInfoBlock(&t, &dw);
+	err = EdfWriteInfo(&dw, &t, &writed);
 
-	uint8_t test[100] = {0}; size_t len = 0;
+	uint8_t test[100] = { 0 }; size_t len = 0;
 	(*(int32_t*)test) = (int32_t)(0xFFFFFFFF);
 
-	WriteDataBlock(test, 4, &dw);
-	FlushDataBlock(&dw);
+	EdfWriteDataBlock(test, 4, &dw);
+	EdfFlushDataBlock(&dw);
 
-	WriteVarInfoBlock(&((TypeInfo_t) { .Type = String, .Name = "CharArrayVariable" }), &dw);
+	err = EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = String, .Name = "CharArrayVariable" }), &writed);
 
 	len += GetBString("Char", test + len, sizeof(test));
 	len += GetBString("Value", test + len, sizeof(test) - len);
 	len += GetBString("Array     Value", test + len, sizeof(test) - len);
-	WriteDataBlock(test, len, &dw);
-	FlushDataBlock(&dw);
+	EdfWriteDataBlock(test, len, &dw);
+	EdfFlushDataBlock(&dw);
 
 	TypeInfo_t comlexVar =
 	{
@@ -112,7 +113,7 @@ static void WriteTest()
 			}
 		}
 	};
-	WriteVarInfoBlock(&comlexVar, &dw);
+	err = EdfWriteInfo(&dw, &comlexVar, &writed);
 
 
 	/*
@@ -131,40 +132,55 @@ static void WriteTest()
 //-----------------------------------------------------------------------------
 static void BinToText(const char* src, const char* dst)
 {
-	DataWriter_t br = {0};
+	DataWriter_t br = { 0 };
 	DataWriter_t tw = { 0 };
-	int errBr = OpenBinReader(&br, src);
-	int errTw = OpenTextWriter(&tw, dst);
+	if (OpenBinReader(&br, src))
+		LOG_ERR();
+	if(OpenTextWriter(&tw, dst))
+		LOG_ERR();
 
-	EdfHeader_t* h = (EdfHeader_t*)br.Buf;
-	ReadHeaderBlock(&br, h);
+	size_t writed = 0;
+	int err = 0;
 
-	size_t len = WriteTxtHeaderBlock(h, &tw.Stream);
-
-	while (-1 != ReadBlock(&br))
+	while (-1 != EdfReadBlock(&br))
 	{
 		switch (br.Block[0])
 		{
 		default: break;
+		case btHeader:
+			if (4 + 16 == br.BlockLen)
+			{
+				EdfHeader_t h = { 0 };
+				err = MakeHeaderFromBytes(&br.Block[4], br.BlockLen - 4, &h);
+				if (!err)
+					err = EdfWriteHeader(&tw, &h, &writed);
+			}
+			break;
 		case btVarInfo:
 		{
 			uint8_t* src = &br.Block[4];
 			TypeInfo_t* t = (TypeInfo_t*)&br.Buf;
 			tw.t = t;
 			uint8_t* mem = (uint8_t*)&br.Buf + sizeof(TypeInfo_t);
-			len = FromBytes(&src, t, &mem);
-			WriteTxtVarInfoBlock(t, &tw);
+			err = FromBytes(&src, t, &mem);
+			if (!err)
+				err = EdfWriteInfo(&tw, t, &writed);
 		}
 		break;
 		case btVarData:
 		{
-			size_t ret = WriteDataBlock(&br.Block[4], br.BlockLen - 4, &tw);
-			FlushDataBlock(&tw);
+			err = EdfWriteDataBlock(&br.Block[4], br.BlockLen - 4, &tw);
+			if (!err)
+				EdfFlushDataBlock(&tw);
 		}
 		break;
 		}
+		if (0 != err)
+		{
+			LOG_ERR();
+			break;
+		}
 	}
-
 	EdfClose(&br);
 	EdfClose(&tw);
 }

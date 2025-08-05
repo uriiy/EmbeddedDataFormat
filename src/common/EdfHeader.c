@@ -8,9 +8,12 @@ EdfHeader_t MakeHeaderDefault()
 	return h;
 }
 //-----------------------------------------------------------------------------
-EdfHeader_t MakeHeaderFromBytes(const uint8_t* b)
+int MakeHeaderFromBytes(const uint8_t* b, size_t srcSize, EdfHeader_t* h)
 {
-	EdfHeader_t h = 
+	if (16 > srcSize)
+		return ERR_SRC_SHORT;
+
+	*h = (EdfHeader_t)
 	{
 		.VersMajor = b[0],
 		.VersMinor = b[1],
@@ -19,7 +22,7 @@ EdfHeader_t MakeHeaderFromBytes(const uint8_t* b)
 		.Blocksize = *((uint16_t*)&b[5]),
 		.Flags = (Options_t)(*((uint32_t*)&b[7])),
 	};
-	return h;
+	return ERR_NO;
 }
 //-----------------------------------------------------------------------------
 size_t HeaderToBytes(const EdfHeader_t* h, uint8_t* b)

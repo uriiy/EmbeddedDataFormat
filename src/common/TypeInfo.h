@@ -36,7 +36,7 @@ uint32_t GetValueSize(const TypeInfo_t* t);
 size_t ToBytes(const TypeInfo_t* t, uint8_t* buf);
 size_t ToString(const TypeInfo_t* t, uint8_t* buf, int noffset);
 size_t InfToString(const TypeInfo_t* t, Stream_t* buf, int noffset);
-size_t FromBytes(uint8_t** src, TypeInfo_t* t, uint8_t** mem);
+int FromBytes(uint8_t** src, TypeInfo_t* t, uint8_t** mem);
 
 #ifdef __cplusplus
 }

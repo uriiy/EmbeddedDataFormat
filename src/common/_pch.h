@@ -34,6 +34,12 @@
 
 #define LOG_ERR() printf("err: %d %s %s ", __LINE__, __FILE__, __FUNCTION__)
 
+#define ERR_NO 0;
+#define ERR_SRC_SHORT -1;
+#define ERR_DST_SHORT 1;
+
+#define ERR_FN_NOT_EXIST -2;
+
 
 
 #endif //PCH_H

@@ -1,87 +1,10 @@
 #include "_pch.h"
-#include "EdfWriter.h"
+#include "edf.h"
 
-//-----------------------------------------------------------------------------
-size_t WriteTxtHeaderBlock(const EdfHeader_t* h, Stream_t* stream)
-{
-	size_t len = StreamWriteFmt(stream, "~ version=%d.%d.%d bs=%d encoding=%d flags=%d \n"
-		, h->VersMajor, h->VersMinor, h->VersPatch
-		, h->Blocksize, h->Encoding, h->Flags);
-	return len;
-}
-//-----------------------------------------------------------------------------
-size_t WriteHeaderBlock(const EdfHeader_t* h, DataWriter_t* dw)
-{
-	dw->Block[0] = (uint8_t)btHeader;
-	dw->Block[1] = (uint8_t)dw->Seq++;
-	size_t data_len = HeaderToBytes(h, &dw->Block[4]);
-	*((uint16_t*)&dw->Block[2]) = (uint16_t)data_len;
-	dw->BlockLen = 1 + 1 + 2 + data_len;
-	if (dw->BlockLen != (*dw->Stream.Write)(dw->Stream.Instance, dw->Block, dw->BlockLen))
-		LOG_ERR();
-	data_len = dw->BlockLen;
-	dw->BlockLen = 0;
-	dw->h = *h;
-	return data_len;
-}
-//-----------------------------------------------------------------------------
-size_t WriteTxtVarInfoBlock(const TypeInfo_t* t, DataWriter_t* tw)
-{
-	size_t len = StreamWrite(&tw->Stream, "\n\n? ", 4);
-	len += InfToString(t, &tw->Stream, 0);
-	tw->BlockLen = 0;
-	return len;
-}
-//-----------------------------------------------------------------------------
-size_t WriteVarInfoBlock(const TypeInfo_t* t, DataWriter_t* dw)
-{
-	dw->Block[0] = (uint8_t)btVarInfo;
-	dw->Block[1] = (uint8_t)dw->Seq++;
-	size_t data_len = ToBytes(t, &dw->Block[4]);
-	*((uint16_t*)&dw->Block[2]) = (uint16_t)data_len;
-	dw->BlockLen = 1 + 1 + 2 + data_len;
-	if (dw->BlockLen != (*dw->Stream.Write)(dw->Stream.Instance, dw->Block, dw->BlockLen))
-		LOG_ERR();
-	data_len = dw->BlockLen;
-	dw->BlockLen = 0;
-	dw->t = t;
-	return data_len;
-}
-//-----------------------------------------------------------------------------
-size_t FlushBinBlock(Stream_t* s, BlockType t, uint8_t seq, uint8_t* src, size_t len)
-{
-	if (0 == len)
-		return 0;
-	uint8_t h[4] = { t, seq };
-	*((uint16_t*)&h[2]) = (uint16_t)len;
-	if (sizeof(h) != (*s->Write)(s->Instance, h, sizeof(h)))
-		LOG_ERR();
-	if (len != (*s->Write)(s->Instance, src, len))
-		LOG_ERR();
-	return 1 + 1 + 2 + len;
-}
-//-----------------------------------------------------------------------------
-size_t FlushTxtBlock(Stream_t* s, BlockType t, uint8_t seq, uint8_t* src, size_t len)
-{
-	UNUSED(t);
-	UNUSED(seq);
 
-	if (0 == len)
-		return 0;
-	if (len != (*s->Write)(s->Instance, src, len))
-		LOG_ERR();
-	return len;
-}
-//-----------------------------------------------------------------------------
-size_t FlushDataBlock(DataWriter_t* dw)
-{
-	if (NULL == dw->FlushBlock || 0 == dw->BlockLen)
-		return 0;
-	size_t ret = (*dw->FlushBlock)(&dw->Stream, btVarData, dw->Seq, dw->Block, dw->BlockLen);
-	dw->Seq++;
-	dw->BlockLen = 0;
-	return ret;
-}
+
+
+
 //-----------------------------------------------------------------------------
 static int WriteData(const TypeInfo_t* t,
 	uint8_t* src, size_t srcLen,
@@ -235,7 +158,7 @@ static int WriteMultipleValues(//const TypeInfo_t* t,
 		if (0 < wr)
 		{
 			dw->BlockLen = w;
-			FlushDataBlock(dw);
+			EdfFlushDataBlock(dw);
 			wr = 0;
 			dst = xdst; dstLen = xdstLen;
 		}
@@ -247,7 +170,7 @@ static int WriteMultipleValues(//const TypeInfo_t* t,
 	return wr;
 }
 //-----------------------------------------------------------------------------
-size_t WriteDataBlock(//const TypeInfo_t* t,
+size_t EdfWriteDataBlock(//const TypeInfo_t* t,
 	uint8_t* src, size_t srcLen,
 	DataWriter_t* dw)
 {
@@ -269,19 +192,19 @@ size_t WriteDataBlock(//const TypeInfo_t* t,
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-size_t ReadBlock(DataWriter_t* dw)
+size_t EdfReadBlock(DataWriter_t* dw)
 {
 	size_t len = 0;
 	do
 	{
-		len = (*dw->Stream.Read)(dw->Stream.Instance, dw->Block, 1);
+		len = StreamRead(&dw->Stream, dw->Block, 1);
 		if (1 == len && IsBlockType(dw->Block[0]))
 		{
-			len = (*dw->Stream.Read)(dw->Stream.Instance, &dw->Block[1], 3);
+			len = StreamRead(&dw->Stream, &dw->Block[1], 3);
 			if (3 == len && dw->Block[1] == dw->Seq)
 			{
 				dw->BlockLen = *(uint16_t*)&dw->Block[2];
-				len = (*dw->Stream.Read)(dw->Stream.Instance, &dw->Block[4], dw->BlockLen);
+				len = StreamRead(&dw->Stream, &dw->Block[4], dw->BlockLen);
 				if (len == dw->BlockLen)
 				{
 					dw->Seq++;
@@ -293,14 +216,3 @@ size_t ReadBlock(DataWriter_t* dw)
 	} while (1 == len);
 	return (size_t)-1;
 }
-//-----------------------------------------------------------------------------
-size_t ReadHeaderBlock(DataWriter_t* dr, EdfHeader_t* h)
-{
-	if (0 < ReadBlock(dr) && btHeader == dr->Block[0] && 4 + 16 == dr->BlockLen)
-	{
-		*h = MakeHeaderFromBytes(&dr->Block[4]);
-		return 0;
-	}
-	return (size_t)-1;
-}
-//-----------------------------------------------------------------------------

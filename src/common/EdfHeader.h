@@ -21,7 +21,7 @@ typedef struct EdfHeader
 } EdfHeader_t;
 
 EdfHeader_t MakeHeaderDefault(void);
-EdfHeader_t MakeHeaderFromBytes(const uint8_t* b);
+int MakeHeaderFromBytes(const uint8_t* b, size_t srcSize, EdfHeader_t* h);
 size_t HeaderToBytes(const EdfHeader_t* h, uint8_t* b);
 
 

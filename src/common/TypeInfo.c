@@ -225,7 +225,7 @@ size_t ToString(const TypeInfo_t* t, uint8_t* buf, int noffset)
 	return (uint8_t*)pbuf - buf;
 }
 //-----------------------------------------------------------------------------
-size_t FromBytes(uint8_t** src, TypeInfo_t* t, uint8_t** mem)
+int FromBytes(uint8_t** src, TypeInfo_t* t, uint8_t** mem)
 {
 	uint8_t* psrc = *src;
 	uint8_t* pdst = *mem;

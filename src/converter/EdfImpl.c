@@ -2,26 +2,35 @@
 #include "edf.h"
 
 //-----------------------------------------------------------------------------
-static size_t StreamWriteImpl(void* stream, void const* data, size_t count)
+static size_t StreamWriteImpl(Stream_t* stream, void const* data, size_t count)
 {
-	size_t ret = fwrite(data, 1, count, (FILE*)stream);
+	size_t ret = fwrite(data, 1, count, (FILE*)stream->Instance);
 	fflush((FILE*)stream);
 	return ret;
 }
 //-----------------------------------------------------------------------------
-static size_t StreamWriteFormatImpl(void* stream, const char* format, ...)
+static size_t StreamWriteFormatImpl(Stream_t* stream, const char* format, ...)
 {
+#ifdef STREAM_BUF_SIZE
+	size_t ret = 0;
 	va_list arglist;
 	va_start(arglist, format);
-	size_t ret = vfprintf((FILE*)stream, format, arglist);
+	ret = vsprintf_s((char*)stream->Buf, STREAM_BUF_SIZE, format, arglist);
+	va_end(arglist);
+	return StreamWriteImpl(stream, (void*)stream->Buf, ret);
+#else
+	va_list arglist;
+	va_start(arglist, format);
+	size_t ret = vfprintf((FILE*)stream->Instance, format, arglist);
 	va_end(arglist);
 	fflush((FILE*)stream);
 	return ret;
+#endif
 }
 //-----------------------------------------------------------------------------
-static size_t StreamReadImpl(void* stream, void* dst, size_t count)
+static size_t StreamReadImpl(Stream_t* stream, void* dst, size_t count)
 {
-	size_t readed = fread(dst, 1, count, (FILE*)stream);
+	size_t readed = fread(dst, 1, count, (FILE*)stream->Instance);
 	if (readed == count)
 		return readed;
 	//if (feof(stream))
@@ -31,108 +40,42 @@ static size_t StreamReadImpl(void* stream, void* dst, size_t count)
 	return readed;
 }
 //-----------------------------------------------------------------------------
-int StreamOpen(Stream_t* s, const char* file, const char* mode)
+int StreamOpen(Stream_t* s, const char* file, const char* inMode)
 {
-	FILE* f = NULL;
-	errno_t err = fopen_s(&f, file, mode);
-	if (err)
+	const char w[] = "wb";
+	const char r[] = "rb";
+	const char* mode = NULL;
+
+	int  err = -1;
+
+	if (0 == strcmp("wb", inMode))
+		mode = w;
+	else if (0 == strcmp("rb", inMode))
+		mode = r;
+
+	if (mode)
 	{
-		LOG_ERR();
-		return -1;
+		FILE* f = NULL;
+		err = fopen_s(&f, file, mode);
+		if (!err)
+		{
+			*s = (Stream_t)
+			{
+				.Instance = (void*)f,
+				.Write = StreamWriteImpl,
+				.Read = StreamReadImpl,
+				.WriteFmt = StreamWriteFormatImpl,
+			};
+			return 0;
+		}
 	}
-	*s = (Stream_t)
-	{
-		.Instance = (void*)f,
-		.Write = StreamWriteImpl,
-		.Read = StreamReadImpl,
-		.FWrite = StreamWriteFormatImpl,
-	};
-	return 0;
+	LOG_ERR();
+	return err;
 }
 //-----------------------------------------------------------------------------
 int StreamClose(Stream_t* w)
 {
+	fflush((FILE*)(w->Instance));
 	return fclose((FILE*)(w->Instance));
 }
 
-//-----------------------------------------------------------------------------
-int OpenBinWriter(DataWriter_t* w, const char* file)
-{
-	Stream_t s;
-	errno_t err = StreamOpen(&s, file, "wb");
-	if (err)
-		return -1;
-	w->Stream = s;
-	w->Seq = 0;
-	w->BlockLen = 0;
-	w->BufLen = 0;
-	w->WritePrimitive = BinToBin;
-	w->FlushBlock = FlushBinBlock;
-	w->SepBeginStruct = NoWrite;
-	w->SepEndStruct = NoWrite;
-	w->SepBeginArray = NoWrite;
-	w->SepEndArray = NoWrite;
-	w->SepVar = NoWrite;
-	w->SepRecBegin = NoWrite;
-	w->SepRecEnd = NoWrite;
-	return 0;
-}
-//-----------------------------------------------------------------------------
-int OpenTextWriter(DataWriter_t* w, const char* file)
-{
-	Stream_t s;
-	errno_t err = StreamOpen(&s, file, "wb");
-	if (err)
-		return -1;
-
-	w->Stream = s;
-	w->Seq = 0;
-	w->BlockLen = 0;
-	w->BufLen = 0;
-	w->WritePrimitive = BinToStr;
-	w->FlushBlock = FlushTxtBlock;
-	w->SepBeginStruct = SepBeginStruct;
-	w->SepEndStruct = SepEndStruct;
-	w->SepBeginArray = SepBeginArray;
-	w->SepEndArray = SepEndArray;
-	w->SepVar = SepVar;
-	w->SepRecBegin = SepRecBegin;
-	w->SepRecEnd = SepRecEnd;
-
-	return 0;
-}
-//-----------------------------------------------------------------------------
-int OpenBinReader(DataWriter_t* w, const char* file)
-{
-	Stream_t s;
-	errno_t err = StreamOpen(&s, file, "rb");
-	if (err)
-		return -1;
-
-	w->Stream = s;
-	w->Seq = 0;
-	w->BlockLen = 0;
-	w->BufLen = 0;
-	w->WritePrimitive = BinToStr;
-	w->FlushBlock = NULL;
-	w->SepBeginStruct = SepBeginStruct;
-	w->SepEndStruct = SepEndStruct;
-	w->SepBeginArray = SepBeginArray;
-	w->SepEndArray = SepEndArray;
-	w->SepVar = SepVar;
-	w->SepRecBegin = SepRecBegin;
-	w->SepRecEnd = SepRecEnd;
-
-	return 0;
-}
-//-----------------------------------------------------------------------------
-void EdfClose(DataWriter_t* dw)
-{
-	if (dw->Stream.Instance)
-	{
-		FlushDataBlock(dw);
-		fclose((FILE*)dw->Stream.Instance);
-		dw->Stream.Instance = NULL;
-	}
-}
-//-----------------------------------------------------------------------------
