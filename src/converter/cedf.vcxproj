@@ -23,6 +23,7 @@
     <ClCompile Include="..\common\EdfHeader.c" />
     <ClCompile Include="..\common\Primitives.c" />
     <ClCompile Include="..\common\TypeInfo.c" />
+    <ClCompile Include="converter.c" />
     <ClCompile Include="EdfImpl.c" />
     <ClCompile Include="..\common\EdfWriter.c" />
     <ClCompile Include="main.c" />
@@ -37,6 +38,7 @@
     <ClInclude Include="..\common\Primitives.h" />
     <ClInclude Include="..\common\TypeInfo.h" />
     <ClInclude Include="..\common\_pch.h" />
+    <ClInclude Include="converter.h" />
     <ClInclude Include="edf_cfg.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -1,7 +1,9 @@
 #ifndef EDF_H
 #define EDF_H
 //-----------------------------------------------------------------------------
+#pragma pack(push,1)
 #include "EdfWriter.h"
+#pragma pack(pop)
 //-----------------------------------------------------------------------------
 #ifdef __cplusplus
 extern "C" {
