@@ -11,7 +11,7 @@ static int WriteData(const TypeInfo_t* t,
 	uint8_t* dst, size_t dstLen,
 	size_t* skip, size_t* wqty,
 	size_t* readed, size_t* writed,
-	DataWriter_t* dw)
+	EdfWriter_t* dw)
 {
 	size_t totalElement = 1;
 	for (size_t i = 0; i < t->Dims.Count; i++)
@@ -39,12 +39,12 @@ static int WriteData(const TypeInfo_t* t,
 			*writed += w;
 			src += r; srcLen -= r;
 			dst += w; dstLen -= w;
-			(*dw->SepVar)(&dst, &dstLen, writed);
+			(*dw->SepVarEnd)(&dst, &dstLen, writed);
 		}
 		return wr;
 	}
 	if (0 == *skip && 1 < totalElement)
-		(*dw->SepBeginArray)(&dst, &dstLen, writed);
+		(*dw->BeginArray)(&dst, &dstLen, writed);
 	for (size_t i = 0; i < totalElement; i++)
 	{
 		if (Struct == t->Type)
@@ -52,7 +52,7 @@ static int WriteData(const TypeInfo_t* t,
 			if (t->Childs.Count)
 			{
 				if (0 == *skip)
-					(*dw->SepBeginStruct)(&dst, &dstLen, writed);
+					(*dw->BeginStruct)(&dst, &dstLen, writed);
 				for (size_t j = 0; j < t->Childs.Count; j++)
 				{
 					TypeInfo_t* s = &t->Childs.Item[j];
@@ -66,7 +66,7 @@ static int WriteData(const TypeInfo_t* t,
 					dst += w; dstLen -= w;
 				}
 				if (0 == *skip)
-					(*dw->SepEndStruct)(&dst, &dstLen, writed);
+					(*dw->EndStruct)(&dst, &dstLen, writed);
 			}
 		}
 		else
@@ -86,14 +86,14 @@ static int WriteData(const TypeInfo_t* t,
 				*writed += w;
 				src += r; srcLen -= r;
 				dst += w; dstLen -= w;
-				(*dw->SepVar)(&dst, &dstLen, writed);
+				(*dw->SepVarEnd)(&dst, &dstLen, writed);
 			}
 			else
 				return wr;
 		}
 	}
 	if (0 == *skip && 1 < totalElement)
-		(*dw->SepEndArray)(&dst, &dstLen, writed);
+		(*dw->EndArray)(&dst, &dstLen, writed);
 	return 0;
 }
 //-----------------------------------------------------------------------------
@@ -102,19 +102,19 @@ static int WriteSingleValue(
 	uint8_t* dst, size_t dstLen,
 	size_t* skip,
 	size_t* readed, size_t* writed,
-	DataWriter_t* dw)
+	EdfWriter_t* dw)
 {
 	size_t wqty = 0;
 	*readed = *writed = 0;
 	if (0 == srcLen)
 		return -1;
 	if (0 == *skip)
-		(*dw->SepRecBegin)(&dst, &dstLen, writed);
+		(*dw->RecBegin)(&dst, &dstLen, writed);
 	int wr = WriteData(dw->t, src, srcLen, dst, dstLen, skip, &wqty, readed, writed, dw);
 	dst += *writed; dstLen -= *writed;
 	if (0 == wr)
 	{
-		(*dw->SepRecEnd)(&dst, &dstLen, writed);
+		(*dw->RecEnd)(&dst, &dstLen, writed);
 		*skip = 0;
 	}
 	else
@@ -128,7 +128,7 @@ static int WriteMultipleValues(//const TypeInfo_t* t,
 	uint8_t* xsrc, size_t xsrcLen,
 	uint8_t* xdst, size_t xdstLen,
 	size_t* readed, size_t* writed,
-	DataWriter_t* dw)
+	EdfWriter_t* dw)
 {
 	uint8_t* dst = xdst;
 	size_t dstLen = xdstLen;
@@ -172,7 +172,7 @@ static int WriteMultipleValues(//const TypeInfo_t* t,
 //-----------------------------------------------------------------------------
 size_t EdfWriteDataBlock(//const TypeInfo_t* t,
 	uint8_t* src, size_t srcLen,
-	DataWriter_t* dw)
+	EdfWriter_t* dw)
 {
 	int ret = 0;
 	size_t r = 0; size_t w = 0;
@@ -192,7 +192,7 @@ size_t EdfWriteDataBlock(//const TypeInfo_t* t,
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-size_t EdfReadBlock(DataWriter_t* dw)
+size_t EdfReadBlock(EdfWriter_t* dw)
 {
 	size_t len = 0;
 	do

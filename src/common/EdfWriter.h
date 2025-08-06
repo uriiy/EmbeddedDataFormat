@@ -7,16 +7,16 @@
 #include "Primitives.h"
 #include "TypeInfo.h"
 
-typedef struct DataWriter DataWriter_t;
+typedef struct EdfWriter EdfWriter_t;
 
 typedef int (*WriteSepFn)(uint8_t** dst, size_t* dstLen, size_t* w);
 typedef size_t(*FlushBlockFn)(Stream_t* s, BlockType t, uint8_t seq, uint8_t* src, size_t len);
-typedef int (*WriteHeaderFn)(DataWriter_t* w, const EdfHeader_t* h, size_t* writed);
-typedef int (*WriteInfoFn)(DataWriter_t* w, const TypeInfo_t* t, size_t* writed);
+typedef int (*WriteHeaderFn)(EdfWriter_t* w, const EdfHeader_t* h, size_t* writed);
+typedef int (*WriteInfoFn)(EdfWriter_t* w, const TypeInfo_t* t, size_t* writed);
 
 //-----------------------------------------------------------------------------
-
-typedef struct DataWriter
+//#pragma pack(1)
+typedef struct EdfWriter
 {
 	EdfHeader_t h;
 	const TypeInfo_t* t;
@@ -32,14 +32,15 @@ typedef struct DataWriter
 	WriteHeaderFn FlushHeader;
 	WriteInfoFn FlushInfo;
 	FlushBlockFn FlushData;
-	WriteSepFn SepBeginStruct;
-	WriteSepFn SepEndStruct;
-	WriteSepFn SepBeginArray;
-	WriteSepFn SepEndArray;
-	WriteSepFn SepVar;
-	WriteSepFn SepRecBegin;
-	WriteSepFn SepRecEnd;
-} DataWriter_t;
+
+	WriteSepFn BeginStruct;
+	WriteSepFn EndStruct;
+	WriteSepFn BeginArray;
+	WriteSepFn EndArray;
+	WriteSepFn SepVarEnd;
+	WriteSepFn RecBegin;
+	WriteSepFn RecEnd;
+} EdfWriter_t;
 
 //-----------------------------------------------------------------------------
 #endif

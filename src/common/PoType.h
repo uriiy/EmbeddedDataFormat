@@ -20,17 +20,14 @@ static const char PoTypeUInt64[] = "UInt64";
 static const char PoTypeInt64[] = "Int64";
 static const char PoTypeDouble[] = "Double";
 
-/*
 static const char SepBeginStruct[] = "{";
 static const char SepEndStruct[] = "}";
 static const char SepBeginArray[] = "[";
 static const char SepEndArray[] = "]";
-static const char SepVar[] = ";";
+static const char SepVarEnd[] = ";";
 static const char SepRecBegin[] = "\n= ";
-static const char SepRecEnd[] = NULL;
-*/
+static const char SepRecEnd[] = {0};
 
-//#pragma pack(1)
 typedef enum PoType
 {
 	Struct = 0,

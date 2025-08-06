@@ -7,19 +7,19 @@
 extern "C" {
 #endif
 //-----------------------------------------------------------------------------
-int OpenBinWriter(DataWriter_t* w, const char* file);
-int OpenTextWriter(DataWriter_t* w, const char* file);
-int OpenBinReader(DataWriter_t* w, const char* file);
-int OpenTextReader(DataWriter_t* w, const char* file);
-void EdfClose(DataWriter_t* dw);
+int OpenBinWriter(EdfWriter_t* w, const char* file);
+int OpenTextWriter(EdfWriter_t* w, const char* file);
+int OpenBinReader(EdfWriter_t* w, const char* file);
+int OpenTextReader(EdfWriter_t* w, const char* file);
+void EdfClose(EdfWriter_t* dw);
 
-int EdfWriteHeader(DataWriter_t* dw, const EdfHeader_t* h, size_t* writed);
-int EdfWriteInfo(DataWriter_t* dw, const TypeInfo_t* t, size_t* writed);
+int EdfWriteHeader(EdfWriter_t* dw, const EdfHeader_t* h, size_t* writed);
+int EdfWriteInfo(EdfWriter_t* dw, const TypeInfo_t* t, size_t* writed);
 
-size_t EdfWriteDataBlock(uint8_t* src, size_t srcLen, DataWriter_t* dw);
-size_t EdfFlushDataBlock(DataWriter_t* dw);
+size_t EdfWriteDataBlock(uint8_t* src, size_t srcLen, EdfWriter_t* dw);
+size_t EdfFlushDataBlock(EdfWriter_t* dw);
 
-size_t EdfReadBlock(DataWriter_t* dr);
+size_t EdfReadBlock(EdfWriter_t* dr);
 //-----------------------------------------------------------------------------
 #ifdef __cplusplus
 }

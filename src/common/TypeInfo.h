@@ -5,10 +5,6 @@
 #include "PoType.h"
 #include "EdfStream.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct TypeInfo
 {
 	PoType Type; /// PoType 
@@ -25,9 +21,6 @@ typedef struct TypeInfo
 	} Childs;
 } TypeInfo_t;
 
-//typedef struct TypeInfo_tx TypeInfo;
-
-
 TypeInfo_t MakeTypeInfo(char* name, PoType type
 	, uint8_t dimCount, uint32_t* dims
 	, uint8_t childCount, TypeInfo_t* childs);
@@ -38,8 +31,5 @@ size_t ToString(const TypeInfo_t* t, uint8_t* buf, int noffset);
 size_t InfToString(const TypeInfo_t* t, Stream_t* buf, int noffset);
 int FromBytes(uint8_t** src, TypeInfo_t* t, uint8_t** mem);
 
-#ifdef __cplusplus
-}
-#endif
 
 #endif

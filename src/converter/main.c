@@ -2,7 +2,7 @@
 #include "edf_cfg.h"
 
 //-----------------------------------------------------------------------------
-static void TestInit()
+static void TestInit(void)
 {
 	TypeInfo_t tst1 =
 	{
@@ -40,9 +40,9 @@ static void TestInit()
 	//TypeInfo_t tst22 = MakeTypeInfo("Test3", Struct, 2, (uint32_t[]) { 2 }, 1, (TypeInfo_t[]) { tst1 });
 }
 //-----------------------------------------------------------------------------
-static void WriteTest()
+static void WriteTest(void)
 {
-	DataWriter_t dw;
+	EdfWriter_t dw;
 	size_t writed = 0;
 	int err = OpenBinWriter(&dw, "c_test.bdf");
 
@@ -132,8 +132,8 @@ static void WriteTest()
 //-----------------------------------------------------------------------------
 static void BinToText(const char* src, const char* dst)
 {
-	DataWriter_t br = { 0 };
-	DataWriter_t tw = { 0 };
+	EdfWriter_t br = { 0 };
+	EdfWriter_t tw = { 0 };
 	if (OpenBinReader(&br, src))
 		LOG_ERR();
 	if(OpenTextWriter(&tw, dst))
@@ -185,7 +185,7 @@ static void BinToText(const char* src, const char* dst)
 	EdfClose(&tw);
 }
 //-----------------------------------------------------------------------------
-static void BinToTextTest()
+static void BinToTextTest(void)
 {
 	const char* src = "c_test.bdf";
 	const char* dst = "c_test.tdf";

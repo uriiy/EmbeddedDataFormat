@@ -28,6 +28,7 @@ int BinToBin(PoType t,
 		return 1;
 	switch (t)
 	{
+	case Struct:
 	default: *r = *w = 0; return -2;
 	case Int8:
 	case UInt8:
@@ -100,9 +101,8 @@ int BinToStr(PoType t,
 	}
 	switch (t)
 	{
-	default:
-		*w = 0;
-		return 0;
+	case Struct:
+	default: *r = *w = 0; return -2;
 	case Int8:
 		*w = xprint(dst, dstLen, "%d", (int8_t)src[0]);
 		return (dstLen < *w);

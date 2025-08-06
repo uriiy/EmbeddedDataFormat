@@ -2,7 +2,7 @@
 #include "EdfHeader.h"
 
 //-----------------------------------------------------------------------------
-EdfHeader_t MakeHeaderDefault()
+EdfHeader_t MakeHeaderDefault(void)
 {
 	EdfHeader_t h = { 1,2,3, 65001,BLOCK_SIZE,Default };
 	return h;

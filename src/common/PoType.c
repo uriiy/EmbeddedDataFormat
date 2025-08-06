@@ -6,6 +6,7 @@ uint8_t GetSizeOf(enum PoType p)
 {
 	switch (p)
 	{
+	case Struct:
 	default: return 0;
 	case UInt8:
 	case Int8:
