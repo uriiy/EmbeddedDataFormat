@@ -37,7 +37,10 @@ void BinToText(const char* src, const char* dst)
 			uint8_t* mem = (uint8_t*)&br.Buf + sizeof(TypeInfo_t);
 			err = FromBytes(&src, t, &mem);
 			if (!err)
+			{
+				writed = 0;
 				err = EdfWriteInfo(&tw, t, &writed);
+			}
 		}
 		break;
 		case btVarData:

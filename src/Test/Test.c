@@ -1,6 +1,16 @@
 ﻿#include "edf_cfg.h"
 #include "converter.h"
 //-----------------------------------------------------------------------------
+static void TestMemStream(void)
+{
+	size_t writed = 0;
+	MemStream_t ms = { 0 };
+	uint8_t buf[256];
+	int err = MemStreamOpen(&ms, (uint8_t)"w", buf, sizeof(buf));
+	const char test[] = "qwe test 123";
+	err = StreamWrite(&ms, &writed, test, sizeof(test));
+}
+//-----------------------------------------------------------------------------
 static void TestInit(void)
 {
 	TypeInfo_t tst1 =
@@ -143,5 +153,6 @@ int main()
 	//TestHeader();
 	WriteTest();
 	BinToTextTest();
+	TestMemStream();
 	return 0;
 }

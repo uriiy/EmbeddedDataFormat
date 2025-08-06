@@ -35,13 +35,15 @@ int EdfWriteInfo(EdfWriter_t* dw, const TypeInfo_t* t, size_t* writed)
 int EdfWriteHeaderTxt(EdfWriter_t* dw, const EdfHeader_t* h, size_t* writed)
 {
 	dw->Seq = 0;
-	*writed = StreamWriteFmt(&dw->Stream, "~ version=%d.%d.%d bs=%d encoding=%d flags=%d \n"
+	int err = StreamWriteFmt(&dw->Stream, writed, "~ version=%d.%d.%d bs=%d encoding=%d flags=%d \n"
 		, h->VersMajor, h->VersMinor, h->VersPatch
 		, h->Blocksize, h->Encoding, h->Flags);
+	if (err)
+		return err;
 	dw->Seq++;
 	dw->BlockLen = 0;
 	dw->h = *h;
-	return (0 >= writed) ? -1 : 0;
+	return 0;
 }
 //-----------------------------------------------------------------------------
 int EdfWriteHeaderBin(EdfWriter_t* dw, const EdfHeader_t* h, size_t* writed)
@@ -51,24 +53,25 @@ int EdfWriteHeaderBin(EdfWriter_t* dw, const EdfHeader_t* h, size_t* writed)
 	size_t data_len = HeaderToBytes(h, &dw->Block[4]);
 	*((uint16_t*)&dw->Block[2]) = (uint16_t)data_len;
 	dw->BlockLen = 1 + 1 + 2 + data_len;
-	*writed = StreamWrite(&dw->Stream, dw->Block, dw->BlockLen);
-	if (dw->BlockLen != *writed)
-		LOG_ERR();
+	int err = StreamWrite(&dw->Stream, writed, dw->Block, dw->BlockLen);
+	if (err)
+		return err;
 	dw->Seq++;
 	dw->BlockLen = 0;
 	dw->h = *h;
 	return 0;
 }
-
 //-----------------------------------------------------------------------------
 int EdfWriteInfoTxt(EdfWriter_t* w, const TypeInfo_t* t, size_t* writed)
 {
-	*writed = StreamWrite(&w->Stream, "\n\n? ", 4);
-	*writed += InfToString(t, &w->Stream, 0);
+	int err = 0;
+	if ((err = StreamWrite(&w->Stream, writed, "\n\n? ", 4)) ||
+		(err = StreamWriteInfoTxt(&w->Stream, t, 0, writed)))
+		return err;
 	w->Seq++;
 	w->BlockLen = 0;
 	w->t = t;
-	return (0 >= writed) ? -1 : 0;
+	return err;
 }
 //-----------------------------------------------------------------------------
 int EdfWriteInfoBin(EdfWriter_t* dw, const TypeInfo_t* t, size_t* writed)
@@ -78,9 +81,9 @@ int EdfWriteInfoBin(EdfWriter_t* dw, const TypeInfo_t* t, size_t* writed)
 	size_t data_len = ToBytes(t, &dw->Block[4]);
 	*((uint16_t*)&dw->Block[2]) = (uint16_t)data_len;
 	dw->BlockLen = 1 + 1 + 2 + data_len;
-	*writed = StreamWrite(&dw->Stream, dw->Block, dw->BlockLen);
-	if (dw->BlockLen != *writed)
-		LOG_ERR();
+	int err = StreamWrite(&dw->Stream, writed, dw->Block, dw->BlockLen);
+	if (err)
+		return err;
 	dw->Seq++;
 	dw->BlockLen = 0;
 	dw->t = t;
@@ -92,7 +95,7 @@ int EdfWriteInfoBin(EdfWriter_t* dw, const TypeInfo_t* t, size_t* writed)
 
 int OpenBinWriter(EdfWriter_t* w, const char* file)
 {
-	errno_t err = StreamOpen(&w->Stream, file, "wb");
+	int err = StreamOpen(&w->Stream, file, "wb");
 	if (err)
 		return -1;
 	w->Seq = 0;
@@ -116,7 +119,7 @@ int OpenBinWriter(EdfWriter_t* w, const char* file)
 //-----------------------------------------------------------------------------
 int OpenTextWriter(EdfWriter_t* w, const char* file)
 {
-	errno_t err = StreamOpen(&w->Stream, file, "wb");
+	int err = StreamOpen(&w->Stream, file, "wb");
 	if (err)
 		return -1;
 	w->Seq = 0;
@@ -140,7 +143,7 @@ int OpenTextWriter(EdfWriter_t* w, const char* file)
 //-----------------------------------------------------------------------------
 int OpenBinReader(EdfWriter_t* w, const char* file)
 {
-	errno_t err = StreamOpen(&w->Stream, file, "rb");
+	int err = StreamOpen(&w->Stream, file, "rb");
 	if (err)
 		return -1;
 	w->Seq = 0;
@@ -173,10 +176,14 @@ size_t StreamWriteBlockDataBin(Stream_t* s, BlockType t, uint8_t seq, uint8_t* s
 		return 0;
 	uint8_t h[4] = { t, seq };
 	*((uint16_t*)&h[2]) = (uint16_t)len;
-	if (sizeof(h) != StreamWrite(s, h, sizeof(h)))
+	int err = 0;
+	size_t writed = 0;
+	if ((err = StreamWrite(s, &writed, h, sizeof(h))) ||
+		(err = StreamWrite(s, &writed, src, len)))
+	{
 		LOG_ERR();
-	if (len != StreamWrite(s, src, len))
-		LOG_ERR();
+		return err;
+	}
 	return 1 + 1 + 2 + len;
 }
 //-----------------------------------------------------------------------------
@@ -184,12 +191,16 @@ size_t StreamWriteBlockDataTxt(Stream_t* s, BlockType t, uint8_t seq, uint8_t* s
 {
 	UNUSED(t);
 	UNUSED(seq);
-
 	if (0 == len)
 		return 0;
-	if (len != StreamWrite(s, src, len))
+	int err = 0;
+	size_t writed = 0;
+	if ((err = StreamWrite(s, &writed, src, len)))
+	{
 		LOG_ERR();
-	return len;
+		return err;
+	}
+	return err;
 }
 //-----------------------------------------------------------------------------
 size_t EdfFlushDataBlock(EdfWriter_t* dw)
@@ -214,7 +225,7 @@ void EdfClose(EdfWriter_t* dw)
 //-----------------------------------------------------------------------------
 static int EdfWriteSeparator(const char* const src, size_t srcLen, uint8_t** dst, size_t* dstSize, size_t* writed)
 {
-	if(!srcLen)
+	if (!srcLen)
 		return 0;
 	if (srcLen > *dstSize)
 		return 1;
@@ -235,35 +246,35 @@ int NoWrite(uint8_t** dst, size_t* dstLen, size_t* w)
 //-----------------------------------------------------------------------------
 int BeginStruct(uint8_t** dst, size_t* dstLen, size_t* w)
 {
-	return EdfWriteSeparator(SepBeginStruct, sizeof(SepBeginStruct)-1, dst, dstLen, w);
+	return EdfWriteSeparator(SepBeginStruct, sizeof(SepBeginStruct) - 1, dst, dstLen, w);
 }
 //-----------------------------------------------------------------------------
 int EndStruct(uint8_t** dst, size_t* dstLen, size_t* w)
 {
-	return EdfWriteSeparator(SepEndStruct, sizeof(SepEndStruct)-1, dst, dstLen, w);
+	return EdfWriteSeparator(SepEndStruct, sizeof(SepEndStruct) - 1, dst, dstLen, w);
 }
 //-----------------------------------------------------------------------------
 int BeginArray(uint8_t** dst, size_t* dstLen, size_t* w)
 {
-	return EdfWriteSeparator(SepBeginArray, sizeof(SepBeginArray)-1, dst, dstLen, w);
+	return EdfWriteSeparator(SepBeginArray, sizeof(SepBeginArray) - 1, dst, dstLen, w);
 }
 //-----------------------------------------------------------------------------
 int EndArray(uint8_t** dst, size_t* dstLen, size_t* w)
 {
-	return EdfWriteSeparator(SepEndArray, sizeof(SepEndArray)-1, dst, dstLen, w);
+	return EdfWriteSeparator(SepEndArray, sizeof(SepEndArray) - 1, dst, dstLen, w);
 }
 //-----------------------------------------------------------------------------
 int VarEnd(uint8_t** dst, size_t* dstLen, size_t* w)
 {
-	return EdfWriteSeparator(SepVarEnd, sizeof(SepVarEnd)-1, dst, dstLen, w);
+	return EdfWriteSeparator(SepVarEnd, sizeof(SepVarEnd) - 1, dst, dstLen, w);
 }
 //-----------------------------------------------------------------------------
 int RecBegin(uint8_t** dst, size_t* dstLen, size_t* w)
 {
-	return EdfWriteSeparator(SepRecBegin, sizeof(SepRecBegin)-1, dst, dstLen, w);
+	return EdfWriteSeparator(SepRecBegin, sizeof(SepRecBegin) - 1, dst, dstLen, w);
 }
 //-----------------------------------------------------------------------------
 int RecEnd(uint8_t** dst, size_t* dstLen, size_t* w)
 {
-	return EdfWriteSeparator(SepRecEnd, sizeof(SepRecEnd)-1, dst, dstLen, w);
+	return EdfWriteSeparator(SepRecEnd, sizeof(SepRecEnd) - 1, dst, dstLen, w);
 }

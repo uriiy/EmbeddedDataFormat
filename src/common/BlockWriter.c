@@ -194,18 +194,19 @@ size_t EdfWriteDataBlock(//const TypeInfo_t* t,
 //-----------------------------------------------------------------------------
 size_t EdfReadBlock(EdfWriter_t* dw)
 {
-	size_t len = 0;
+	int err = 0;
+	size_t readed = 0;
 	do
 	{
-		len = StreamRead(&dw->Stream, dw->Block, 1);
-		if (1 == len && IsBlockType(dw->Block[0]))
+		err = StreamRead(&dw->Stream, &readed, dw->Block, 1);
+		if (0 == err && IsBlockType(dw->Block[0]))
 		{
-			len = StreamRead(&dw->Stream, &dw->Block[1], 3);
-			if (3 == len && dw->Block[1] == dw->Seq)
+			err = StreamRead(&dw->Stream, &readed, &dw->Block[1], 3);
+			if (0 == err && dw->Block[1] == dw->Seq)
 			{
 				dw->BlockLen = *(uint16_t*)&dw->Block[2];
-				len = StreamRead(&dw->Stream, &dw->Block[4], dw->BlockLen);
-				if (len == dw->BlockLen)
+				err = StreamRead(&dw->Stream, &readed, &dw->Block[4], dw->BlockLen);
+				if (0 == err)
 				{
 					dw->Seq++;
 					dw->BlockLen += 4;
@@ -213,6 +214,6 @@ size_t EdfReadBlock(EdfWriter_t* dw)
 				}
 			}
 		}
-	} while (1 == len);
-	return (size_t)-1;
+	} while (!err);
+	return err;
 }

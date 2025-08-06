@@ -20,6 +20,7 @@ static const char PoTypeUInt64[] = "UInt64";
 static const char PoTypeInt64[] = "Int64";
 static const char PoTypeDouble[] = "Double";
 
+static const char SepOffset[] = "  ";
 static const char SepBeginStruct[] = "{";
 static const char SepEndStruct[] = "}";
 static const char SepBeginArray[] = "[";
