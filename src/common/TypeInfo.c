@@ -75,16 +75,6 @@ size_t ToBytes(const TypeInfo_t* t, uint8_t* buf)
 	return ret - buf;
 }
 //-----------------------------------------------------------------------------
-static int PrintOffset(int noffset, char* buf)
-{
-	for (int i = 0; i < noffset; i++)
-	{
-		memcpy(buf, SepOffset, sizeof(SepOffset) - 1);
-		buf += sizeof(SepOffset) - 1;
-	}
-	return (sizeof(SepOffset) - 1) * noffset;
-}
-//-----------------------------------------------------------------------------
 static int StreamPrintOffset(Stream_t* s, int noffset, size_t* writed)
 {
 	int err = 0;
@@ -113,33 +103,6 @@ static int StreamPrintType(Stream_t* s, PoType po, size_t* writed)
 	case Int64: POT_PRINT_S(s, PoTypeInt64);
 	case UInt64: POT_PRINT_S(s, PoTypeUInt64);
 	case Double: POT_PRINT_S(s, PoTypeDouble);
-	}
-	return 0;
-}
-//-----------------------------------------------------------------------------
-#define POT_PRINT(t,buf) memcpy(buf, t, (sizeof t) - 1); return (sizeof t)-1
-static int PrintType(PoType po, char* buf)
-{
-	switch (po)
-	{
-	default: break;
-	case Struct: POT_PRINT(PoTypeStruct, buf);
-	case Int8: POT_PRINT(PoTypeInt8, buf);
-	case UInt8: POT_PRINT(PoTypeUInt8, buf);
-	case Char: POT_PRINT(PoTypeChar, buf);
-	case String: POT_PRINT(PoTypeString, buf);
-
-	case UInt16: POT_PRINT(PoTypeUInt16, buf);
-	case Int16: POT_PRINT(PoTypeUInt16, buf);
-	case Half: POT_PRINT(PoTypeHalf, buf);
-
-	case UInt32: POT_PRINT(PoTypeInt32, buf);
-	case Int32: POT_PRINT(PoTypeUInt32, buf);
-	case Single: POT_PRINT(PoTypeSingle, buf);
-
-	case Int64: POT_PRINT(PoTypeInt64, buf);
-	case UInt64: POT_PRINT(PoTypeUInt64, buf);
-	case Double: POT_PRINT(PoTypeDouble, buf);
 	}
 	return 0;
 }
