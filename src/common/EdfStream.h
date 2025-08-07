@@ -38,19 +38,20 @@ int FileStreamOpen(FileStream_t* w, const char* file, const char* mode);
 int FileStreamClose(FileStream_t* w);
 
 //-----------------------------------------------------------------------------
-
+//Memory Stream
 
 typedef struct MemStream
 {
 	WriteFn Write;
 	ReadFn Read;
 	WriteFmtFn WriteFmt;
-	uint8_t* Buf;
+	uint8_t* Mem;
 	size_t Size;
 	size_t Pos;
 } MemStream_t;
 
 int MemStreamOpen(MemStream_t* s, uint8_t* buf, size_t size, const char* mode);
+int MemStreamClose(MemStream_t* s);
 
 //-----------------------------------------------------------------------------
 #endif

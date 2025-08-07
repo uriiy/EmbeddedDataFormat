@@ -39,9 +39,9 @@ static int StreamWriteFormatImpl(void* stream, size_t* writed, const char* forma
 	size_t ret = 0;
 	va_list arglist;
 	va_start(arglist, format);
-	ret = vsprintf_s((char*)stream->Buf, STREAM_BUF_SIZE, format, arglist);
+	ret = vsnprintf((char*)stream->Buf, STREAM_BUF_SIZE, format, arglist);
 	va_end(arglist);
-	return StreamWriteImpl(stream, (void*)stream->Buf, ret);
+	return StreamWriteImpl(stream, (void*)stream->Buf, ret - 1);
 #else
 	FILE* f = (FILE*)((FileStream_t*)stream)->Instance;
 	va_list arglist;
