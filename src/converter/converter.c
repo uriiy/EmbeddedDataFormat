@@ -24,14 +24,14 @@ int BinToText(const char* src, const char* dst)
 			if (16 == br.BlockLen)
 			{
 				EdfHeader_t h = { 0 };
-				err = MakeHeaderFromBytes(&br.Block, br.BlockLen , &h);
+				err = MakeHeaderFromBytes(br.Block, br.BlockLen , &h);
 				if (!err)
 					err = EdfWriteHeader(&tw, &h, &writed);
 			}
 			break;
 		case btVarInfo:
 		{
-			uint8_t* src = &br.Block;
+			uint8_t* src = br.Block;
 			TypeInfo_t* t = (TypeInfo_t*)&br.Buf;
 			tw.t = t;
 			uint8_t* mem = (uint8_t*)&br.Buf + sizeof(TypeInfo_t);

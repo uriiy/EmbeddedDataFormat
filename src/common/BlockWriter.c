@@ -124,8 +124,9 @@ static int WriteSingleValue(
 	return wr;
 }
 //-----------------------------------------------------------------------------
-int EdfWriteDataBlock(EdfWriter_t* dw, uint8_t* xsrc, size_t xsrcLen)
+int EdfWriteDataBlock(EdfWriter_t* dw, void* src, size_t xsrcLen)
 {
+	uint8_t* xsrc = (uint8_t*)src;
 	size_t dstLen = sizeof(dw->Block) - dw->BlockLen;
 	uint8_t* dst = dw->Block + dw->BlockLen;
 

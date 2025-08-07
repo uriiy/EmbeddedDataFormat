@@ -185,7 +185,8 @@ int StreamWriteBlockDataBin(EdfWriter_t* dw, size_t* writed)
 		LOG_ERR();
 		return err;
 	}
-	return 1 + 1 + 2 + dw->BlockLen;
+	writed += dw->BlockLen + 1 + 1 + 2;
+	return 0;
 }
 //-----------------------------------------------------------------------------
 int StreamWriteBlockDataTxt(EdfWriter_t* dw, size_t* writed)
@@ -205,10 +206,15 @@ int EdfFlushDataBlock(EdfWriter_t* dw, size_t* writed)
 {
 	if (NULL == dw->FlushData || 0 == dw->BlockLen)
 		return 0;
-	size_t ret = (*dw->FlushData)(dw, writed);
+	int err = (*dw->FlushData)(dw, writed);
+	if(err)
+	{
+		LOG_ERR();
+		return err;
+	}
 	dw->Seq++;
 	dw->BlockLen = 0;
-	return ret;
+	return err;
 }
 //-----------------------------------------------------------------------------
 void EdfClose(EdfWriter_t* dw)
