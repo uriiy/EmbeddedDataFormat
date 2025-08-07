@@ -19,6 +19,8 @@
 
 #include "edf_cfg.h"
 
+#define FIELD_SIZEOF(t, f) (sizeof(((t*)0)->f))
+
 #ifndef MAX
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #endif 

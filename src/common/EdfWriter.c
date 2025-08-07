@@ -28,9 +28,12 @@ int EdfWriteHeader(EdfWriter_t* dw, const EdfHeader_t* h, size_t* writed)
 //-----------------------------------------------------------------------------
 int EdfWriteInfo(EdfWriter_t* dw, const TypeInfo_t* t, size_t* writed)
 {
+	int err = 0;
+	size_t flushed = 0;
+	if ((err = EdfFlushDataBlock(dw, &flushed)))
+		return err;
 	return (dw->FlushInfo) ? (*dw->FlushInfo)(dw, t, writed) : ERR_FN_NOT_EXIST
 }
-
 //-----------------------------------------------------------------------------
 int EdfWriteHeaderTxt(EdfWriter_t* dw, const EdfHeader_t* h, size_t* writed)
 {
@@ -79,7 +82,6 @@ int EdfWriteInfoBin(EdfWriter_t* dw, const TypeInfo_t* t, size_t* writed)
 	int err = 0;
 	dw->Block[0] = (uint8_t)btVarInfo;
 	dw->Block[1] = (uint8_t)dw->Seq;
-
 	MemStream_t ms = { 0 };
 	if ((err = MemStreamOpen(&ms, &dw->Block[4], sizeof(dw->Block) - 4, "wb")) ||
 		(err = StreamWriteInfoBin((Stream_t*)&ms, t, writed)))
@@ -170,7 +172,6 @@ int OpenTextReader(EdfWriter_t* w, const char* file)
 	return -1;
 }
 //-----------------------------------------------------------------------------
-//size_t StreamWriteBlockDataBin(Stream_t* s, BlockType t, uint8_t seq, uint8_t* src, size_t len)
 int StreamWriteBlockDataBin(EdfWriter_t* dw, size_t* writed)
 {
 	if (0 == dw->BlockLen)
@@ -202,7 +203,7 @@ int StreamWriteBlockDataTxt(EdfWriter_t* dw, size_t* writed)
 //-----------------------------------------------------------------------------
 int EdfFlushDataBlock(EdfWriter_t* dw, size_t* writed)
 {
-	if (NULL == dw->FlushData)
+	if (NULL == dw->FlushData || 0 == dw->BlockLen)
 		return 0;
 	size_t ret = (*dw->FlushData)(dw, writed);
 	dw->Seq++;

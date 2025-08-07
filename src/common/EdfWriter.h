@@ -21,10 +21,13 @@ typedef struct EdfWriter
 	EdfHeader_t h;
 	const TypeInfo_t* t;
 	FileStream_t Stream;
-	uint8_t Seq;
 	size_t Skip;
+
+	uint8_t BlockType;
+	uint8_t Seq;
 	size_t BlockLen;
-	uint8_t Block[BLOCK_SIZE + 4];
+	uint8_t Block[BLOCK_SIZE];
+
 	size_t BufLen;
 	uint8_t Buf[BLOCK_SIZE];
 

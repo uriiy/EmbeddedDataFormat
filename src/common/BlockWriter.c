@@ -124,15 +124,13 @@ static int WriteSingleValue(
 	return wr;
 }
 //-----------------------------------------------------------------------------
-static int WriteMultipleValues(//const TypeInfo_t* t,
-	uint8_t* xsrc, size_t xsrcLen,
-	uint8_t* xdst, size_t xdstLen,
-	size_t* readed, size_t* writed,
-	EdfWriter_t* dw)
+int EdfWriteDataBlock(EdfWriter_t* dw, uint8_t* xsrc, size_t xsrcLen)
 {
-	uint8_t* dst = xdst;
-	size_t dstLen = xdstLen;
-	*readed = *writed = 0;
+	size_t dstLen = sizeof(dw->Block) - dw->BlockLen;
+	uint8_t* dst = dw->Block + dw->BlockLen;
+
+	size_t readed, writed;
+	readed = writed = 0;
 	int wr;
 	do
 	{
@@ -144,50 +142,29 @@ static int WriteMultipleValues(//const TypeInfo_t* t,
 			xsrc += len;
 			xsrcLen -= len;
 			dw->BufLen += len;
-			(*readed) += len;
+			readed += len;
 			// add copy
 		}
 
 		size_t r = 0, w = 0;
 		wr = WriteSingleValue(dw->Buf, dw->BufLen, dst, dstLen, &dw->Skip, &r, &w, dw);
 		//readed += r;
-		*writed += w;
+		writed += w;
 		dw->BufLen -= r;
 		memcpy(dw->Buf, dw->Buf + r, dw->BufLen);
 		dst += w; dstLen -= w;
+		dw->BlockLen += w;
 		if (0 < wr)
 		{
-			dw->BlockLen = w;
 			w = 0;
 			EdfFlushDataBlock(dw, &w);
 			wr = 0;
-			dst = xdst; dstLen = xdstLen;
-		}
-		else
-		{
-			dw->BlockLen += w;
+			dst -= w;
+			dstLen += w;
 		}
 	} while (0 == wr && 0 < dw->BufLen);
 	return wr;
 }
-//-----------------------------------------------------------------------------
-int EdfWriteDataBlock(EdfWriter_t* dw, uint8_t* src, size_t srcLen)
-{
-	int ret = 0;
-	size_t r = 0; size_t w = 0;
-	do
-	{
-		size_t dstLen = sizeof(dw->Block) - dw->BlockLen;
-		uint8_t* dst = dw->Block + dw->BlockLen;
-
-		ret = WriteMultipleValues(src, srcLen, dst, dstLen, &r, &w, dw);
-		src += r; srcLen -= r;
-		dst += w; dstLen -= w;
-
-	} while (0 == ret && 0 < srcLen);
-	return ret;
-}
-
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -195,21 +172,29 @@ int EdfReadBlock(EdfWriter_t* dw)
 {
 	int err = 0;
 	size_t readed = 0;
+
+	uint8_t blockType;
+	uint8_t blockseq;
+	uint16_t blockLen;
+
 	do
 	{
-		err = StreamRead(&dw->Stream, &readed, dw->Block, 1);
-		if (0 == err && IsBlockType(dw->Block[0]))
+		if (!(err = StreamRead(&dw->Stream, &readed, &blockType, 1))
+			&& IsBlockType(blockType))
 		{
-			err = StreamRead(&dw->Stream, &readed, &dw->Block[1], 3);
-			if (0 == err && dw->Block[1] == dw->Seq)
+			if (!(StreamRead(&dw->Stream, &readed, &blockseq, 1))
+				&& blockseq == dw->Seq)
 			{
-				dw->BlockLen = *(uint16_t*)&dw->Block[2];
-				err = StreamRead(&dw->Stream, &readed, &dw->Block[4], dw->BlockLen);
-				if (0 == err)
+				if (!(err = StreamRead(&dw->Stream, &readed, &blockLen, 2))
+					&& 4096 > blockLen)
 				{
-					dw->Seq++;
-					dw->BlockLen += 4;
-					return dw->BlockLen;
+					if (!(StreamRead(&dw->Stream, &readed, &dw->Block, blockLen)))
+					{
+						dw->BlockType = blockType;
+						dw->Seq++;
+						dw->BlockLen = blockLen;
+						return 0;
+					}
 				}
 			}
 		}

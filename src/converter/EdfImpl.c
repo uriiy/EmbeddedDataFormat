@@ -12,7 +12,7 @@ static int StreamWriteImpl(void* stream, size_t* writed, void const* data, size_
 			perror("Error writing");
 		return -1;
 	}
-	writed += ret;
+	*writed += ret;
 	fflush(f);
 	return 0;
 }
@@ -29,7 +29,7 @@ static int StreamReadImpl(void* stream, size_t* readed, void* dst, size_t len)
 		if (ferror(f))
 			perror("Error reading ");
 	}
-	readed += ret;
+	*readed += ret;
 	return 0;
 }
 //-----------------------------------------------------------------------------
@@ -54,7 +54,7 @@ static int StreamWriteFormatImpl(void* stream, size_t* writed, const char* forma
 			perror("Error writing fmt");
 		return -1;
 	}
-	writed += ret;
+	*writed += ret;
 	fflush(f);
 	return 0;
 #endif

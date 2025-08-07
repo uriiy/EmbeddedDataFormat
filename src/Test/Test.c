@@ -9,7 +9,7 @@ static void TestMemStream(void)
 	int err = MemStreamOpen(&ms, buf, sizeof(buf), "wb");
 	const char test[] = "qwe test 123";
 	Stream_t* stream = (Stream_t*)&ms;
-	err = StreamWrite(stream, &writed, test, sizeof(test)-1);
+	err = StreamWrite(stream, &writed, test, sizeof(test) - 1);
 	err = StreamWriteFmt(stream, &writed, " format %d", 1);
 }
 //-----------------------------------------------------------------------------
@@ -155,6 +155,7 @@ int main()
 	//TestHeader();
 	WriteTest();
 	BinToTextTest();
+	DatToTdf("1.dat", "1.tdf");
 	TestMemStream();
 	return 0;
 }
