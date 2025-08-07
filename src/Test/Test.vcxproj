@@ -155,17 +155,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\common\MemStream.c" />
     <ClCompile Include="Test.c" />
     <ClCompile Include="..\common\PoType.c" />
-	<ClCompile Include="..\common\BlockWriter.c" />
+    <ClCompile Include="..\common\BlockWriter.c" />
     <ClCompile Include="..\common\EdfHeader.c" />
     <ClCompile Include="..\common\Primitives.c" />
     <ClCompile Include="..\common\TypeInfo.c" />
-	<ClCompile Include="..\common\EdfWriter.c" />    
-	<ClCompile Include="..\converter\converter.c" />
+    <ClCompile Include="..\common\EdfWriter.c" />
+    <ClCompile Include="..\converter\converter.c" />
     <ClCompile Include="..\converter\EdfImpl.c" />
   </ItemGroup>
-  
   <ItemGroup>
     <ClInclude Include="..\common\EdfWriter.h" />
     <ClInclude Include="..\common\EdfHeader.h" />
@@ -178,7 +178,6 @@
     <ClInclude Include="..\converter\converter.h" />
     <ClInclude Include="..\converter\edf_cfg.h" />
   </ItemGroup>
-  
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

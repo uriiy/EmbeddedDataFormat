@@ -158,7 +158,8 @@ static int WriteMultipleValues(//const TypeInfo_t* t,
 		if (0 < wr)
 		{
 			dw->BlockLen = w;
-			EdfFlushDataBlock(dw);
+			w = 0;
+			EdfFlushDataBlock(dw, &w);
 			wr = 0;
 			dst = xdst; dstLen = xdstLen;
 		}
@@ -170,9 +171,7 @@ static int WriteMultipleValues(//const TypeInfo_t* t,
 	return wr;
 }
 //-----------------------------------------------------------------------------
-size_t EdfWriteDataBlock(//const TypeInfo_t* t,
-	uint8_t* src, size_t srcLen,
-	EdfWriter_t* dw)
+int EdfWriteDataBlock(EdfWriter_t* dw, uint8_t* src, size_t srcLen)
 {
 	int ret = 0;
 	size_t r = 0; size_t w = 0;
@@ -192,7 +191,7 @@ size_t EdfWriteDataBlock(//const TypeInfo_t* t,
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-size_t EdfReadBlock(EdfWriter_t* dw)
+int EdfReadBlock(EdfWriter_t* dw)
 {
 	int err = 0;
 	size_t readed = 0;

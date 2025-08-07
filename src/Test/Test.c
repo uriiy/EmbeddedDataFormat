@@ -6,9 +6,10 @@ static void TestMemStream(void)
 	size_t writed = 0;
 	MemStream_t ms = { 0 };
 	uint8_t buf[256];
-	int err = MemStreamOpen(&ms, (uint8_t)"w", buf, sizeof(buf));
+	int err = MemStreamOpen(&ms, buf, sizeof(buf), "wb");
 	const char test[] = "qwe test 123";
-	err = StreamWrite(&ms, &writed, test, sizeof(test));
+	Stream_t* stream = (Stream_t*)&ms;
+	err = StreamWrite(stream, &writed, test, sizeof(test));
 }
 //-----------------------------------------------------------------------------
 static void TestInit(void)
@@ -64,16 +65,16 @@ static void WriteTest(void)
 	uint8_t test[100] = { 0 }; size_t len = 0;
 	(*(int32_t*)test) = (int32_t)(0xFFFFFFFF);
 
-	EdfWriteDataBlock(test, 4, &dw);
-	EdfFlushDataBlock(&dw);
+	EdfWriteDataBlock(&dw, test, 4);
+	EdfFlushDataBlock(&dw, &writed);
 
 	err = EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = String, .Name = "CharArrayVariable" }), &writed);
 
 	len += GetBString("Char", test + len, sizeof(test));
 	len += GetBString("Value", test + len, sizeof(test) - len);
 	len += GetBString("Array     Value", test + len, sizeof(test) - len);
-	EdfWriteDataBlock(test, len, &dw);
-	EdfFlushDataBlock(&dw);
+	EdfWriteDataBlock(&dw, test, len);
+	EdfFlushDataBlock(&dw, &writed);
 
 	TypeInfo_t comlexVar =
 	{

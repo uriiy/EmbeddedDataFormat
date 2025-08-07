@@ -10,7 +10,7 @@
 typedef struct EdfWriter EdfWriter_t;
 
 typedef int (*WriteSepFn)(uint8_t** dst, size_t* dstLen, size_t* w);
-typedef size_t(*FlushBlockFn)(Stream_t* s, BlockType t, uint8_t seq, uint8_t* src, size_t len);
+typedef int (*FlushDataFn)(EdfWriter_t* w, size_t* writed);
 typedef int (*WriteHeaderFn)(EdfWriter_t* w, const EdfHeader_t* h, size_t* writed);
 typedef int (*WriteInfoFn)(EdfWriter_t* w, const TypeInfo_t* t, size_t* writed);
 
@@ -20,7 +20,7 @@ typedef struct EdfWriter
 {
 	EdfHeader_t h;
 	const TypeInfo_t* t;
-	Stream_t Stream;
+	FileStream_t Stream;
 	uint8_t Seq;
 	size_t Skip;
 	size_t BlockLen;
@@ -31,7 +31,7 @@ typedef struct EdfWriter
 	WritePrimitivesFn WritePrimitive;
 	WriteHeaderFn FlushHeader;
 	WriteInfoFn FlushInfo;
-	FlushBlockFn FlushData;
+	FlushDataFn FlushData;
 
 	WriteSepFn BeginStruct;
 	WriteSepFn EndStruct;

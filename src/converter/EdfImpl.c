@@ -4,7 +4,7 @@
 //-----------------------------------------------------------------------------
 static int StreamWriteImpl(void* stream, size_t* writed, void const* data, size_t len)
 {
-	FILE* f = (FILE*)((Stream_t*)stream)->Instance;
+	FILE* f = (FILE*)((FileStream_t*)stream)->Instance;
 	size_t ret = fwrite(data, 1, len, f);
 	if (ret != len)
 	{
@@ -19,7 +19,7 @@ static int StreamWriteImpl(void* stream, size_t* writed, void const* data, size_
 //-----------------------------------------------------------------------------
 static int StreamReadImpl(void* stream, size_t* readed, void* dst, size_t len)
 {
-	FILE* f = (FILE*)((Stream_t*)stream)->Instance;
+	FILE* f = (FILE*)((FileStream_t*)stream)->Instance;
 	size_t ret = fread(dst, 1, len, f);
 	if (ret != len)
 	{
@@ -43,7 +43,7 @@ static int StreamWriteFormatImpl(void* stream, size_t* writed, const char* forma
 	va_end(arglist);
 	return StreamWriteImpl(stream, (void*)stream->Buf, ret);
 #else
-	FILE* f = (FILE*)((Stream_t*)stream)->Instance;
+	FILE* f = (FILE*)((FileStream_t*)stream)->Instance;
 	va_list arglist;
 	va_start(arglist, format);
 	size_t ret = vfprintf(f, format, arglist);
@@ -60,7 +60,7 @@ static int StreamWriteFormatImpl(void* stream, size_t* writed, const char* forma
 #endif
 }
 //-----------------------------------------------------------------------------
-int StreamOpen(Stream_t* s, const char* file, const char* inMode)
+int FileStreamOpen(FileStream_t* s, const char* file, const char* inMode)
 {
 	const char w[] = "wb";
 	const char r[] = "rb";
@@ -79,7 +79,7 @@ int StreamOpen(Stream_t* s, const char* file, const char* inMode)
 		err = fopen_s(&f, file, mode);
 		if (!err)
 		{
-			*s = (Stream_t)
+			*s = (FileStream_t)
 			{
 				.Instance = (void*)f,
 				.Write = StreamWriteImpl,
@@ -93,7 +93,7 @@ int StreamOpen(Stream_t* s, const char* file, const char* inMode)
 	return err;
 }
 //-----------------------------------------------------------------------------
-int StreamClose(Stream_t* w)
+int FileStreamClose(FileStream_t* w)
 {
 	fflush((FILE*)(w->Instance));
 	return fclose((FILE*)(w->Instance));
@@ -102,28 +102,3 @@ int StreamClose(Stream_t* w)
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-static int MemStreamWriteImpl(void* stream, size_t* writed, void const* data, size_t count)
-{
-	MemStream_t* s = (MemStream_t*)stream;
-	if (count > s->Size - s->Pos)
-		return (size_t)-1;
-	memcpy(&s->Buf[s->Pos], data, count);
-	s->Pos += count;
-	writed += count;
-	return 0;
-}
-//-----------------------------------------------------------------------------
-int MemStreamOpen(MemStream_t* s, uint8_t mod, uint8_t* buf, size_t size)
-{
-	MemStream_t stream = (MemStream_t)
-	{
-		.Buf = buf,
-		.Size = size,
-		.Pos = 0,
-		.Write = MemStreamWriteImpl,
-		.Read = NULL,
-		.WriteFmt = NULL,
-	};
-	*s = stream;
-	return 0;
-}

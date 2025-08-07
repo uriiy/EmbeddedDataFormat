@@ -42,37 +42,42 @@ uint32_t GetValueSize(const TypeInfo_t* t)
 	return sz;
 }
 //-----------------------------------------------------------------------------
-size_t ToBytes(const TypeInfo_t* t, uint8_t* buf)
+int StreamWriteInfoBin(Stream_t* s, const TypeInfo_t* t, size_t* writed)
 {
-	uint8_t* ret = buf;
-
-	(*ret++) = (uint8_t)t->Type;
-
+	int err = 0;
+	// TYPE
+	if ((err = StreamWrite(s, writed, &t->Type, 1)))
+		return err;
 	if (t->Dims.Item && t->Dims.Count)
 	{
-		(*ret++) = t->Dims.Count;
+		if ((err = StreamWrite(s, writed, &t->Dims.Count, 1)))
+			return err;
 		for (uint32_t i = 0; i < t->Dims.Count; i++)
-		{
-			*((uint32_t*)ret) = t->Dims.Item[i];
-			ret += sizeof(uint32_t);
-		}
+			if ((err = StreamWrite(s, writed, &t->Dims.Item[i], sizeof(uint32_t))))
+				return err;
 	}
 	else
-		(*ret++) = 0;
+	{
+		if ((err = StreamWrite(s, writed, &err, 1)))//val=0
+			return err;
+	}
 
 	size_t nameSize = t->Name ? strlen(t->Name) : 0;
 	nameSize = (255 < nameSize ? 255 : nameSize);
-	(*ret++) = (uint8_t)nameSize;
-	memcpy(ret, t->Name, nameSize);
-	ret += nameSize;
+
+	if ((err = StreamWrite(s, writed, &nameSize, 1)) ||
+		(err = StreamWrite(s, writed, t->Name, nameSize)))
+		return err;
 
 	if (Struct == t->Type && t->Childs.Item && t->Childs.Count)
 	{
-		*ret++ = t->Childs.Count;
+		if ((err = StreamWrite(s, writed, &t->Childs.Count, 1)))
+			return err;
 		for (uint8_t i = 0; i < t->Childs.Count; i++)
-			ret += ToBytes(&t->Childs.Item[i], ret);
+			if ((err = StreamWriteInfoBin(s, &t->Childs.Item[i], writed)))
+				return err;
 	}
-	return ret - buf;
+	return err;
 }
 //-----------------------------------------------------------------------------
 static int StreamPrintOffset(Stream_t* s, int noffset, size_t* writed)

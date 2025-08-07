@@ -45,9 +45,9 @@ void BinToText(const char* src, const char* dst)
 		break;
 		case btVarData:
 		{
-			err = EdfWriteDataBlock(&br.Block[4], br.BlockLen - 4, &tw);
+			err = EdfWriteDataBlock(&tw, &br.Block[4], br.BlockLen - 4);
 			if (!err)
-				EdfFlushDataBlock(&tw);
+				EdfFlushDataBlock(&tw, &writed);
 		}
 		break;
 		}

@@ -17,11 +17,10 @@ void EdfClose(EdfWriter_t* dw);
 
 int EdfWriteHeader(EdfWriter_t* dw, const EdfHeader_t* h, size_t* writed);
 int EdfWriteInfo(EdfWriter_t* dw, const TypeInfo_t* t, size_t* writed);
+int EdfWriteDataBlock(EdfWriter_t* dw, uint8_t* src, size_t srcLen);
+int EdfFlushDataBlock(EdfWriter_t* dw, size_t* writed);
 
-size_t EdfWriteDataBlock(uint8_t* src, size_t srcLen, EdfWriter_t* dw);
-size_t EdfFlushDataBlock(EdfWriter_t* dw);
-
-size_t EdfReadBlock(EdfWriter_t* dr);
+int EdfReadBlock(EdfWriter_t* dr);
 //-----------------------------------------------------------------------------
 #ifdef __cplusplus
 }
