@@ -32,6 +32,7 @@ int EdfWriteInfo(EdfWriter_t* dw, const TypeInfo_t* t, size_t* writed)
 	size_t flushed = 0;
 	if ((err = EdfFlushDataBlock(dw, &flushed)))
 		return err;
+	dw->Skip = 0;
 	return (dw->FlushInfo) ? (*dw->FlushInfo)(dw, t, writed) : ERR_FN_NOT_EXIST
 }
 //-----------------------------------------------------------------------------

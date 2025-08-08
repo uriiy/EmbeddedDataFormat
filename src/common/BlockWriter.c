@@ -153,7 +153,7 @@ int EdfWriteDataBlock(EdfWriter_t* dw, void* src, size_t xsrcLen)
 		memcpy(dw->Buf, dw->Buf + r, dw->BufLen);
 		dst += w; dstLen -= w;
 		dw->BlockLen += w;
-		if (0 < wr)
+		if (0 < wr || 0 == dstLen)
 		{
 			w = 0;
 			EdfFlushDataBlock(dw, &w);
