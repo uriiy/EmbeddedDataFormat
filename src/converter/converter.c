@@ -31,23 +31,24 @@ int BinToText(const char* src, const char* dst)
 			break;
 		case btVarInfo:
 		{
+			tw.t = NULL;
 			uint8_t* src = br.Block;
-			TypeInfo_t* t = (TypeInfo_t*)&br.Buf;
-			tw.t = t;
-			uint8_t* mem = (uint8_t*)&br.Buf + sizeof(TypeInfo_t);
-			err = FromBytes(&src, t, &mem);
+			uint8_t* mem = (uint8_t*)&br.Buf;
+			size_t memLen = sizeof(br.Buf);
+			err = InfoFromBytes(&src, (TypeInfo_t*)&br.Buf, &mem, memLen);
+			writed = mem - br.Buf;
 			if (!err)
 			{
+				tw.t = (TypeInfo_t*)&br.Buf;
 				writed = 0;
-				err = EdfWriteInfo(&tw, t, &writed);
+				err = EdfWriteInfo(&tw, tw.t, &writed);
 			}
 		}
 		break;
 		case btVarData:
 		{
-			err = EdfWriteDataBlock(&tw, &br.Block, br.BlockLen);
-			if (!err)
-				EdfFlushDataBlock(&tw, &writed);
+			EdfWriteDataBlock(&tw, &br.Block, br.BlockLen);
+			//EdfFlushDataBlock(&tw, &writed);
 		}
 		break;
 		}

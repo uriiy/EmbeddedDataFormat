@@ -105,6 +105,7 @@ int OpenBinWriter(EdfWriter_t* w, const char* file)
 	if (err)
 		return -1;
 	w->Seq = 0;
+	w->Skip = 0;
 	w->BlockLen = 0;
 	w->BufLen = 0;
 	w->WritePrimitive = BinToBin;
@@ -127,6 +128,7 @@ int OpenTextWriter(EdfWriter_t* w, const char* file)
 	if (err)
 		return -1;
 	w->Seq = 0;
+	w->Skip = 0;
 	w->BlockLen = 0;
 	w->BufLen = 0;
 	w->WritePrimitive = BinToStr;
@@ -149,6 +151,7 @@ int OpenBinReader(EdfWriter_t* w, const char* file)
 	if (err)
 		return -1;
 	w->Seq = 0;
+	w->Skip = 0;
 	w->BlockLen = 0;
 	w->BufLen = 0;
 	w->WritePrimitive = BinToStr;
@@ -179,13 +182,13 @@ int StreamWriteBlockDataBin(EdfWriter_t* dw, size_t* writed)
 	uint8_t h[4] = { btVarData, dw->Seq };
 	*((uint16_t*)&h[2]) = (uint16_t)dw->BlockLen;
 	int err = 0;
-	if ((err = StreamWrite((Stream_t*)&dw->Stream, writed, h, sizeof(h))) ||
+	size_t blockHeader = 0;
+	if ((err = StreamWrite((Stream_t*)&dw->Stream, &blockHeader, h, sizeof(h))) ||
 		(err = StreamWrite((Stream_t*)&dw->Stream, writed, dw->Block, dw->BlockLen)))
 	{
 		LOG_ERR();
 		return err;
 	}
-	writed += dw->BlockLen + 1 + 1 + 2;
 	return 0;
 }
 //-----------------------------------------------------------------------------
@@ -207,7 +210,7 @@ int EdfFlushDataBlock(EdfWriter_t* dw, size_t* writed)
 	if (NULL == dw->FlushData || 0 == dw->BlockLen)
 		return 0;
 	int err = (*dw->FlushData)(dw, writed);
-	if(err)
+	if (err)
 	{
 		LOG_ERR();
 		return err;

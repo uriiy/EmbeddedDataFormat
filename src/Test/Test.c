@@ -1,5 +1,40 @@
 ﻿#include "edf_cfg.h"
 #include "converter.h"
+
+static int CompareFiles(const char* src, const char* dst)
+{
+	int ret = 0;
+	errno_t err = 0;
+	FILE* f1 = NULL;
+	err = fopen_s(&f1, src, "rb");
+	if (err)
+		return err;
+	FILE* f2 = NULL;
+	err = fopen_s(&f2, src, "rb");
+	if (err)
+		return err;
+	uint8_t buf1[1024];
+	uint8_t buf2[1024];
+	size_t readed1 = 0;
+	size_t readed2 = 0;
+	do
+	{
+		readed1 = fread(buf1, 1, sizeof(buf1), f1);
+		readed2 = fread(buf2, 1, sizeof(buf2), f2);
+		if (readed1 != readed2 || memcmp(buf1, buf2, readed1))
+		{
+			ret = 1;
+			break;
+		}
+
+	} while (!feof(f1) && feof(f2));
+
+
+	fclose(f1);
+	fclose(f2);
+	return 0;
+}
+
 //-----------------------------------------------------------------------------
 static void TestMemStream(void)
 {
@@ -38,17 +73,6 @@ static void TestInit(void)
 			}
 		}
 	};
-
-	//uint8_t buf[256];
-
-	//size_t sz = ToBytes(&tst2, buf);
-
-	uint8_t buf2[256];
-	memcpy(buf2, &tst2, sizeof(TypeInfo_t));
-
-	//size_t r = 0, w = 0;
-	//TypeInfo_t* rtst2 = FromBytes(buf, buf2,&r, &w);
-	//TypeInfo_t tst22 = MakeTypeInfo("Test3", Struct, 2, (uint32_t[]) { 2 }, 1, (TypeInfo_t[]) { tst1 });
 }
 //-----------------------------------------------------------------------------
 static void WriteTest(void)
@@ -126,20 +150,50 @@ static void WriteTest(void)
 	};
 	err = EdfWriteInfo(&dw, &comlexVar, &writed);
 
-
-	/*
-	(*(int32_t*)&test[0]) = (int32_t)(0x04000000);
-	(*(int32_t*)&test[4]) = (int32_t)(0x05000000);
-	(*(int16_t*)&test[8]) = (int16_t)(0x0600);
-	WriteDataBlock(&t, test, 10, &dw);
-
-	(*(int16_t*)&test[0]) = (int16_t)(0x0000);
-	(*(int16_t*)&test[2]) = (int16_t)(0x1314);
-	WriteDataBlock(&t, test, 4, &dw);
-	*/
-
 	EdfClose(&dw);
 }
+//-----------------------------------------------------------------------------
+static void WriteBigVar(EdfWriter_t* dw)
+{
+	int err = 0;
+	size_t writed = 0;
+	EdfHeader_t h = MakeHeaderDefault();
+	err = EdfWriteHeader(dw, &h, &writed);
+
+	size_t arrLen = (size_t)(BLOCK_SIZE / sizeof(uint32_t) * 2.5);
+	TypeInfo_t t = { .Type = Int32, .Name = "variable", .Dims = { 1, (uint32_t[]) { arrLen }} };
+	err = EdfWriteInfo(dw, &t, &writed);
+
+	uint32_t test[1000] = { 0 };
+	for (uint32_t i = 0; i < arrLen; i++)
+		test[i] = i;
+
+	EdfWriteDataBlock(dw, test, sizeof(uint32_t) * arrLen);
+	EdfFlushDataBlock(dw, &writed);
+
+}
+static void WriteTestBigVar()
+{
+	int err = 0;
+
+	EdfWriter_t bw;
+	err = OpenBinWriter(&bw, "c_testbig.bdf");
+	WriteBigVar(&bw);
+	EdfClose(&bw);
+
+	EdfWriter_t tw;
+	err = OpenTextWriter(&tw, "c_testbig.tdf");
+	WriteBigVar(&tw);
+	EdfClose(&tw);
+
+	BinToText("c_testbig.bdf", "c_testbig1.tdf");
+
+	err = CompareFiles("c_testbig.tdf", "c_testbig1.tdf");
+	if (err)
+		perror("err: c_testbig");
+}
+
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 static void BinToTextTest(void)
 {
@@ -151,6 +205,7 @@ static void BinToTextTest(void)
 int main()
 {
 	LOG_ERR();
+	WriteTestBigVar();
 	TestInit();
 	//TestHeader();
 	WriteTest();

@@ -152,38 +152,43 @@ int StreamWriteInfoTxt(Stream_t* s, const TypeInfo_t* t, int noffset, size_t* wr
 	return StreamWrite(s, writed, ";", 1);
 }
 //-----------------------------------------------------------------------------
-int FromBytes(uint8_t** src, TypeInfo_t* t, uint8_t** mem)
+static int FromBytes(uint8_t** src, TypeInfo_t* t, uint8_t** mem, size_t memLen)
 {
 	uint8_t* psrc = *src;
 	uint8_t* pdst = *mem;
-
-	memset(t, 0, sizeof(TypeInfo_t));
-
 	if (!IsPoType(psrc[0]))
 		return (size_t)-1;
-
-
+	memset(t, 0, sizeof(TypeInfo_t));
 	t->Type = *psrc++;
 	t->Dims.Count = *psrc++;
 
 	if (t->Dims.Count)
 	{
 		// allocate array
+		const size_t dimsSize = sizeof(uint32_t) * t->Dims.Count;
+		if (dimsSize > memLen)
+			return (size_t)-1;
+		memLen -= dimsSize;
+
 		t->Dims.Item = (uint32_t*)pdst;
-		pdst += sizeof(uint32_t) * t->Dims.Count;
+		pdst += dimsSize;
 		for (uint8_t i = 0; i < t->Dims.Count; i++)
 		{
 			t->Dims.Item[i] = *(uint32_t*)psrc;
 			psrc += sizeof(uint32_t);
 		}
 	}
-	size_t nameSize = *psrc++;
+	const size_t nameSize = *psrc++;
 	if (nameSize)
 	{
+		if (nameSize > memLen)
+			return (size_t)-1;
+		memLen -= nameSize;
+
 		t->Name = (char*)pdst;
 		memcpy(t->Name, psrc, nameSize);
 		pdst += nameSize;
-		*pdst++ = '\0';
+		*pdst++ = '\0'; memLen--;
 		psrc += nameSize;
 	}
 
@@ -193,15 +198,32 @@ int FromBytes(uint8_t** src, TypeInfo_t* t, uint8_t** mem)
 		if (t->Childs.Count)
 		{
 			// allocate array
+			const size_t childsSize = sizeof(TypeInfo_t) * t->Childs.Count;
+			if (childsSize > memLen)
+				return (size_t)-1;
+			memLen -= childsSize;
+
 			t->Childs.Item = (TypeInfo_t*)pdst;
-			pdst += sizeof(TypeInfo_t) * t->Childs.Count;
+			pdst += childsSize;
+			int err = 0;
+			uint8_t* w = NULL;
 			for (uint8_t i = 0; i < t->Childs.Count; i++)
 			{
-				FromBytes(&psrc, &t->Childs.Item[i], &pdst);
+				w = pdst;
+				if ((err = FromBytes(&psrc, &t->Childs.Item[i], &pdst, memLen)))
+					return err;
+				memLen -= pdst - w;
 			}
 		}
 	}
 	*src = (uint8_t*)(psrc);
 	*mem = (uint8_t*)(pdst);
 	return 0;
+}
+//-----------------------------------------------------------------------------
+int InfoFromBytes(uint8_t** src, TypeInfo_t* t, uint8_t** mem, size_t memLen)
+{
+	(*mem) += sizeof(TypeInfo_t);
+	memLen -= sizeof(TypeInfo_t);
+	return FromBytes(src, t, mem, memLen);
 }

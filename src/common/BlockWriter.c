@@ -130,6 +130,7 @@ int EdfWriteDataBlock(EdfWriter_t* dw, void* src, size_t xsrcLen)
 	size_t dstLen = sizeof(dw->Block) - dw->BlockLen;
 	uint8_t* dst = dw->Block + dw->BlockLen;
 
+	size_t r = 0, w = 0;
 	size_t readed, writed;
 	readed = writed = 0;
 	int wr;
@@ -146,10 +147,7 @@ int EdfWriteDataBlock(EdfWriter_t* dw, void* src, size_t xsrcLen)
 			readed += len;
 			// add copy
 		}
-
-		size_t r = 0, w = 0;
 		wr = WriteSingleValue(dw->Buf, dw->BufLen, dst, dstLen, &dw->Skip, &r, &w, dw);
-		//readed += r;
 		writed += w;
 		dw->BufLen -= r;
 		memcpy(dw->Buf, dw->Buf + r, dw->BufLen);
@@ -163,7 +161,7 @@ int EdfWriteDataBlock(EdfWriter_t* dw, void* src, size_t xsrcLen)
 			dst -= w;
 			dstLen += w;
 		}
-	} while (0 == wr && 0 < dw->BufLen);
+	} while (0 >= wr && (0 < dw->BufLen || 0 < xsrcLen));
 	return wr;
 }
 //-----------------------------------------------------------------------------
@@ -200,5 +198,7 @@ int EdfReadBlock(EdfWriter_t* dw)
 			}
 		}
 	} while (!err);
+	dw->BlockType = 0;
+	dw->BlockLen = 0;
 	return err;
 }
