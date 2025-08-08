@@ -192,7 +192,13 @@ static void WriteTestBigVar()
 	if (err)
 		perror("err: c_testbig");
 }
-
+//-----------------------------------------------------------------------------
+static void DatFormatTest()
+{
+	DatToEdf("1.dat", "1.tdf", 't');
+	DatToEdf("1.dat", "1.bdf", 'b');
+	BinToText("1.bdf", "11.tdf");
+}
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 static void BinToTextTest(void)
@@ -205,12 +211,12 @@ static void BinToTextTest(void)
 int main()
 {
 	LOG_ERR();
+	DatFormatTest();
 	WriteTestBigVar();
 	TestInit();
 	//TestHeader();
 	WriteTest();
 	BinToTextTest();
-	DatToTdf("1.dat", "1.tdf");
 	TestMemStream();
 	return 0;
 }

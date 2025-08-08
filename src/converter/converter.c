@@ -83,7 +83,7 @@ int IsExt(const char* file, const char* ext)
 	return 0 == _strcmpi(fileExt, ext);
 }
 //-----------------------------------------------------------------------------
-int DatToTdf(const char* src, const char* dst)
+int DatToEdf(const char* src, const char* edf, char mode)
 {
 	FILE* f = NULL;
 	int err = fopen_s(&f, src, "rb");
@@ -99,8 +99,13 @@ int DatToTdf(const char* src, const char* dst)
 	uint8_t sbuf[256] = { 0 };
 	size_t slen = 0;
 
-
-	if ((err = OpenTextWriter(&dw, dst)))
+	if ('t' == mode)
+		err = OpenTextWriter(&dw, edf);
+	else if ('b' == mode)
+		err = OpenBinWriter(&dw, edf); 
+	else
+		err = -1;
+	if (err)
 		return err;
 
 	EdfHeader_t h = MakeHeaderDefault();
@@ -182,3 +187,4 @@ int DatToTdf(const char* src, const char* dst)
 	EdfClose(&dw);
 	return 0;
 }
+

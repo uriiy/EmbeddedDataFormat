@@ -16,7 +16,12 @@ int main(int argc, char* argv[])
 			if (IsExt(dst, "bdf") && 0 == ChangeExt(dst, "bdf", "tdf"))
 				return BinToText(argv[1], dst);
 			if (IsExt(dst, "dat") && 0 == ChangeExt(dst, "dat", "tdf"))
-				return DatToTdf(argv[1], dst);
+				return DatToEdf(argv[1], dst, 't');
+		}
+		if ('b' == *argv[2])
+		{
+			if (IsExt(dst, "dat") && 0 == ChangeExt(dst, "dat", "bdf"))
+				return DatToEdf(argv[1], dst, 'b');
 		}
 	}
 	return 0;

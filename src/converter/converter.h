@@ -1,7 +1,7 @@
 #include "_pch.h"
 
 int BinToText(const char* src, const char* dst);
-int DatToTdf(const char* src, const char* dst);
+int DatToEdf(const char* src, const char* dst, char mode);
 int ChangeExt(char* file, const char* input, const char* output);
 int IsExt(const char* file, const char* ext);
 
