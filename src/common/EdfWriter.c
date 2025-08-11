@@ -1,15 +1,6 @@
 #include "_pch.h"
 #include "edf.h"
 
-int NoWrite(uint8_t** dst, size_t* dstLen, size_t* w);
-int BeginStruct(uint8_t** dst, size_t* dstLen, size_t* w);
-int EndStruct(uint8_t** dst, size_t* dstLen, size_t* w);
-int BeginArray(uint8_t** dst, size_t* dstLen, size_t* w);
-int EndArray(uint8_t** dst, size_t* dstLen, size_t* w);
-int VarEnd(uint8_t** dst, size_t* dstLen, size_t* w);
-int RecBegin(uint8_t** dst, size_t* dstLen, size_t* w);
-int RecEnd(uint8_t** dst, size_t* dstLen, size_t* w);
-
 int StreamWriteBlockDataTxt(EdfWriter_t* dw, size_t* writed);
 int StreamWriteBlockDataBin(EdfWriter_t* dw, size_t* writed);
 
@@ -113,13 +104,13 @@ int OpenBinWriter(EdfWriter_t* w, const char* file)
 	w->FlushHeader = EdfWriteHeaderBin;
 	w->FlushInfo = EdfWriteInfoBin;
 	w->FlushData = StreamWriteBlockDataBin;
-	w->BeginStruct = NoWrite;
-	w->EndStruct = NoWrite;
-	w->BeginArray = NoWrite;
-	w->EndArray = NoWrite;
-	w->SepVarEnd = NoWrite;
-	w->RecBegin = NoWrite;
-	w->RecEnd = NoWrite;
+	w->BeginStruct = NULL;
+	w->EndStruct = NULL;
+	w->BeginArray = NULL;
+	w->EndArray = NULL;
+	w->SepVarEnd = NULL;
+	w->RecBegin = NULL;
+	w->RecEnd = NULL;
 	return 0;
 }
 //-----------------------------------------------------------------------------
@@ -136,13 +127,13 @@ int OpenTextWriter(EdfWriter_t* w, const char* file)
 	w->FlushHeader = EdfWriteHeaderTxt;
 	w->FlushInfo = EdfWriteInfoTxt;
 	w->FlushData = StreamWriteBlockDataTxt;
-	w->BeginStruct = BeginStruct;
-	w->EndStruct = EndStruct;
-	w->BeginArray = BeginArray;
-	w->EndArray = EndArray;
-	w->SepVarEnd = VarEnd;
-	w->RecBegin = RecBegin;
-	w->RecEnd = RecEnd;
+	w->BeginStruct = SepBeginStruct;
+	w->EndStruct = SepEndStruct;
+	w->BeginArray = SepBeginArray;
+	w->EndArray = SepEndArray;
+	w->SepVarEnd = SepVarEnd;
+	w->RecBegin = SepRecBegin;
+	w->RecEnd = SepRecEnd;
 	return 0;
 }
 //-----------------------------------------------------------------------------
@@ -159,13 +150,13 @@ int OpenBinReader(EdfWriter_t* w, const char* file)
 	w->FlushHeader = NULL;
 	w->FlushInfo = NULL;
 	w->FlushData = NULL;
-	w->BeginStruct = BeginStruct;
-	w->EndStruct = EndStruct;
-	w->BeginArray = BeginArray;
-	w->EndArray = EndArray;
-	w->SepVarEnd = VarEnd;
-	w->RecBegin = RecBegin;
-	w->RecEnd = RecEnd;
+	w->BeginStruct = NULL;
+	w->EndStruct = NULL;
+	w->BeginArray = NULL;
+	w->EndArray = NULL;
+	w->SepVarEnd = NULL;
+	w->RecBegin = NULL;
+	w->RecEnd = NULL;
 	return 0;
 }
 //-----------------------------------------------------------------------------
@@ -232,8 +223,18 @@ void EdfClose(EdfWriter_t* dw)
 	}
 }
 //-----------------------------------------------------------------------------
-static int EdfWriteSeparator(const char* const src, size_t srcLen, uint8_t** dst, size_t* dstSize, size_t* writed)
+int EdfWriteSep(const char* const src,
+	uint8_t** dst, size_t* dstSize,
+	size_t* skip, size_t* wqty,
+	size_t* writed)
 {
+	if (0 < (*skip))
+	{
+		(*skip)--;
+		return 0;
+	}
+	(*wqty)++;
+	size_t srcLen = src ? strlen(src) : 0;
 	if (!srcLen)
 		return 0;
 	if (srcLen > *dstSize)
@@ -243,47 +244,4 @@ static int EdfWriteSeparator(const char* const src, size_t srcLen, uint8_t** dst
 	(*writed) += srcLen;
 	(*dst) += srcLen;
 	return 0;
-}
-//-----------------------------------------------------------------------------
-int NoWrite(uint8_t** dst, size_t* dstLen, size_t* w)
-{
-	UNUSED(dst);
-	UNUSED(dstLen);
-	UNUSED(w);
-	return 0;
-}
-//-----------------------------------------------------------------------------
-int BeginStruct(uint8_t** dst, size_t* dstLen, size_t* w)
-{
-	return EdfWriteSeparator(SepBeginStruct, sizeof(SepBeginStruct) - 1, dst, dstLen, w);
-}
-//-----------------------------------------------------------------------------
-int EndStruct(uint8_t** dst, size_t* dstLen, size_t* w)
-{
-	return EdfWriteSeparator(SepEndStruct, sizeof(SepEndStruct) - 1, dst, dstLen, w);
-}
-//-----------------------------------------------------------------------------
-int BeginArray(uint8_t** dst, size_t* dstLen, size_t* w)
-{
-	return EdfWriteSeparator(SepBeginArray, sizeof(SepBeginArray) - 1, dst, dstLen, w);
-}
-//-----------------------------------------------------------------------------
-int EndArray(uint8_t** dst, size_t* dstLen, size_t* w)
-{
-	return EdfWriteSeparator(SepEndArray, sizeof(SepEndArray) - 1, dst, dstLen, w);
-}
-//-----------------------------------------------------------------------------
-int VarEnd(uint8_t** dst, size_t* dstLen, size_t* w)
-{
-	return EdfWriteSeparator(SepVarEnd, sizeof(SepVarEnd) - 1, dst, dstLen, w);
-}
-//-----------------------------------------------------------------------------
-int RecBegin(uint8_t** dst, size_t* dstLen, size_t* w)
-{
-	return EdfWriteSeparator(SepRecBegin, sizeof(SepRecBegin) - 1, dst, dstLen, w);
-}
-//-----------------------------------------------------------------------------
-int RecEnd(uint8_t** dst, size_t* dstLen, size_t* w)
-{
-	return EdfWriteSeparator(SepRecEnd, sizeof(SepRecEnd) - 1, dst, dstLen, w);
 }

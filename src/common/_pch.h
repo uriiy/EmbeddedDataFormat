@@ -34,7 +34,7 @@
 #define UNUSED(x) (void)(x);
 #endif 
 
-#define LOG_ERR() printf("err: %d %s %s ", __LINE__, __FILE__, __FUNCTION__)
+#define LOG_ERR() printf("\n err: %d %s %s ", __LINE__, __FILE__, __FUNCTION__)
 
 #define ERR_NO 0;
 #define ERR_SRC_SHORT -1;

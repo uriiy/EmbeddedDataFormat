@@ -9,11 +9,14 @@
 
 typedef struct EdfWriter EdfWriter_t;
 
-typedef int (*WriteSepFn)(uint8_t** dst, size_t* dstLen, size_t* w);
 typedef int (*FlushDataFn)(EdfWriter_t* w, size_t* writed);
 typedef int (*WriteHeaderFn)(EdfWriter_t* w, const EdfHeader_t* h, size_t* writed);
 typedef int (*WriteInfoFn)(EdfWriter_t* w, const TypeInfo_t* t, size_t* writed);
 
+int EdfWriteSep(const char* const src,
+	uint8_t** dst, size_t* dstSize,
+	size_t* skip, size_t* wqty,
+	size_t* writed);
 //-----------------------------------------------------------------------------
 //#pragma pack(1)
 typedef struct EdfWriter
@@ -36,13 +39,13 @@ typedef struct EdfWriter
 	WriteInfoFn FlushInfo;
 	FlushDataFn FlushData;
 
-	WriteSepFn BeginStruct;
-	WriteSepFn EndStruct;
-	WriteSepFn BeginArray;
-	WriteSepFn EndArray;
-	WriteSepFn SepVarEnd;
-	WriteSepFn RecBegin;
-	WriteSepFn RecEnd;
+	const char* BeginStruct;
+	const char* EndStruct;
+	const char* BeginArray;
+	const char* EndArray;
+	const char* SepVarEnd;
+	const char* RecBegin;
+	const char* RecEnd;
 } EdfWriter_t;
 
 //-----------------------------------------------------------------------------

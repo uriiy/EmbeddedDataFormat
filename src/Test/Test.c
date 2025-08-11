@@ -79,7 +79,7 @@ static void WriteTest(void)
 {
 	EdfWriter_t dw;
 	size_t writed = 0;
-	int err = OpenBinWriter(&dw, "c_test.bdf");
+	int err = OpenBinWriter(&dw, "t_write.bdf");
 
 	EdfHeader_t h = MakeHeaderDefault();
 	err = EdfWriteHeader(&dw, &h, &writed);
@@ -87,19 +87,26 @@ static void WriteTest(void)
 	TypeInfo_t t = { .Type = Int32, .Name = "weight variable" };
 	err = EdfWriteInfo(&dw, &t, &writed);
 
-	uint8_t test[100] = { 0 }; size_t len = 0;
+	uint8_t test[100] = { 0 };
 	(*(int32_t*)test) = (int32_t)(0xFFFFFFFF);
 
 	EdfWriteDataBlock(&dw, test, 4);
 	EdfFlushDataBlock(&dw, &writed);
 
-	err = EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = String, .Name = "CharArrayVariable" }), &writed);
-
+	err = EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = String, .Name = "BString Text" }), &writed);
+	size_t len = 0;
 	len += GetBString("Char", test + len, sizeof(test));
 	len += GetBString("Value", test + len, sizeof(test) - len);
 	len += GetBString("Array     Value", test + len, sizeof(test) - len);
 	EdfWriteDataBlock(&dw, test, len);
 	EdfFlushDataBlock(&dw, &writed);
+
+	err = EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = Char, .Name = "Char Text", { 1, (uint32_t[]) { 20 } } }), &writed);
+	len = 0;
+	len += GetCString("Char", 20, test + len, sizeof(test));
+	len += GetCString("Value", 20, test + len, sizeof(test) - len);
+	len += GetCString("Array     Value", 20, test + len, sizeof(test) - len);
+	EdfWriteDataBlock(&dw, test, len);
 
 	TypeInfo_t comlexVar =
 	{
@@ -177,42 +184,42 @@ static void WriteTestBigVar()
 	int err = 0;
 
 	EdfWriter_t bw;
-	err = OpenBinWriter(&bw, "c_testbig.bdf");
+	err = OpenBinWriter(&bw, "t_big.bdf");
 	WriteBigVar(&bw);
 	EdfClose(&bw);
 
 	EdfWriter_t tw;
-	err = OpenTextWriter(&tw, "c_testbig.tdf");
+	err = OpenTextWriter(&tw, "t_big.tdf");
 	WriteBigVar(&tw);
 	EdfClose(&tw);
 
-	BinToText("c_testbig.bdf", "c_testbig1.tdf");
+	BinToText("t_big.bdf", "t_bigConv.tdf");
 
-	err = CompareFiles("c_testbig.tdf", "c_testbig1.tdf");
+	err = CompareFiles("t_big.tdf", "t_bigConv.tdf");
 	if (err)
-		perror("err: c_testbig");
+		perror("err: t_big");
 }
 //-----------------------------------------------------------------------------
 static void DatFormatTest()
 {
 	DatToEdf("1.dat", "1.tdf", 't');
 	DatToEdf("1.dat", "1.bdf", 'b');
-	BinToText("1.bdf", "11.tdf");
+	BinToText("1.bdf", "1Conv.tdf");
 }
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 static void BinToTextTest(void)
 {
-	const char* src = "c_test.bdf";
-	const char* dst = "c_test.tdf";
+	const char* src = "t_write.bdf";
+	const char* dst = "t_write.tdf";
 	BinToText(src, dst);
 }
 //-----------------------------------------------------------------------------
 int main()
 {
 	LOG_ERR();
-	DatFormatTest();
 	WriteTestBigVar();
+	DatFormatTest();
 	TestInit();
 	//TestHeader();
 	WriteTest();

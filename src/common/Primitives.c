@@ -14,7 +14,19 @@ size_t GetBString(const char* str, uint8_t* dst, size_t dst_len)
 	memcpy(dst + 1, str, len);
 	return len + 1;
 }
-
+//-----------------------------------------------------------------------------
+size_t GetCString(const char* str, uint32_t arr_len, uint8_t* dst, size_t dst_len)
+{
+	if (NULL == str)
+		return 0;
+	size_t len = strlen(str) + 1;
+	len = MIN(0xFE, len);
+	if (0 == len || len > dst_len)
+		return 0;
+	memcpy(dst, str, len);
+	memset(dst + len, 0, arr_len - len);
+	return arr_len;
+}
 //-----------------------------------------------------------------------------
 int BinToBin(PoType t,
 	uint8_t* src, size_t srcLen,
@@ -139,9 +151,13 @@ int BinToStr(PoType t,
 		*w = xprint(dst, dstLen, "%g", *((double*)src));
 		return (dstLen < *w);
 	case Char:
+		if (dstLen < (*w) + 2)
+			return 1;
 		*r = srcLen;
-		*w = srcLen;
-		memcpy(dst, src, dstLen);
+		*w = srcLen + 2;
+		dst[0] = '"';
+		memcpy(dst + 1, src, srcLen);
+		dst[srcLen + 2 - 1] = '"';
 		return 0;
 	case String:
 		if ((size_t)2 + src[0] > dstLen)

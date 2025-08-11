@@ -1,10 +1,6 @@
 #include "_pch.h"
 #include "edf.h"
 
-
-
-
-
 //-----------------------------------------------------------------------------
 static int WriteData(const TypeInfo_t* t,
 	uint8_t* src, size_t srcLen,
@@ -22,37 +18,36 @@ static int WriteData(const TypeInfo_t* t,
 			return -1;
 		if (dstLen < totalElement)
 			return 1;
-		if (*skip >= totalElement)
+		if (totalElement <= *skip)
+			*skip -= totalElement;
 		{
-			*skip -= (size_t)totalElement;
-			return 0;
-		}
-		size_t r = 0, w = 0;
-		int wr = (*dw->WritePrimitive)(t->Type,
-			src, totalElement,
-			dst, dstLen,
-			&r, &w);
-		if (0 == wr)
-		{
+			size_t r = 0, w = 0;
+			int wr = (*dw->WritePrimitive)(t->Type, src, totalElement, dst, dstLen, &r, &w);
+			if (wr)
+				return wr;
 			*wqty += totalElement;
 			*readed += r;
 			*writed += w;
 			src += r; srcLen -= r;
 			dst += w; dstLen -= w;
-			(*dw->SepVarEnd)(&dst, &dstLen, writed);
 		}
-		return wr;
+		if ((EdfWriteSep(dw->SepVarEnd, &dst, &dstLen, skip, wqty, writed)))
+			return 1;
+		return 0;
 	}
-	if (0 == *skip && 1 < totalElement)
-		(*dw->BeginArray)(&dst, &dstLen, writed);
+	if (1 < totalElement)
+	{
+		if ((EdfWriteSep(dw->BeginArray, &dst, &dstLen, skip, wqty, writed)))
+			return 1;
+	}
 	for (size_t i = 0; i < totalElement; i++)
 	{
 		if (Struct == t->Type)
 		{
 			if (t->Childs.Count)
 			{
-				if (0 == *skip)
-					(*dw->BeginStruct)(&dst, &dstLen, writed);
+				if ((EdfWriteSep(dw->BeginStruct, &dst, &dstLen, skip, wqty, writed)))
+					return 1;
 				for (size_t j = 0; j < t->Childs.Count; j++)
 				{
 					TypeInfo_t* s = &t->Childs.Item[j];
@@ -65,35 +60,35 @@ static int WriteData(const TypeInfo_t* t,
 					src += r; srcLen -= r;
 					dst += w; dstLen -= w;
 				}
-				if (0 == *skip)
-					(*dw->EndStruct)(&dst, &dstLen, writed);
+				if ((EdfWriteSep(dw->EndStruct, &dst, &dstLen, skip, wqty, writed)))
+					return 1;
 			}
 		}
 		else
 		{
-			if (0 < *skip)
-			{
+			if (0 < (*skip))
 				(*skip)--;
-				(*wqty)++;
-				continue;
-			}
-			size_t r = 0, w = 0;
-			int wr = (*dw->WritePrimitive)(t->Type, src, srcLen, dst, dstLen, &r, &w);
-			if (0 == wr)
+			else
 			{
+				size_t r = 0, w = 0;
+				int wr = (*dw->WritePrimitive)(t->Type, src, srcLen, dst, dstLen, &r, &w);
+				if (wr)
+					return wr;
 				(*wqty)++;
 				*readed += r;
 				*writed += w;
 				src += r; srcLen -= r;
 				dst += w; dstLen -= w;
-				(*dw->SepVarEnd)(&dst, &dstLen, writed);
 			}
-			else
-				return wr;
+			if ((EdfWriteSep(dw->SepVarEnd, &dst, &dstLen, skip, wqty, writed)))
+				return 1;
 		}
 	}
-	if (0 == *skip && 1 < totalElement)
-		(*dw->EndArray)(&dst, &dstLen, writed);
+	if (1 < totalElement)
+	{
+		if ((EdfWriteSep(dw->EndArray, &dst, &dstLen, skip, wqty, writed)))
+			return 1;
+	}
 	return 0;
 }
 //-----------------------------------------------------------------------------
@@ -104,22 +99,32 @@ static int WriteSingleValue(
 	size_t* readed, size_t* writed,
 	EdfWriter_t* dw)
 {
+	size_t prevskip = *skip;
 	size_t wqty = 0;
 	*readed = *writed = 0;
 	if (0 == srcLen)
 		return -1;
-	if (0 == *skip)
-		(*dw->RecBegin)(&dst, &dstLen, writed);
+	if ((EdfWriteSep(dw->RecBegin, &dst, &dstLen, skip, &wqty, writed)))
+		return 1;
 	int wr = WriteData(dw->t, src, srcLen, dst, dstLen, skip, &wqty, readed, writed, dw);
 	dst += *writed; dstLen -= *writed;
-	if (0 == wr)
+	if (0 > wr)
 	{
-		(*dw->RecEnd)(&dst, &dstLen, writed);
-		*skip = 0;
+		*skip = prevskip + wqty;
+	}
+	else if (0 < wr)
+	{
+		*skip = prevskip + wqty;
 	}
 	else
 	{
-		*skip = wqty;
+		if ((EdfWriteSep(dw->RecEnd, &dst, &dstLen, skip, &wqty, writed)))
+		{
+			wr = 1;
+			*skip = prevskip + wqty;
+		}
+		else
+			*skip = 0;
 	}
 	return wr;
 }
@@ -161,6 +166,8 @@ int EdfWriteDataBlock(EdfWriter_t* dw, void* src, size_t xsrcLen)
 			dst -= w;
 			dstLen += w;
 		}
+		if (0 > wr && 0 == xsrcLen)
+			break;
 	} while (0 >= wr && (0 < dw->BufLen || 0 < xsrcLen));
 	return wr;
 }
@@ -185,7 +192,7 @@ int EdfReadBlock(EdfWriter_t* dw)
 				&& blockseq == dw->Seq)
 			{
 				if (!(err = StreamRead(&dw->Stream, &readed, &blockLen, 2))
-					&& 4096 > blockLen)
+					&& 4096 > blockLen && BLOCK_SIZE >= blockLen)
 				{
 					if (!(StreamRead(&dw->Stream, &readed, &dw->Block, blockLen)))
 					{
