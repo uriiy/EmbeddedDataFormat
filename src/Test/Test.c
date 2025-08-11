@@ -1,5 +1,5 @@
-﻿#include "edf_cfg.h"
-#include "converter.h"
+﻿#include "converter.h"
+#include "edf_cfg.h"
 
 static int CompareFiles(const char* src, const char* dst)
 {
@@ -174,10 +174,13 @@ static void WriteBigVar(EdfWriter_t* dw)
 	uint32_t test[1000] = { 0 };
 	for (uint32_t i = 0; i < arrLen; i++)
 		test[i] = i;
-
 	EdfWriteDataBlock(dw, test, sizeof(uint32_t) * arrLen);
-	EdfFlushDataBlock(dw, &writed);
 
+	uint8_t* test2 = (uint8_t*)test;
+	EdfWriteDataBlock(dw, test2, 15);
+	EdfWriteDataBlock(dw, test2 + 15, sizeof(uint32_t) * arrLen - 15);
+
+	EdfFlushDataBlock(dw, &writed);
 }
 static void WriteTestBigVar()
 {
