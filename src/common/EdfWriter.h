@@ -48,5 +48,16 @@ typedef struct EdfWriter
 	const char* RecEnd;
 } EdfWriter_t;
 
+
+int StreamWriteBlockDataTxt(EdfWriter_t* dw, size_t* writed);
+int StreamWriteBlockDataBin(EdfWriter_t* dw, size_t* writed);
+
+int EdfWriteHeaderBin(EdfWriter_t* dw, const EdfHeader_t* h, size_t* writed);
+int EdfWriteHeaderTxt(EdfWriter_t* dw, const EdfHeader_t* h, size_t* writed);
+
+int EdfWriteInfoBin(EdfWriter_t* w, const TypeInfo_t* t, size_t* writed);
+int EdfWriteInfoTxt(EdfWriter_t* w, const TypeInfo_t* t, size_t* writed);
+
+
 //-----------------------------------------------------------------------------
 #endif
