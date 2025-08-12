@@ -24,7 +24,7 @@ int EdfReadBlock(EdfWriter_t* dr);
 
 //shortcut
 int EdfWriteInfData(EdfWriter_t* dw, PoType, char* name, void* data);
-
+int EdfWriteStringBytes(EdfWriter_t* dw, char* name, void* data, size_t maxLen);
 //-----------------------------------------------------------------------------
 #ifdef __cplusplus
 }

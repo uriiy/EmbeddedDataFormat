@@ -249,8 +249,25 @@ int EdfWriteInfData(EdfWriter_t* dw, PoType pt, char* name, void* data)
 	if (String == pt)
 	{
 		uint8_t strBuf[256] = { 0 };
-		uint8_t len = GetBString(data, strBuf, sizeof(strBuf));
+		uint8_t len = (uint8_t)GetBString(data, strBuf, sizeof(strBuf));
 		return EdfWriteDataBlock(dw, strBuf, len);
 	}
 	return EdfWriteDataBlock(dw, data, GetSizeOf(pt));
+}
+//-----------------------------------------------------------------------------
+int EdfWriteStringBytes(EdfWriter_t* dw, char* name, void* str, size_t len)
+{
+	int err;
+	size_t writed = 0;
+	if ((err = EdfWriteInfo(dw, &((TypeInfo_t) { .Type = String, .Name = name }), &writed)))
+		return err;
+
+	uint8_t strBuf[256] = { 0 };
+	if (NULL == str)
+		return 0;
+	len = MIN(len, strlen(str));
+	len = MIN(0xFE, len);
+	strBuf[0] = (uint8_t)len;
+	memcpy(strBuf + 1, str, len);
+	return EdfWriteDataBlock(dw, strBuf, len + 1);
 }

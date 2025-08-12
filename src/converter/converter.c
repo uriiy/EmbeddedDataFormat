@@ -24,7 +24,7 @@ int BinToText(const char* src, const char* dst)
 			if (16 == br.BlockLen)
 			{
 				EdfHeader_t h = { 0 };
-				err = MakeHeaderFromBytes(br.Block, br.BlockLen , &h);
+				err = MakeHeaderFromBytes(br.Block, br.BlockLen, &h);
 				if (!err)
 					err = EdfWriteHeader(&tw, &h, &writed);
 			}
@@ -96,13 +96,11 @@ int DatToEdf(const char* src, const char* edf, char mode)
 
 	EdfWriter_t dw;
 	size_t writed = 0;
-	uint8_t sbuf[256] = { 0 };
-	size_t slen = 0;
 
 	if ('t' == mode)
 		err = OpenTextWriter(&dw, edf);
 	else if ('b' == mode)
-		err = OpenBinWriter(&dw, edf); 
+		err = OpenBinWriter(&dw, edf);
 	else
 		err = -1;
 	if (err)
@@ -112,46 +110,26 @@ int DatToEdf(const char* src, const char* edf, char mode)
 	if ((err = EdfWriteHeader(&dw, &h, &writed)))
 		return err;
 
-	EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = UInt32, .Name = "FileType" }), &writed);
-	EdfWriteDataBlock(&dw, &dat.FileType, sizeof(uint32_t));
-	slen = GetBString(dat.FileDescription, sbuf, sizeof(sbuf));
-	EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = String, .Name = "FileDescription" }), &writed);
-	EdfWriteDataBlock(&dw, sbuf, slen);
+	EdfWriteInfData(&dw, UInt32, "FileType", &dat.FileType);
+	EdfWriteStringBytes(&dw, "FileDescription", &dat.FileDescription, FIELD_SIZEOF(SPSK_FILE_V1_1, FileDescription));
 
-	EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = UInt8, .Name = "Year" }), &writed);
-	EdfWriteDataBlock(&dw, &dat.Year, 1);
-	EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = UInt8, .Name = "Month" }), &writed);
-	EdfWriteDataBlock(&dw, &dat.Month, 1);
-	EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = UInt8, .Name = "Day" }), &writed);
-	EdfWriteDataBlock(&dw, &dat.Day, 1);
+	EdfWriteInfData(&dw, UInt8, "Year", &dat.Year);
+	EdfWriteInfData(&dw, UInt8, "Month", &dat.Month);
+	EdfWriteInfData(&dw, UInt8, "Day", &dat.Day);
 
-	EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = UInt16, .Name = "Shop" }), &writed);
-	EdfWriteDataBlock(&dw, &dat.id.Shop, FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Shop));
-	EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = UInt16, .Name = "Field" }), &writed);
-	EdfWriteDataBlock(&dw, &dat.id.Field, FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Field));
-	slen = GetBString(dat.id.Cluster, sbuf, sizeof(sbuf));
-	EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = String, .Name = "Cluster" }), &writed);
-	EdfWriteDataBlock(&dw, sbuf, slen);
-	slen = GetBString(dat.id.Well, sbuf, sizeof(sbuf));
-	EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = String, .Name = "Well" }), &writed);
-	EdfWriteDataBlock(&dw, sbuf, slen);
-	EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = UInt16, .Name = "PlaceId" }), &writed);
-	EdfWriteDataBlock(&dw, &dat.id.PlaceId, FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, PlaceId));
-	EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = Int32, .Name = "Depth" }), &writed);
-	EdfWriteDataBlock(&dw, &dat.id.Depth, FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Depth));
+	EdfWriteInfData(&dw, UInt16, "Shop", &dat.id.Shop);
+	EdfWriteInfData(&dw, UInt16, "Field", &dat.id.Field);
+	EdfWriteStringBytes(&dw, "Cluster", &dat.id.Cluster, FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Cluster));
+	EdfWriteStringBytes(&dw, "Well", &dat.id.Well, FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Well));
+	EdfWriteInfData(&dw, UInt16, "PlaceId", &dat.id.PlaceId);
+	EdfWriteInfData(&dw, Int32, "Depth", &dat.id.Depth);
 
-	EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = UInt16, .Name = "RegType" }), &writed);
-	EdfWriteDataBlock(&dw, &dat.RegType, FIELD_SIZEOF(SPSK_FILE_V1_1, RegType));
-	EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = UInt16, .Name = "RegNum" }), &writed);
-	EdfWriteDataBlock(&dw, &dat.RegNum, FIELD_SIZEOF(SPSK_FILE_V1_1, RegNum));
-	EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = UInt16, .Name = "RegVer" }), &writed);
-	EdfWriteDataBlock(&dw, &dat.RegVer, FIELD_SIZEOF(SPSK_FILE_V1_1, RegVer));
-	EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = UInt16, .Name = "SensType" }), &writed);
-	EdfWriteDataBlock(&dw, &dat.SensType, FIELD_SIZEOF(SPSK_FILE_V1_1, SensType));
-	EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = UInt32, .Name = "SensNum" }), &writed);
-	EdfWriteDataBlock(&dw, &dat.SensNum, FIELD_SIZEOF(SPSK_FILE_V1_1, SensNum));
-	EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = UInt16, .Name = "SensVer" }), &writed);
-	EdfWriteDataBlock(&dw, &dat.SensVer, FIELD_SIZEOF(SPSK_FILE_V1_1, SensVer));
+	EdfWriteInfData(&dw, UInt16, "RegType", &dat.RegType);
+	EdfWriteInfData(&dw, UInt16, "RegNum", &dat.RegNum);
+	EdfWriteInfData(&dw, UInt16, "RegVer", &dat.RegVer);
+	EdfWriteInfData(&dw, UInt16, "SensType", &dat.SensType);
+	EdfWriteInfData(&dw, UInt32, "SensNum", &dat.SensNum);
+	EdfWriteInfData(&dw, UInt16, "SensVer", &dat.SensVer);
 
 	TypeInfo_t recordInf =
 	{
