@@ -86,12 +86,19 @@ static void WriteTest(void)
 
 	TypeInfo_t t = { .Type = Int32, .Name = "weight variable" };
 	err = EdfWriteInfo(&dw, &t, &writed);
-
 	uint8_t test[100] = { 0 };
 	(*(int32_t*)test) = (int32_t)(0xFFFFFFFF);
-
 	EdfWriteDataBlock(&dw, test, 4);
 	EdfFlushDataBlock(&dw, &writed);
+
+	TypeInfo_t td = { .Type = Double, .Name = "TestDouble" };
+	err = EdfWriteInfo(&dw, &td, &writed);
+	double dd = 1.1;
+	EdfWriteDataBlock(&dw, &dd, sizeof(double));
+	dd = 2.1;
+	EdfWriteDataBlock(&dw, &dd, sizeof(double));
+	dd = 3.1;
+	EdfWriteDataBlock(&dw, &dd, sizeof(double));
 
 	err = EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = String, .Name = "BString Text" }), &writed);
 	size_t len = 0;
@@ -167,18 +174,19 @@ static void WriteBigVar(EdfWriter_t* dw)
 	EdfHeader_t h = MakeHeaderDefault();
 	err = EdfWriteHeader(dw, &h, &writed);
 
-	size_t arrLen = (size_t)(BLOCK_SIZE / sizeof(uint32_t) * 2.5);
+	size_t arrLen = (size_t)(BLOCK_SIZE / sizeof(uint32_t) * 102.5);
 	TypeInfo_t t = { .Type = Int32, .Name = "variable", .Dims = { 1, (uint32_t[]) { arrLen }} };
 	err = EdfWriteInfo(dw, &t, &writed);
 
-	uint32_t test[1000] = { 0 };
+	uint32_t test[100000] = { 0 };
 	for (uint32_t i = 0; i < arrLen; i++)
 		test[i] = i;
 	EdfWriteDataBlock(dw, test, sizeof(uint32_t) * arrLen);
 
 	uint8_t* test2 = (uint8_t*)test;
 	EdfWriteDataBlock(dw, test2, 15);
-	EdfWriteDataBlock(dw, test2 + 15, sizeof(uint32_t) * arrLen - 15);
+	EdfWriteDataBlock(dw, test2 + 15, 249);
+	EdfWriteDataBlock(dw, test2 + 15 + 249, sizeof(uint32_t) * arrLen - 15 - 249);
 
 	EdfFlushDataBlock(dw, &writed);
 }
@@ -186,15 +194,15 @@ static void WriteTestBigVar()
 {
 	int err = 0;
 
-	EdfWriter_t bw;
-	err = OpenBinWriter(&bw, "t_big.bdf");
-	WriteBigVar(&bw);
-	EdfClose(&bw);
-
 	EdfWriter_t tw;
 	err = OpenTextWriter(&tw, "t_big.tdf");
 	WriteBigVar(&tw);
 	EdfClose(&tw);
+
+	EdfWriter_t bw;
+	err = OpenBinWriter(&bw, "t_big.bdf");
+	WriteBigVar(&bw);
+	EdfClose(&bw);
 
 	BinToText("t_big.bdf", "t_bigConv.tdf");
 
