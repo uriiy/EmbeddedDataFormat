@@ -129,33 +129,68 @@ static int WriteSingleValue(
 	return wr;
 }
 //-----------------------------------------------------------------------------
-int EdfWriteDataBlock(EdfWriter_t* dw, void* src, size_t xsrcLen)
+int EdfWriteDataBlock(EdfWriter_t* dw, void* vsrc, size_t xsrcLen)
 {
-	uint8_t* xsrc = (uint8_t*)src;
+	uint8_t* xsrc = (uint8_t*)vsrc;
+	uint8_t* src = xsrc;
+	size_t srcLen = xsrcLen;
+
 	size_t dstLen = sizeof(dw->Block) - dw->BlockLen;
 	uint8_t* dst = dw->Block + dw->BlockLen;
 
 	size_t r = 0, w = 0;
-	size_t readed, writed;
-	readed = writed = 0;
 	int wr;
 	do
 	{
-		// copy xsrc data to buffer
-		size_t len = MIN(sizeof(dw->Buf) - dw->BufLen, xsrcLen);
-		if (0 < len)
+		if (dw->BufLen)
 		{
-			memcpy(dw->Buf + dw->BufLen, xsrc, len);
-			xsrc += len;
-			xsrcLen -= len;
-			dw->BufLen += len;
-			readed += len;
-			// add copy
+			// copy xsrc data to buffer
+			size_t len = MIN(sizeof(dw->Buf) - dw->BufLen, xsrcLen);
+			if (0 < len)
+			{
+				memcpy(dw->Buf + dw->BufLen, xsrc, len);
+				xsrc += len;
+				xsrcLen -= len;
+				dw->BufLen += len;
+
+				src = dw->Buf;
+				srcLen = dw->BufLen;
+			}
 		}
-		wr = WriteSingleValue(dw->Buf, dw->BufLen, dst, dstLen, &dw->Skip, &r, &w, dw);
-		writed += w;
-		dw->BufLen -= r;
-		memcpy(dw->Buf, dw->Buf + r, dw->BufLen);
+		else
+		{
+			src = xsrc;
+			srcLen = xsrcLen;
+		}
+
+		wr = WriteSingleValue(src, srcLen, dst, dstLen, &dw->Skip, &r, &w, dw);
+
+		if (dw->BufLen)
+		{
+			dw->BufLen -= r;
+			if (dw->BufLen)
+			{
+				memcpy(dw->Buf, src, dw->BufLen);
+				src = dw->Buf;
+				srcLen = dw->BufLen;
+			}
+			else
+			{
+				src = xsrc;
+				srcLen = xsrcLen;
+			}
+			if (0 > wr && 0 < xsrcLen)
+				wr = 0;
+		}
+		else
+		{
+			xsrc += r;
+			xsrcLen -= r;
+			src = xsrc;
+			srcLen = xsrcLen;
+		}
+
+
 		dst += w; dstLen -= w;
 		dw->BlockLen += w;
 		if (0 < wr || 0 == dstLen)
@@ -166,9 +201,15 @@ int EdfWriteDataBlock(EdfWriter_t* dw, void* src, size_t xsrcLen)
 			dst -= w;
 			dstLen += w;
 		}
-		if (0 > wr && 0 == xsrcLen)
-			break;
-	} while (0 >= wr && (0 < dw->BufLen || 0 < xsrcLen));
+	} while (0 == wr && 0 < srcLen);
+
+	if (0 > wr && 0 < srcLen)
+	{
+		dw->BufLen = srcLen;
+		memcpy(dw->Buf, src, dw->BufLen);
+	}
+
+
 	return wr;
 }
 //-----------------------------------------------------------------------------
