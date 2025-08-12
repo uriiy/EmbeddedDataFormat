@@ -239,3 +239,18 @@ int EdfWriteSep(const char* const src,
 	(*dst) += srcLen;
 	return 0;
 }
+//-----------------------------------------------------------------------------
+int EdfWriteInfData(EdfWriter_t* dw, PoType pt, const char* name, void* data)
+{
+	int err;
+	size_t writed = 0;
+	if ((err = EdfWriteInfo(dw, &((TypeInfo_t) { .Type = pt, .Name = name }), &writed)))
+		return err;
+	if (String == pt)
+	{
+		uint8_t strBuf[256] = { 0 };
+		uint8_t len = GetBString(data, strBuf, sizeof(strBuf));
+		return EdfWriteDataBlock(dw, strBuf, len);
+	}
+	return EdfWriteDataBlock(dw, data, GetSizeOf(pt));
+}

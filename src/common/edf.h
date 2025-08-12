@@ -21,6 +21,10 @@ int EdfWriteDataBlock(EdfWriter_t* dw, void* src, size_t srcLen);
 int EdfFlushDataBlock(EdfWriter_t* dw, size_t* writed);
 
 int EdfReadBlock(EdfWriter_t* dr);
+
+//shortcut
+int EdfWriteInfData(EdfWriter_t* dw, PoType, const char* name, void* data);
+
 //-----------------------------------------------------------------------------
 #ifdef __cplusplus
 }

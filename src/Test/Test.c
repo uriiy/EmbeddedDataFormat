@@ -84,6 +84,9 @@ static void WriteTest(void)
 	EdfHeader_t h = MakeHeaderDefault();
 	err = EdfWriteHeader(&dw, &h, &writed);
 
+	EdfWriteInfData(&dw, String, "String Key", "String Value");
+	EdfWriteInfData(&dw, Int32, "Int32 Key", &((int32_t) { 123456 }));
+
 	TypeInfo_t t = { .Type = Int32, .Name = "weight variable" };
 	err = EdfWriteInfo(&dw, &t, &writed);
 	uint8_t test[100] = { 0 };
