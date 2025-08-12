@@ -224,12 +224,15 @@ int EdfWriteSep(const char* const src,
 		(*skip)--;
 		return 0;
 	}
-	(*wqty)++;
 	size_t srcLen = src ? strlen(src) : 0;
 	if (!srcLen)
+	{
+		(*wqty)++;
 		return 0;
+	}
 	if (srcLen > *dstSize)
 		return 1;
+	(*wqty)++;
 	memcpy(*dst, src, srcLen);
 	(*dstSize) -= srcLen;
 	(*writed) += srcLen;
