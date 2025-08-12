@@ -100,10 +100,10 @@ static int StreamPrintType(Stream_t* s, PoType po, size_t* writed)
 	case Char: POT_PRINT_S(s, PoTypeChar);
 	case String: POT_PRINT_S(s, PoTypeString);
 	case UInt16: POT_PRINT_S(s, PoTypeUInt16);
-	case Int16: POT_PRINT_S(s, PoTypeUInt16);
+	case Int16: POT_PRINT_S(s, PoTypeInt16);
 	case Half: POT_PRINT_S(s, PoTypeHalf);
-	case UInt32: POT_PRINT_S(s, PoTypeInt32);
-	case Int32: POT_PRINT_S(s, PoTypeUInt32);
+	case UInt32: POT_PRINT_S(s, PoTypeUInt32);
+	case Int32: POT_PRINT_S(s, PoTypeInt32);
 	case Single: POT_PRINT_S(s, PoTypeSingle);
 	case Int64: POT_PRINT_S(s, PoTypeInt64);
 	case UInt64: POT_PRINT_S(s, PoTypeUInt64);
