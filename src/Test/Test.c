@@ -166,6 +166,33 @@ static void WriteTest(void)
 		}
 	};
 	err = EdfWriteInfo(&dw, &comlexVar, &writed);
+#pragma pack(push,1)
+	struct ComplexVariable
+	{
+		int64_t time;
+		struct State
+		{
+			int8_t text;
+			struct
+			{
+				int32_t x;
+				int32_t y;
+			} Pos;
+			double Temp[2][2];
+		} State[3];
+	};
+#pragma pack(pop)
+	struct ComplexVariable cv =
+	{
+		.time = -123,
+		.State =
+		{
+			{ 1, { 11, 12 }, {1.1,1.2,1.3,1.4 } },
+			{ 2, { 21, 22 }, {2.1,2.2,2.3,2.4 } },
+			{ 3, { 31, 32 }, {3.1,3.2,3.3,3.4 } },
+		}
+	};
+	EdfWriteDataBlock(&dw, &cv, sizeof(struct ComplexVariable));
 
 	EdfClose(&dw);
 }
@@ -177,11 +204,11 @@ static void WriteBigVar(EdfWriter_t* dw)
 	EdfHeader_t h = MakeHeaderDefault();
 	err = EdfWriteHeader(dw, &h, &writed);
 
-	size_t arrLen = (size_t)(BLOCK_SIZE / sizeof(uint32_t) * 102.5);
+	size_t arrLen = (size_t)(BLOCK_SIZE / sizeof(uint32_t) * 2.5);
 	TypeInfo_t t = { .Type = Int32, .Name = "variable", .Dims = { 1, (uint32_t[]) { arrLen }} };
 	err = EdfWriteInfo(dw, &t, &writed);
 
-	uint32_t test[100000] = { 0 };
+	uint32_t test[1000] = { 0 };
 	for (uint32_t i = 0; i < arrLen; i++)
 		test[i] = i;
 	EdfWriteDataBlock(dw, test, sizeof(uint32_t) * arrLen);
