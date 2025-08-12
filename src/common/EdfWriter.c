@@ -240,7 +240,7 @@ int EdfWriteSep(const char* const src,
 	return 0;
 }
 //-----------------------------------------------------------------------------
-int EdfWriteInfData(EdfWriter_t* dw, PoType pt, const char* name, void* data)
+int EdfWriteInfData(EdfWriter_t* dw, PoType pt, char* name, void* data)
 {
 	int err;
 	size_t writed = 0;
