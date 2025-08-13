@@ -1,4 +1,4 @@
-#include "_pch.h"
+п»ї#include "_pch.h"
 
 int BinToText(const char* src, const char* dst);
 int DatToEdf(const char* src, const char* dst, char mode);
@@ -8,10 +8,10 @@ int IsExt(const char* file, const char* ext);
 #pragma pack(push,1)
 typedef struct
 {
-	uint32_t Time; // время измерения от начала дня, мс
-	int32_t Press; // давление, 0.001 атм
-	int32_t Temp;	// температура, 0.001 °С
-	uint16_t Vbat; // напряжение батареи,
+	uint32_t Time; // РІСЂРµРјСЏ РёР·РјРµСЂРµРЅРёСЏ РѕС‚ РЅР°С‡Р°Р»Р° РґРЅСЏ, РјСЃ
+	int32_t Press; // РґР°РІР»РµРЅРёРµ, 0.001 Р°С‚Рј
+	int32_t Temp;	// С‚РµРјРїРµСЂР°С‚СѓСЂР°, 0.001 В°РЎ
+	uint16_t Vbat; // РЅР°РїСЂСЏР¶РµРЅРёРµ Р±Р°С‚Р°СЂРµРё,
 	uint16_t crc;	// CRC16
 } OMEGA_DATA_FILE_V1_1;
 
