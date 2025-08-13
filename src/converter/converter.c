@@ -33,10 +33,10 @@ int BinToText(const char* src, const char* dst)
 		case btVarInfo:
 		{
 			tw.t = NULL;
-			uint8_t* src = br.Block;
+			uint8_t* srcData = br.Block;
 			uint8_t* mem = (uint8_t*)&br.Buf;
 			size_t memLen = sizeof(br.Buf);
-			err = InfoFromBytes(&src, (TypeInfo_t*)&br.Buf, &mem, memLen);
+			err = InfoFromBytes(&srcData, (TypeInfo_t*)&br.Buf, &mem, memLen);
 			writed = mem - br.Buf;
 			if (!err)
 			{
@@ -177,9 +177,7 @@ static double ExtractDiscrete(uint16_t level)
 }
 static double ExtractLevel(uint16_t level)
 {
-	if (level & 0x4000)
-		level = level & 0xBFFF;
-	return level;
+	return level & 0xBFFF;
 }
 static uint16_t ExtractReflections(uint16_t val)
 {
@@ -190,11 +188,11 @@ static uint16_t ExtractReflections(uint16_t val)
 	int refect = dec + sig;
 	return (refect > 99) ? (uint16_t)99 : (uint16_t)refect;
 }
-static float UnPow(float v, float pow)
+static double UnPow(double v, double p)
 {
 	if (0 > v)
-		return powf(fabs(v), pow) * (-1.0);
-	return powf(v, pow);
+		return pow(fabs(v), p) * (-1.0f);
+	return pow(v, p);
 }
 
 int EchoToEdf(const char* src, const char* edf, char mode)
@@ -300,9 +298,9 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 	for (size_t i = 0; i < 3000; i++)
 	{
 		if (dat.Data[i] > 127)
-			p.y = UnPow(-1.0 * (dat.Data[i] - 127), 1.0 / 0.35) / 1000;
+			p.y = (float)UnPow(-1 * (dat.Data[i] - 127), 1.0 / 0.35) / 1000;
 		else
-			p.y = UnPow(dat.Data[i], 1.0 / 0.35) / 1000;
+			p.y = (float)UnPow(dat.Data[i], 1.0 / 0.35) / 1000;
 
 		p.x = xDiscrete * i * maxDepthMult;
 
