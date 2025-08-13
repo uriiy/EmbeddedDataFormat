@@ -158,6 +158,19 @@ int OpenTextReader(EdfWriter_t* w, const char* file)
 	return -1;
 }
 //-----------------------------------------------------------------------------
+int EdfOpen(EdfWriter_t* w, const char* file, const char* inMode)
+{
+	if (0 == strncmp("wb", inMode, 2))
+		return OpenBinWriter(w, file);
+	if (0 == strncmp("wt", inMode, 2))
+		return OpenTextWriter(w, file);
+	if (0 == strncmp("rb", inMode, 2))
+		return OpenBinReader(w, file);
+	if (0 == strncmp("rt", inMode, 2))
+		return OpenTextReader(w, file);
+	return -1;
+}
+//-----------------------------------------------------------------------------
 int StreamWriteBlockDataBin(EdfWriter_t* dw, size_t* writed)
 {
 	if (0 == dw->BlockLen)

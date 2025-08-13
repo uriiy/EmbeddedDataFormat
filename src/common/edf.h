@@ -13,6 +13,7 @@ int OpenBinWriter(EdfWriter_t* w, const char* file);
 int OpenTextWriter(EdfWriter_t* w, const char* file);
 int OpenBinReader(EdfWriter_t* w, const char* file);
 int OpenTextReader(EdfWriter_t* w, const char* file);
+int EdfOpen(EdfWriter_t* w, const char* file, const char* inMode);
 void EdfClose(EdfWriter_t* dw);
 
 int EdfWriteHeader(EdfWriter_t* dw, const EdfHeader_t* h, size_t* writed);

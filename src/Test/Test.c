@@ -10,7 +10,7 @@ static int CompareFiles(const char* src, const char* dst)
 	if (err)
 		return err;
 	FILE* f2 = NULL;
-	err = fopen_s(&f2, src, "rb");
+	err = fopen_s(&f2, dst, "rb");
 	if (err)
 		return err;
 	uint8_t buf1[1024];
@@ -73,6 +73,7 @@ static void TestInit(void)
 			}
 		}
 	};
+	UNUSED(tst2);
 }
 //-----------------------------------------------------------------------------
 static void WriteTest(void)
