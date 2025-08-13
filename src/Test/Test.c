@@ -243,9 +243,14 @@ static void WriteTestBigVar()
 //-----------------------------------------------------------------------------
 static void DatFormatTest()
 {
-	DatToEdf("1.dat", "1.tdf", 't');
-	DatToEdf("1.dat", "1.bdf", 'b');
-	BinToText("1.bdf", "1Conv.tdf");
+	DatToEdf("1.dat", "1DAT.tdf", 't');
+	DatToEdf("1.dat", "1DAT.bdf", 'b');
+	BinToText("1DAT.bdf", "1DATConv.tdf");
+
+	EchoToEdf("1.E", "1E.tdf", 't');
+	EchoToEdf("1.E", "1E.bdf", 'b');
+	BinToText("1E.bdf", "1EConv.tdf");
+
 }
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------

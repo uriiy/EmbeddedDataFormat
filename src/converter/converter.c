@@ -1,6 +1,7 @@
-#include "_pch.h"
+﻿#include "_pch.h"
 #include "converter.h"
 #include "edf_cfg.h"
+#include "math.h"
 
 //-----------------------------------------------------------------------------
 int BinToText(const char* src, const char* dst)
@@ -166,3 +167,148 @@ int DatToEdf(const char* src, const char* edf, char mode)
 	return 0;
 }
 
+//-----------------------------------------------------------------------------
+static const double Discrete3000 = 0.00585938;
+static const double Discrete6000 = 0.01171875;
+
+static double ExtractDiscrete(uint16_t level)
+{
+	return (level & 0x4000) ? Discrete6000 : Discrete3000;
+}
+static double ExtractLevel(uint16_t level)
+{
+	if (level & 0x4000)
+		level = level & 0xBFFF;
+	return level;
+}
+static uint16_t ExtractReflections(uint16_t val)
+{
+	// ахтунг! параметр передаётся в двоично десятичном виде :-(
+	const uint16_t mask = 0x000F;
+	uint16_t dec = (uint16_t)((((val >> 4)) & mask) * 10);
+	uint16_t sig = (uint16_t)(val & mask);
+	int refect = dec + sig;
+	return (refect > 99) ? (uint16_t)99 : (uint16_t)refect;
+}
+static float UnPow(float v, float pow)
+{
+	if (0 > v)
+		return powf(fabs(v), pow) * (-1.0);
+	return powf(v, pow);
+}
+
+int EchoToEdf(const char* src, const char* edf, char mode)
+{
+	FILE* f = NULL;
+	int err = fopen_s(&f, src, "rb");
+	if (err)
+		return err;
+
+	ECHO_FILE_V2_0 dat;
+	if (1 != fread(&dat, sizeof(ECHO_FILE_V2_0), 1, f))
+		return -1;
+
+	EdfWriter_t dw;
+	size_t writed = 0;
+
+	if ('t' == mode)
+		err = OpenTextWriter(&dw, edf);
+	else if ('b' == mode)
+		err = OpenBinWriter(&dw, edf);
+	else
+		err = -1;
+	if (err)
+		return err;
+
+	double discrete = ExtractDiscrete(dat.Level);
+	int maxDepthMult = 1;
+	if (Discrete3000 < discrete)
+		maxDepthMult = 2;
+	float speed = (float)dat.Speed / 10;
+	float xDiscrete = speed / 341;
+
+	EdfHeader_t h = MakeHeaderDefault();
+	if ((err = EdfWriteHeader(&dw, &h, &writed)))
+		return err;
+
+	EdfWriteInfData(&dw, UInt32, "FileType", &dat.FileType);
+	EdfWriteStringBytes(&dw, "FileDescription", &dat.FileDescription, FIELD_SIZEOF(ECHO_FILE_V2_0, FileDescription));
+
+	EdfWriteInfData(&dw, UInt16, "ResearchType", &dat.id.ResearchType);
+	EdfWriteInfData(&dw, UInt16, "DeviceType", &dat.id.DeviceType);
+	EdfWriteInfData(&dw, UInt16, "DeviceNum", &dat.id.DeviceNum);
+	EdfWriteInfData(&dw, UInt16, "Shop", &dat.id.Shop);
+	EdfWriteInfData(&dw, UInt16, "Oper", &dat.id.Oper);
+	EdfWriteInfData(&dw, UInt16, "Field", &dat.id.Field);
+	EdfWriteStringBytes(&dw, "Cluster", &dat.id.Cluster, FIELD_SIZEOF(RESEARCH_ID_V2_0, Cluster));
+	EdfWriteStringBytes(&dw, "Well", &dat.id.Well, FIELD_SIZEOF(RESEARCH_ID_V2_0, Well));
+
+	EdfWriteInfData(&dw, UInt8, "Year", &dat.id.Time.Year);
+	EdfWriteInfData(&dw, UInt8, "Month", &dat.id.Time.Month);
+	EdfWriteInfData(&dw, UInt8, "Day", &dat.id.Time.Day);
+	EdfWriteInfData(&dw, UInt8, "Hour", &dat.id.Time.Hour);
+	EdfWriteInfData(&dw, UInt8, "Min", &dat.id.Time.Min);
+	EdfWriteInfData(&dw, UInt8, "Sec", &dat.id.Time.Sec);
+
+	EdfWriteInfData(&dw, UInt16, "RegType", &dat.id.RegType);
+	EdfWriteInfData(&dw, UInt32, "RegNum", &dat.id.RegNum);
+
+	EdfWriteInfData(&dw, UInt16, "Reflections", &((uint16_t) { ExtractReflections(dat.Reflections) }));
+	EdfWriteInfData(&dw, Double, "Level", &((double) { ExtractLevel(dat.Level) }));
+	EdfWriteInfData(&dw, Double, "Discrete", &discrete);//!!
+
+	EdfWriteInfData(&dw, Int16, "Pressure", &dat.Pressure);
+	EdfWriteInfData(&dw, UInt16, "Table", &dat.Table);
+	EdfWriteInfData(&dw, Single, "Speed", &speed); //!!
+	EdfWriteInfData(&dw, Int16, "BufPressure", &dat.BufPressure);
+	EdfWriteInfData(&dw, Int16, "LinPressure", &dat.LinPressure);
+	EdfWriteInfData(&dw, UInt16, "Current", &dat.Current);
+	EdfWriteInfData(&dw, UInt8, "IdleHour", &dat.IdleHour);
+	EdfWriteInfData(&dw, UInt8, "IdleMin", &dat.IdleMin);
+
+	EdfWriteInfData(&dw, UInt16, "Mode", &dat.Mode);
+	EdfWriteInfData(&dw, UInt16, "Acc", &dat.Acc);
+	EdfWriteInfData(&dw, Int16, "Temp", &dat.Temp);
+
+	//EdfWriteInfData(&dw, Double, "EchoChart", &dat.Data);
+	//for (size_t i = 0; i < 3000; i++)
+	//	EdfWriteDataBlock(&dw, &dat.Data[i], sizeof(uint8_t));
+
+#pragma pack(push,1)
+	struct Point
+	{
+		float x;
+		float y;
+	};
+#pragma pack(pop)
+	TypeInfo_t pointType =
+	{
+		Struct, "EchoChart", { 0, NULL },
+		.Childs =
+		{
+			.Count = 2,
+			.Item = (TypeInfo_t[])
+			{
+				{ Single, "x" },
+				{ Single, "y" },
+			}
+		}
+	};
+	EdfWriteInfo(&dw, &pointType, &writed);
+
+	struct Point p = { 0,0 };
+	for (size_t i = 0; i < 3000; i++)
+	{
+		if (dat.Data[i] > 127)
+			p.y = UnPow(-1.0 * (dat.Data[i] - 127), 1.0 / 0.35) / 1000;
+		else
+			p.y = UnPow(dat.Data[i], 1.0 / 0.35) / 1000;
+
+		p.x = xDiscrete * i * maxDepthMult;
+
+		EdfWriteDataBlock(&dw, &p, sizeof(struct Point));
+	}
+
+	EdfClose(&dw);
+	return 0;
+}
