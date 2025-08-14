@@ -1,4 +1,4 @@
-﻿#include "converter.h"
+#include "converter.h"
 #include "edf_cfg.h"
 
 static int CompareFiles(const char* src, const char* dst)
@@ -84,6 +84,15 @@ static void WriteTest(void)
 
 	EdfHeader_t h = MakeHeaderDefault();
 	err = EdfWriteHeader(&dw, &h, &writed);
+
+#pragma pack(push,1)
+	typedef struct KeyValue
+	{
+		char* Key;
+		char* Value;
+	} KeyValue_t;
+#pragma pack(pop)
+
 
 	EdfWriteInfData(&dw, String, "тестовый ключ", "String Value");
 	EdfWriteInfData(&dw, Int32, "Int32 Key", &((int32_t) { 123456 }));
@@ -252,6 +261,10 @@ static void DatFormatTest()
 	EchoToEdf("1.E", "1E.bdf", 'b');
 	BinToText("1E.bdf", "1EConv.tdf");
 
+	DynToEdf("1.D", "1D.tdf", 't');
+	DynToEdf("1.D", "1D.bdf", 'b');
+	BinToText("1D.bdf", "1DConv.tdf");
+
 }
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -268,7 +281,6 @@ int main()
 	WriteTestBigVar();
 	DatFormatTest();
 	TestInit();
-	//TestHeader();
 	WriteTest();
 	BinToTextTest();
 	TestMemStream();

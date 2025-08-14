@@ -6,7 +6,7 @@ int main(int argc, char* argv[])
 {
 	if (2 < argc && NULL != argv[1])
 	{
-		char dst[1024];
+		char dst[4096];
 		size_t len = strlen(argv[1]);
 		if (sizeof(dst) < len)
 			return -1;
@@ -19,6 +19,8 @@ int main(int argc, char* argv[])
 				return DatToEdf(argv[1], dst, 't');
 			if (IsExt(dst, "e") && 0 == ChangeExt(dst, "e", "tdf"))
 				return EchoToEdf(argv[1], dst, 't');
+			if (IsExt(dst, "d") && 0 == ChangeExt(dst, "d", "tdf"))
+				return DynToEdf(argv[1], dst, 't');
 		}
 		if ('b' == *argv[2])
 		{
@@ -28,6 +30,8 @@ int main(int argc, char* argv[])
 				return DatToEdf(argv[1], dst, 'b');
 			if (IsExt(dst, "e") && 0 == ChangeExt(dst, "e", "bdf"))
 				return EchoToEdf(argv[1], dst, 'b');
+			if (IsExt(dst, "d") && 0 == ChangeExt(dst, "d", "bdf"))
+				return DynToEdf(argv[1], dst, 'b');
 		}
 	}
 	return 0;

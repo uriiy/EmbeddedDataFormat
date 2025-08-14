@@ -237,7 +237,7 @@ int EdfWriteSep(const char* const src,
 		(*skip)--;
 		return 0;
 	}
-	size_t srcLen = src ? strlen(src) : 0;
+	size_t srcLen = src ? strnlen(src, 10) : 0;
 	if (!srcLen)
 	{
 		(*wqty)++;
@@ -278,8 +278,7 @@ int EdfWriteStringBytes(EdfWriter_t* dw, char* name, void* str, size_t len)
 	uint8_t strBuf[256] = { 0 };
 	if (NULL == str)
 		return 0;
-	len = MIN(len, strlen(str));
-	len = MIN(0xFE, len);
+	len = MIN(len, strnlen(str, 0xFE));
 	strBuf[0] = (uint8_t)len;
 	memcpy(strBuf + 1, str, len);
 	return EdfWriteDataBlock(dw, strBuf, len + 1);

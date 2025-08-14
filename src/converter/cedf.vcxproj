@@ -41,6 +41,7 @@
     <ClInclude Include="..\common\_pch.h" />
     <ClInclude Include="converter.h" />
     <ClInclude Include="edf_cfg.h" />
+    <ClInclude Include="SiamFileFormat.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

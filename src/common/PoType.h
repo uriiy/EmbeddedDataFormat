@@ -48,6 +48,7 @@ typedef enum PoType
 	// strings
 	Char,
 	String,
+	CString,
 } PoType;
 
 uint8_t GetSizeOf(enum PoType p);

@@ -46,7 +46,7 @@ int StreamWriteInfoBin(Stream_t* s, const TypeInfo_t* t, size_t* writed)
 {
 	int err = 0;
 	// TYPE
-	if ((err = StreamWrite(s, writed, &t->Type, 1)))
+	if ((err = StreamWrite(s, writed, &(uint8_t){ CString == t->Type ? String : t->Type }, 1)))
 		return err;
 	if (t->Dims.Item && t->Dims.Count)
 	{
@@ -62,8 +62,7 @@ int StreamWriteInfoBin(Stream_t* s, const TypeInfo_t* t, size_t* writed)
 			return err;
 	}
 
-	size_t nameSize = t->Name ? strlen(t->Name) : 0;
-	nameSize = (255 < nameSize ? 255 : nameSize);
+	size_t nameSize = t->Name ? strnlen(t->Name, 255) : 0;
 
 	if ((err = StreamWrite(s, writed, &nameSize, 1)) ||
 		(err = StreamWrite(s, writed, t->Name, nameSize)))
@@ -99,6 +98,7 @@ static int StreamPrintType(Stream_t* s, PoType po, size_t* writed)
 	case UInt8: POT_PRINT_S(s, PoTypeUInt8);
 	case Char: POT_PRINT_S(s, PoTypeChar);
 	case String: POT_PRINT_S(s, PoTypeString);
+	case CString: POT_PRINT_S(s, PoTypeString);
 	case UInt16: POT_PRINT_S(s, PoTypeUInt16);
 	case Int16: POT_PRINT_S(s, PoTypeInt16);
 	case Half: POT_PRINT_S(s, PoTypeHalf);
@@ -127,8 +127,7 @@ int StreamWriteInfoTxt(Stream_t* s, const TypeInfo_t* t, int noffset, size_t* wr
 				return err;
 	}
 	// NAME
-	size_t nameSize = t->Name ? strlen(t->Name) : 0;
-	nameSize = (255 < nameSize ? 255 : nameSize);
+	size_t nameSize = t->Name ? strnlen(t->Name, 255) : 0;
 	if ((err = StreamWriteFmt(s, writed, " \'%s\'", t->Name)))
 		return err;
 	// CHILDS
