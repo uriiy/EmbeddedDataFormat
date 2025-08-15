@@ -127,8 +127,8 @@ int StreamWriteInfoTxt(Stream_t* s, const TypeInfo_t* t, int noffset, size_t* wr
 				return err;
 	}
 	// NAME
-	size_t nameSize = t->Name ? strnlen(t->Name, 255) : 0;
-	if ((err = StreamWriteFmt(s, writed, " \'%s\'", t->Name)))
+	//size_t nameSize = t->Name ? strnlen(t->Name, 255) : 0;
+	if ((err = StreamWriteFmt(s, writed, " \'%.255s\'", t->Name)))
 		return err;
 	// CHILDS
 	if (Struct == t->Type && t->Childs.Item && t->Childs.Count)

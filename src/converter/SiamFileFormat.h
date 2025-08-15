@@ -77,7 +77,7 @@ typedef struct
 	uint16_t Table;						//номер таблицы скоростей
 	uint16_t Speed;						//скорость звука, 0.1 м/с
 	int16_t BufPressure;				//буферное давление, 0.1 атм (new)
-	int16_t LinPressure;				//линейное давление, 0.1 атм (new)
+	int16_t LinePressure;				//линейное давление, 0.1 атм (new)
 	uint16_t Current;					//ток, 0.1А (new)
 	uint8_t IdleHour;					//время простоя, ч (new)
 	uint8_t IdleMin;					//время простоя, мин (new)

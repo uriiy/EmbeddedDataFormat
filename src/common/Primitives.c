@@ -18,7 +18,7 @@ size_t GetCString(const char* str, uint32_t arr_len, uint8_t* dst, size_t dst_le
 {
 	if (NULL == str)
 		return 0;
-	size_t len = strnlen(str, 0xFE-1) + 1;
+	size_t len = strnlen(str, 0xFE - 1) + 1;
 	if (0 == len || len > dst_len)
 		return 0;
 	memcpy(dst, str, len);
