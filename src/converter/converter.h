@@ -5,7 +5,7 @@
 #include "SiamFileFormat.h"
 
 int IsExt(const char* file, const char* ext);
-int ChangeExt(char* file, const char* input, const char* output);
+int ChangeExt(char* file, const char* ext);
 
 int BinToText(const char* src, const char* dst);
 int DatToEdf(const char* src, const char* dst, char mode);

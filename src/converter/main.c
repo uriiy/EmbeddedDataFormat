@@ -13,24 +13,24 @@ int main(int argc, char* argv[])
 		snprintf(dst, sizeof(dst), "%s", argv[1]);
 		if ('t' == *argv[2])
 		{
-			if (IsExt(dst, "bdf") && 0 == ChangeExt(dst, "bdf", "tdf"))
+			if (IsExt(dst, "bdf") && 0 == ChangeExt(dst, "tdf"))
 				return BinToText(argv[1], dst);
-			if (IsExt(dst, "dat") && 0 == ChangeExt(dst, "dat", "tdf"))
+			if (IsExt(dst, "dat") && 0 == ChangeExt(dst, "tdf"))
 				return DatToEdf(argv[1], dst, 't');
-			if (IsExt(dst, "e") && 0 == ChangeExt(dst, "e", "tdf"))
+			if (IsExt(dst, "e") && 0 == ChangeExt(dst, "tdf"))
 				return EchoToEdf(argv[1], dst, 't');
-			if (IsExt(dst, "d") && 0 == ChangeExt(dst, "d", "tdf"))
+			if (IsExt(dst, "d") && 0 == ChangeExt(dst, "tdf"))
 				return DynToEdf(argv[1], dst, 't');
 		}
 		if ('b' == *argv[2])
 		{
 			//if (IsExt(dst, "tdf") && 0 == ChangeExt(dst, "tdf", "bdf"))
 			//	return TextToBin(argv[1], dst);
-			if (IsExt(dst, "dat") && 0 == ChangeExt(dst, "dat", "bdf"))
+			if (IsExt(dst, "dat") && 0 == ChangeExt(dst, "bdf"))
 				return DatToEdf(argv[1], dst, 'b');
-			if (IsExt(dst, "e") && 0 == ChangeExt(dst, "e", "bdf"))
+			if (IsExt(dst, "e") && 0 == ChangeExt(dst, "bdf"))
 				return EchoToEdf(argv[1], dst, 'b');
-			if (IsExt(dst, "d") && 0 == ChangeExt(dst, "d", "bdf"))
+			if (IsExt(dst, "d") && 0 == ChangeExt(dst, "bdf"))
 				return DynToEdf(argv[1], dst, 'b');
 		}
 	}

@@ -19,7 +19,7 @@ static int StreamWriteFormatImpl(void* stream, size_t* writed, const char* forma
 	size_t bufFreeLen = s->Size - s->Pos;
 	va_list arglist;
 	va_start(arglist, format);
-	size_t ret = vsnprintf((char*)& s->Mem[s->Pos], bufFreeLen - 1, format, arglist);
+	size_t ret = vsnprintf((char*)&s->Mem[s->Pos], bufFreeLen - 1, format, arglist);
 	va_end(arglist);
 	if (bufFreeLen < ret)
 		return -1;

@@ -50,7 +50,7 @@ static int WriteData(const TypeInfo_t* t,
 					return 1;
 				for (size_t j = 0; j < t->Childs.Count; j++)
 				{
-					TypeInfo_t* s = &t->Childs.Item[j];
+					const TypeInfo_t* s = &t->Childs.Item[j];
 					size_t r = 0, w = 0;
 					int wr = WriteData(s, src, srcLen, dst, dstLen, skip, wqty, &r, &w, dw);
 					*readed += r;

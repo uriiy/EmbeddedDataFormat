@@ -67,17 +67,13 @@ int BinToBin(PoType t,
 		size_t sLen = src[0];
 		size_t blength = 1;
 		*r = *w = 0;
-		if (0 < blength)
-		{
-			blength += sLen;
-			if (srcLen < blength)
-				return -1;
-			if (dstLen < blength)
-				return 1;
-			memcpy(dst, src, blength);
-			*r = *w = blength;
-			return 0;
-		}
+		blength += sLen;
+		if (srcLen < blength)
+			return -1;
+		if (dstLen < blength)
+			return 1;
+		memcpy(dst, src, blength);
+		*r = *w = blength;
 	}
 	return 0;
 	case CString:

@@ -18,7 +18,7 @@ int EdfWriteSep(const char* const src,
 	size_t* skip, size_t* wqty,
 	size_t* writed);
 //-----------------------------------------------------------------------------
-//#pragma pack(1)
+
 typedef struct EdfWriter
 {
 	EdfHeader_t h;
@@ -47,7 +47,6 @@ typedef struct EdfWriter
 	const char* RecBegin;
 	const char* RecEnd;
 } EdfWriter_t;
-
 
 int StreamWriteBlockDataTxt(EdfWriter_t* dw, size_t* writed);
 int StreamWriteBlockDataBin(EdfWriter_t* dw, size_t* writed);

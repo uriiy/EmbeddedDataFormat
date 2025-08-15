@@ -1,8 +1,8 @@
 #include "_pch.h"
+#include "assert.h"
 #include "converter.h"
 #include "edf_cfg.h"
 #include "math.h"
-#include "assert.h"
 //-----------------------------------------------------------------------------
 static char* GetFileExt(const char* filename) {
 	char* dot = strrchr(filename, '.');
@@ -18,18 +18,17 @@ int IsExt(const char* file, const char* ext)
 	return 0 == _strcmpi(fileExt, ext);
 }
 //-----------------------------------------------------------------------------
-int ChangeExt(char* file, const char* input, const char* output)
+int ChangeExt(char* file, const char* ext)
 {
 	// remove ext
 	char* fileExt = GetFileExt(file);
-	size_t fileExtLen = strlen(GetFileExt(file));
 	if (fileExt && 0 != strlen(fileExt))
 	{
 		*fileExt = '\0';
 	}
 	// add ext
 	size_t fileLen = strlen(file);
-	memcpy(file + fileLen, output, strlen(output) + 1);
+	memcpy(file + fileLen, ext, strlen(ext) + 1);
 	return 0;
 }
 //-----------------------------------------------------------------------------
@@ -37,9 +36,9 @@ int BinToText(const char* src, const char* dst)
 {
 	EdfWriter_t br = { 0 };
 	EdfWriter_t tw = { 0 };
-	if (OpenBinReader(&br, src))
+	if (EdfOpen(&br, src, "rb"))
 		LOG_ERR();
-	if (OpenTextWriter(&tw, dst))
+	if (EdfOpen(&tw, dst, "wt"))
 		LOG_ERR();
 
 	size_t writed = 0;
@@ -126,8 +125,8 @@ int DatToEdf(const char* src, const char* edf, char mode)
 
 	char cbuf[256] = { 0 };
 	snprintf(cbuf, sizeof(cbuf), "%u.%02u.%02uT%02u:%02u:%02u",
-		2000 + dat.Year, dat.Month, dat.Day,
-		0, 0, 0);
+		(uint32_t)2000 + dat.Year, dat.Month, dat.Day,
+		(uint8_t)0, (uint8_t)0, (uint8_t)0);
 	EdfWriteInfData(&dw, CString, "DateTime", &((char*) { cbuf }));
 	//EdfWriteInfData(&dw, UInt8, "Year", &dat.Year);
 	//EdfWriteInfData(&dw, UInt8, "Month", &dat.Month);
@@ -260,7 +259,7 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 
 	char cbuf[256] = { 0 };
 	snprintf(cbuf, sizeof(cbuf), "%u.%02u.%02uT%02u:%02u:%02u",
-		2000 + dat.Id.Time.Year, dat.Id.Time.Month, dat.Id.Time.Day,
+		(uint32_t)2000 + dat.Id.Time.Year, dat.Id.Time.Month, dat.Id.Time.Day,
 		dat.Id.Time.Hour, dat.Id.Time.Min, dat.Id.Time.Sec);
 	EdfWriteInfData(&dw, CString, "DateTime", &((char*) { cbuf }));
 	//EdfWriteInfData(&dw, UInt8, "Year", &dat.Id.Time.Year);
@@ -416,7 +415,7 @@ int DynToEdf(const char* src, const char* edf, char mode)
 	EdfWriteDataBlock(&dw, &((char*) { "LinePressure - линейное давление (атм)" }), sizeof(char*));
 	EdfWriteDataBlock(&dw, &((char*) { "PumpType - тип привода станка-качалки {}" }), sizeof(char*));
 	EdfWriteDataBlock(&dw, &((char*) { "Acc - напряжение аккумулятора датчика, (В)" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "Temp - температура датчика, (℃)" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "Temp - температура датчика, (°С)" }), sizeof(char*));
 
 	EdfWriteInfData(&dw, UInt32, "FileType", &dat.FileType);
 	EdfWriteStringBytes(&dw, "FileDescription", &dat.FileDescription, FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription));
@@ -432,7 +431,7 @@ int DynToEdf(const char* src, const char* edf, char mode)
 
 	char cbuf[256] = { 0 };
 	snprintf(cbuf, sizeof(cbuf), "%u.%02u.%02uT%02u:%02u:%02u",
-		2000 + dat.Id.Time.Year, dat.Id.Time.Month, dat.Id.Time.Day,
+		(uint32_t)2000 + dat.Id.Time.Year, dat.Id.Time.Month, dat.Id.Time.Day,
 		dat.Id.Time.Hour, dat.Id.Time.Min, dat.Id.Time.Sec);
 	EdfWriteInfData(&dw, CString, "DateTime", &((char*) { cbuf }));
 	EdfWriteInfData(&dw, UInt16, "RegType", &dat.Id.RegType);

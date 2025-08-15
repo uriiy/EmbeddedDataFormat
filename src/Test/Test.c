@@ -32,7 +32,7 @@ static int CompareFiles(const char* src, const char* dst)
 
 	fclose(f1);
 	fclose(f2);
-	return 0;
+	return ret;
 }
 
 //-----------------------------------------------------------------------------

@@ -46,7 +46,7 @@ static int StreamWriteFormatImpl(void* stream, size_t* writed, const char* forma
 	FILE* f = (FILE*)((FileStream_t*)stream)->Instance;
 	va_list arglist;
 	va_start(arglist, format);
-	size_t ret = vfprintf(f, format, arglist);
+	int ret = vfprintf(f, format, arglist);
 	va_end(arglist);
 	if (-1 == ret)
 	{
