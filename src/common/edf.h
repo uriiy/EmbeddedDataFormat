@@ -1,13 +1,13 @@
 #ifndef EDF_H
 #define EDF_H
 //-----------------------------------------------------------------------------
-#pragma pack(push,1)
-#include "EdfWriter.h"
-#pragma pack(pop)
-//-----------------------------------------------------------------------------
 #ifdef __cplusplus
 extern "C" {
 #endif
+//-----------------------------------------------------------------------------
+#pragma pack(push,1)
+#include "EdfWriter.h"
+#pragma pack(pop)
 //-----------------------------------------------------------------------------
 int OpenBinWriter(EdfWriter_t* w, const char* file);
 int OpenTextWriter(EdfWriter_t* w, const char* file);

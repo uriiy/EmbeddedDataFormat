@@ -67,6 +67,6 @@ int MemStreamOpen(MemStream_t* s, uint8_t* buf, size_t size, const char* inMode)
 int MemStreamClose(MemStream_t* stream)
 {
 	MemStream_t* s = (MemStream_t*)stream;
-	memset(&s, 0, sizeof(MemStream_t));
+	memset(s, 0, sizeof(MemStream_t));
 	return 0;
 }
