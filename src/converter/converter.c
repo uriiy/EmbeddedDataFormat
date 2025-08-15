@@ -3,7 +3,12 @@
 #include "edf_cfg.h"
 #include "math.h"
 #include "assert.h"
-
+//-----------------------------------------------------------------------------
+static char* GetFileExt(const char* filename) {
+	char* dot = strrchr(filename, '.');
+	if (!dot || dot == filename) return "";
+	return dot + 1;
+}
 //-----------------------------------------------------------------------------
 int IsExt(const char* file, const char* ext)
 {
@@ -15,14 +20,17 @@ int IsExt(const char* file, const char* ext)
 //-----------------------------------------------------------------------------
 int ChangeExt(char* file, const char* input, const char* output)
 {
-	size_t extLen = strlen(input);
-	size_t fileLen = strlen(file);
-	if (4 < fileLen && 0 == _strcmpi(file + fileLen - extLen, input))
+	// remove ext
+	char* fileExt = GetFileExt(file);
+	size_t fileExtLen = strlen(GetFileExt(file));
+	if (fileExt && 0 != strlen(fileExt))
 	{
-		memcpy(file + fileLen - extLen, output, extLen);
-		return 0;
+		*fileExt = '\0';
 	}
-	return -1;
+	// add ext
+	size_t fileLen = strlen(file);
+	memcpy(file + fileLen, output, strlen(output) + 1);
+	return 0;
 }
 //-----------------------------------------------------------------------------
 int BinToText(const char* src, const char* dst)
@@ -116,9 +124,14 @@ int DatToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfData(&dw, UInt32, "FileType", &dat.FileType);
 	EdfWriteStringBytes(&dw, "FileDescription", &dat.FileDescription, FIELD_SIZEOF(SPSK_FILE_V1_1, FileDescription));
 
-	EdfWriteInfData(&dw, UInt8, "Year", &dat.Year);
-	EdfWriteInfData(&dw, UInt8, "Month", &dat.Month);
-	EdfWriteInfData(&dw, UInt8, "Day", &dat.Day);
+	char cbuf[256] = { 0 };
+	snprintf(cbuf, sizeof(cbuf), "%u.%02u.%02uT%02u:%02u:%02u",
+		2000 + dat.Year, dat.Month, dat.Day,
+		0, 0, 0);
+	EdfWriteInfData(&dw, CString, "DateTime", &((char*) { cbuf }));
+	//EdfWriteInfData(&dw, UInt8, "Year", &dat.Year);
+	//EdfWriteInfData(&dw, UInt8, "Month", &dat.Month);
+	//EdfWriteInfData(&dw, UInt8, "Day", &dat.Day);
 
 	EdfWriteInfData(&dw, UInt16, "Shop", &dat.Id.Shop);
 	EdfWriteInfData(&dw, UInt16, "Field", &dat.Id.Field);
@@ -142,10 +155,10 @@ int DatToEdf(const char* src, const char* edf, char mode)
 			.Count = 4,
 			.Item = (TypeInfo_t[])
 			{
-				{ UInt32, "Time" },
-				{ Int32, "Press" },
-				{ Int32, "Temp" },
-				{ UInt16, "Vbat" },
+				{ UInt32, "время измерения от начала дня (мс)" },
+				{ Int32, "давление, 0.001 атм" },
+				{ Int32, "температура, 0.001 °С" },
+				{ UInt16, "сопротивление изоляции (кОм)" },
 			}
 		}
 	};
@@ -442,7 +455,7 @@ int DynToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfData(&dw, UInt16, "PumpType", &dat.PumpType);
 	EdfWriteInfData(&dw, Single, "Acc", &((float) { dat.Acc / 10.0f }));
 	EdfWriteInfData(&dw, Single, "Temp", &((float) { dat.Temp / 10.0f }));
-
+	/*
 	{
 		EdfWriteInfo(&dw, &DoubleValueInf, &writed);
 		EdfWriteDataBlock(&dw, &(DoubleValue_t)
@@ -464,7 +477,7 @@ int DynToEdf(const char* src, const char* edf, char mode)
 		EdfWriteDataBlock(&dw, &(DoubleValue_t)
 		{ "Temp", dat.Temp / 10.0f, "℃", "температура датчика" }, sizeof(DoubleValue_t));
 	}
-
+	*/
 #pragma pack(push,1)
 	struct Point
 	{
@@ -480,23 +493,19 @@ int DynToEdf(const char* src, const char* edf, char mode)
 			.Count = 2,
 			.Item = (TypeInfo_t[])
 			{
-				{ Single, "Position" },
-				{ Single, "Weight" },
+				{ Single, "Position(m)" },
+				{ Single, "Weight(t)" }, //вес в тоннах
 			}
 		}
 	};
 	EdfWriteInfo(&dw, &pointType, &writed);
-
 	struct Point p = { 0,0 };
 	for (size_t i = 0; i < 1000; i++)
 	{
-		// вес будем отображать в тоннах, поделим всё на 1000 (1E-3)
 		p.w = (float)((dat.Data[i] & 1023) * dat.LoadStep * 1.0E-3);
 		p.pos += (float)(ExtractTravel(dat.Data[i]) * dat.TravelStep / 1.E4);
-
 		EdfWriteDataBlock(&dw, &p, sizeof(struct Point));
 	}
-
 	EdfClose(&dw);
 	return 0;
 }
