@@ -72,6 +72,11 @@ int BinToText(const char* src, const char* dst)
 				writed = 0;
 				err = EdfWriteInfo(&tw, tw.t, &writed);
 			}
+			else
+			{
+				err = 0;
+				//return err;// ignore wrong or too big info block
+			}
 		}
 		break;
 		case btVarData:
@@ -161,21 +166,19 @@ int DatToEdf(const char* src, const char* edf, char mode)
 			}
 		}
 	};
-	EdfWriteInfo(&dw, &recordInf, &writed);
-
+	if ((err = EdfWriteInfo(&dw, &recordInf, &writed)))
+		return err;
 
 	OMEGA_DATA_FILE_V1_1 record;
 	do
 	{
 		if (1 == fread(&record, sizeof(OMEGA_DATA_FILE_V1_1), 1, f))
 		{
-			EdfWriteDataBlock(&dw, &record, sizeof(OMEGA_DATA_FILE_V1_1) - 2);
+			if ((err = EdfWriteDataBlock(&dw, &record, sizeof(OMEGA_DATA_FILE_V1_1) - 2)))
+				return err;
 			//EdfFlushDataBlock(&dw, &writed);
 		}
 	} while (!feof(f));
-
-
-
 
 	EdfClose(&dw);
 	return 0;
