@@ -170,7 +170,7 @@ int EdfWriteDataBlock(EdfWriter_t* dw, void* vsrc, size_t xsrcLen)
 			dw->BufLen -= r;
 			if (dw->BufLen)
 			{
-				memcpy(dw->Buf, src, dw->BufLen);
+				memcpy(dw->Buf, src + r, dw->BufLen);
 				src = dw->Buf;
 				srcLen = dw->BufLen;
 			}
