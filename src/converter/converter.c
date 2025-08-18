@@ -108,9 +108,9 @@ int DatToEdf(const char* src, const char* edf, char mode)
 	size_t writed = 0;
 
 	if ('t' == mode)
-		err = OpenTextWriter(&dw, edf);
+		err = EdfOpen(&dw, edf, "wt");
 	else if ('b' == mode)
-		err = OpenBinWriter(&dw, edf);
+		err = EdfOpen(&dw, edf, "wb");
 	else
 		err = -1;
 	if (err)
@@ -226,9 +226,9 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 	size_t writed = 0;
 
 	if ('t' == mode)
-		err = OpenTextWriter(&dw, edf);
+		err = EdfOpen(&dw, edf, "wt");
 	else if ('b' == mode)
-		err = OpenBinWriter(&dw, edf);
+		err = EdfOpen(&dw, edf, "wb");
 	else
 		err = -1;
 	if (err)
@@ -385,9 +385,9 @@ int DynToEdf(const char* src, const char* edf, char mode)
 	size_t writed = 0;
 
 	if ('t' == mode)
-		err = OpenTextWriter(&dw, edf);
+		err = EdfOpen(&dw, edf, "wt");
 	else if ('b' == mode)
-		err = OpenBinWriter(&dw, edf);
+		err = EdfOpen(&dw, edf, "wb");
 	else
 		err = -1;
 	if (err)

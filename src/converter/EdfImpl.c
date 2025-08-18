@@ -8,9 +8,12 @@ static int StreamWriteImpl(void* stream, size_t* writed, void const* data, size_
 	size_t ret = fwrite(data, 1, len, f);
 	if (ret != len)
 	{
-		if (ferror(f))
-			perror("Error writing");
-		return -1;
+		int err = 0;
+		if ((err = ferror(f)))
+		{
+			LOG_ERRF("Error writing %d", err);
+			return err;
+		}
 	}
 	*writed += ret;
 	fflush(f);
@@ -24,10 +27,14 @@ static int StreamReadImpl(void* stream, size_t* readed, void* dst, size_t len)
 	if (ret != len)
 	{
 		if (feof(f))
-			return -1;
+			return EOF;
 		//	printf("Error reading : unexpected end of file\n");
-		if (ferror(f))
-			perror("Error reading ");
+		int err = 0;
+		if ((err = ferror(f)))
+		{
+			LOG_ERRF("Error reading %d", err);
+			return err;
+		}
 	}
 	*readed += ret;
 	return 0;
@@ -50,9 +57,12 @@ static int StreamWriteFormatImpl(void* stream, size_t* writed, const char* forma
 	va_end(arglist);
 	if (-1 == ret)
 	{
-		if (ferror(f))
-			perror("Error writing fmt");
-		return -1;
+		int err = 0;
+		if ((err = ferror(f)))
+		{
+			LOG_ERRF("Error reading %d", err);
+			return err;
+		}
 	}
 	*writed += ret;
 	fflush(f);
@@ -62,6 +72,7 @@ static int StreamWriteFormatImpl(void* stream, size_t* writed, const char* forma
 //-----------------------------------------------------------------------------
 int FileStreamOpen(FileStream_t* s, const char* file, const char* inMode)
 {
+	const char a[] = "ab+";
 	const char w[] = "wb";
 	const char r[] = "rb";
 	const char* mode = NULL;
@@ -70,6 +81,8 @@ int FileStreamOpen(FileStream_t* s, const char* file, const char* inMode)
 
 	if (0 == strcmp("wb", inMode))
 		mode = w;
+	else if (0 == strcmp("ab", inMode))
+		mode = a;
 	else if (0 == strcmp("rb", inMode))
 		mode = r;
 

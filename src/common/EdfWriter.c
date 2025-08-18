@@ -81,54 +81,41 @@ int EdfWriteInfoBin(EdfWriter_t* dw, const TypeInfo_t* t, size_t* writed)
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-
-int OpenBinWriter(EdfWriter_t* w, const char* file)
+static int SeekEnd(EdfWriter_t* f)
 {
-	int err = FileStreamOpen(&w->Stream, file, "wb");
-	if (err)
-		return -1;
-	w->Seq = 0;
-	w->Skip = 0;
-	w->BlockLen = 0;
-	w->BufLen = 0;
-	w->WritePrimitive = BinToBin;
-	w->FlushHeader = EdfWriteHeaderBin;
-	w->FlushInfo = EdfWriteInfoBin;
-	w->FlushData = StreamWriteBlockDataBin;
-	w->BeginStruct = NULL;
-	w->EndStruct = NULL;
-	w->BeginArray = NULL;
-	w->EndArray = NULL;
-	w->SepVarEnd = NULL;
-	w->RecBegin = NULL;
-	w->RecEnd = NULL;
-	return 0;
+	int err = 0;
+	while (!(err = EdfReadBlock(f)))
+	{
+		switch (f->BlockType)
+		{
+		default: break;
+		case btHeader:
+			if (16 == f->BlockLen)
+			{
+				err = MakeHeaderFromBytes(f->Block, f->BlockLen, &f->h);
+			}
+			break;
+		case btVarInfo:
+		{
+		}
+		break;
+		case btVarData:
+		{
+		}
+		break;
+		}//switch
+		if (0 != err)
+		{
+			LOG_ERR();
+			break;
+		}
+	}//while
+	if (EOF == err)
+		err = 0;
+	return err;
 }
 //-----------------------------------------------------------------------------
-int OpenTextWriter(EdfWriter_t* w, const char* file)
-{
-	int err = FileStreamOpen(&w->Stream, file, "wb");
-	if (err)
-		return -1;
-	w->Seq = 0;
-	w->Skip = 0;
-	w->BlockLen = 0;
-	w->BufLen = 0;
-	w->WritePrimitive = BinToStr;
-	w->FlushHeader = EdfWriteHeaderTxt;
-	w->FlushInfo = EdfWriteInfoTxt;
-	w->FlushData = StreamWriteBlockDataTxt;
-	w->BeginStruct = SepBeginStruct;
-	w->EndStruct = SepEndStruct;
-	w->BeginArray = SepBeginArray;
-	w->EndArray = SepEndArray;
-	w->SepVarEnd = SepVarEnd;
-	w->RecBegin = SepRecBegin;
-	w->RecEnd = SepRecEnd;
-	return 0;
-}
-//-----------------------------------------------------------------------------
-int OpenBinReader(EdfWriter_t* w, const char* file)
+static int OpenBinReader(EdfWriter_t* w, const char* file)
 {
 	int err = FileStreamOpen(&w->Stream, file, "rb");
 	if (err)
@@ -151,23 +138,77 @@ int OpenBinReader(EdfWriter_t* w, const char* file)
 	return 0;
 }
 //-----------------------------------------------------------------------------
-int OpenTextReader(EdfWriter_t* w, const char* file)
+static int OpenTextReader(EdfWriter_t* w, const char* file)
 {
 	UNUSED(w);
 	UNUSED(file);
 	return -1;
 }
 //-----------------------------------------------------------------------------
-int EdfOpen(EdfWriter_t* w, const char* file, const char* inMode)
+int EdfOpen(EdfWriter_t* f, const char* file, const char* mode)
 {
-	if (0 == strncmp("wb", inMode, 2))
-		return OpenBinWriter(w, file);
-	if (0 == strncmp("wt", inMode, 2))
-		return OpenTextWriter(w, file);
-	if (0 == strncmp("rb", inMode, 2))
-		return OpenBinReader(w, file);
-	if (0 == strncmp("rt", inMode, 2))
-		return OpenTextReader(w, file);
+	if (2 > strnlen(mode, 2))
+		return -1;
+	int err = 0;
+	if (0 == strncmp("wb", mode, 2) || 0 == strncmp("ab", mode, 2))
+	{
+		err = FileStreamOpen(&f->Stream, file, mode);
+		if (err)
+			return -1;
+		f->Seq = 0;
+		f->Skip = 0;
+		f->BlockLen = 0;
+		f->BufLen = 0;
+		f->WritePrimitive = BinToBin;
+		f->FlushHeader = EdfWriteHeaderBin;
+		f->FlushInfo = EdfWriteInfoBin;
+		f->FlushData = StreamWriteBlockDataBin;
+		f->BeginStruct = NULL;
+		f->EndStruct = NULL;
+		f->BeginArray = NULL;
+		f->EndArray = NULL;
+		f->SepVarEnd = NULL;
+		f->RecBegin = NULL;
+		f->RecEnd = NULL;
+		if (!err && 'a' == mode[0])
+		{
+			err = SeekEnd(f);
+		}
+		return err;
+	}
+	if (0 == strncmp("wt", mode, 2) || 0 == strncmp("at", mode, 2))
+	{
+		char* filemode;
+		if (0 == strcmp("wt", mode))
+			filemode = "wb";
+		else if (0 == strcmp("at", mode))
+			filemode = "ab";
+		else
+			return -1;
+		err = FileStreamOpen(&f->Stream, file, filemode);
+		if (err)
+			return -1;
+		f->Seq = 0;
+		f->Skip = 0;
+		f->BlockLen = 0;
+		f->BufLen = 0;
+		f->WritePrimitive = BinToStr;
+		f->FlushHeader = EdfWriteHeaderTxt;
+		f->FlushInfo = EdfWriteInfoTxt;
+		f->FlushData = StreamWriteBlockDataTxt;
+		f->BeginStruct = SepBeginStruct;
+		f->EndStruct = SepEndStruct;
+		f->BeginArray = SepBeginArray;
+		f->EndArray = SepEndArray;
+		f->SepVarEnd = SepVarEnd;
+		f->RecBegin = SepRecBegin;
+		f->RecEnd = SepRecEnd;
+		return err;
+	}
+	if (0 == strncmp("rb", mode, 2))
+		return OpenBinReader(f, file);
+	if (0 == strncmp("rt", mode, 2))
+		return OpenTextReader(f, file);
 	return -1;
 }
 //-----------------------------------------------------------------------------

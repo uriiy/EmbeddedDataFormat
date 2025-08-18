@@ -76,14 +76,13 @@ static void TestInit(void)
 	UNUSED(tst2);
 }
 //-----------------------------------------------------------------------------
-static void WriteTest(void)
+static int WriteSample(EdfWriter_t* dw)
 {
-	EdfWriter_t dw;
 	size_t writed = 0;
-	int err = OpenBinWriter(&dw, "t_write.bdf");
+	int err = 0;
 
 	EdfHeader_t h = MakeHeaderDefault();
-	err = EdfWriteHeader(&dw, &h, &writed);
+	err = EdfWriteHeader(dw, &h, &writed);
 
 #pragma pack(push,1)
 	typedef struct KeyValue
@@ -91,42 +90,58 @@ static void WriteTest(void)
 		char* Key;
 		char* Value;
 	} KeyValue_t;
+	TypeInfo_t keyValueType =
+	{
+		.Type = Struct, .Name = "KeyValue", .Dims = {0, NULL},
+		.Childs =
+		{
+			.Count = 2,
+			.Item = (TypeInfo_t[])
+			{
+				{ CString, "Key" },
+				{ CString, "Value" },
+			}
+		}
+	};
 #pragma pack(pop)
 
+	err = EdfWriteInfo(dw, &keyValueType, &writed);
+	EdfWriteDataBlock(dw, &((KeyValue_t) { "Key1", "Value1" }), sizeof(KeyValue_t));
+	EdfWriteDataBlock(dw, &((KeyValue_t) { "Key2", "Value2" }), sizeof(KeyValue_t));
+	EdfWriteDataBlock(dw, &((KeyValue_t) { "Key3", "Value3" }), sizeof(KeyValue_t));
 
-	EdfWriteInfData(&dw, String, "тестовый ключ", "String Value");
-	EdfWriteInfData(&dw, Int32, "Int32 Key", &((int32_t) { 123456 }));
+	EdfWriteInfData(dw, String, "тестовый ключ", "String Value");
 
 	TypeInfo_t t = { .Type = Int32, .Name = "weight variable" };
-	err = EdfWriteInfo(&dw, &t, &writed);
+	err = EdfWriteInfo(dw, &t, &writed);
 	uint8_t test[100] = { 0 };
 	(*(int32_t*)test) = (int32_t)(0xFFFFFFFF);
-	EdfWriteDataBlock(&dw, test, 4);
-	EdfFlushDataBlock(&dw, &writed);
+	EdfWriteDataBlock(dw, test, 4);
+	EdfFlushDataBlock(dw, &writed);
 
 	TypeInfo_t td = { .Type = Double, .Name = "TestDouble" };
-	err = EdfWriteInfo(&dw, &td, &writed);
+	err = EdfWriteInfo(dw, &td, &writed);
 	double dd = 1.1;
-	EdfWriteDataBlock(&dw, &dd, sizeof(double));
+	EdfWriteDataBlock(dw, &dd, sizeof(double));
 	dd = 2.1;
-	EdfWriteDataBlock(&dw, &dd, sizeof(double));
+	EdfWriteDataBlock(dw, &dd, sizeof(double));
 	dd = 3.1;
-	EdfWriteDataBlock(&dw, &dd, sizeof(double));
+	EdfWriteDataBlock(dw, &dd, sizeof(double));
 
-	err = EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = String, .Name = "BString Text" }), &writed);
+	err = EdfWriteInfo(dw, &((TypeInfo_t) { .Type = String, .Name = "BString Text" }), &writed);
 	size_t len = 0;
 	len += GetBString("Char", test + len, sizeof(test));
 	len += GetBString("Value", test + len, sizeof(test) - len);
 	len += GetBString("Array     Value", test + len, sizeof(test) - len);
-	EdfWriteDataBlock(&dw, test, len);
-	EdfFlushDataBlock(&dw, &writed);
+	EdfWriteDataBlock(dw, test, len);
+	EdfFlushDataBlock(dw, &writed);
 
-	err = EdfWriteInfo(&dw, &((TypeInfo_t) { .Type = Char, .Name = "Char Text", { 1, (uint32_t[]) { 20 } } }), &writed);
+	err = EdfWriteInfo(dw, &((TypeInfo_t) { .Type = Char, .Name = "Char Text", { 1, (uint32_t[]) { 20 } } }), &writed);
 	len = 0;
 	len += GetCString("Char", 20, test + len, sizeof(test));
 	len += GetCString("Value", 20, test + len, sizeof(test) - len);
 	len += GetCString("Array     Value", 20, test + len, sizeof(test) - len);
-	EdfWriteDataBlock(&dw, test, len);
+	EdfWriteDataBlock(dw, test, len);
 
 	TypeInfo_t comlexVar =
 	{
@@ -175,7 +190,7 @@ static void WriteTest(void)
 			}
 		}
 	};
-	err = EdfWriteInfo(&dw, &comlexVar, &writed);
+	err = EdfWriteInfo(dw, &comlexVar, &writed);
 #pragma pack(push,1)
 	struct ComplexVariable
 	{
@@ -202,9 +217,42 @@ static void WriteTest(void)
 			{ 3, { 31, 32 }, {3.1,3.2,3.3,3.4 } },
 		}
 	};
-	EdfWriteDataBlock(&dw, &cv, sizeof(struct ComplexVariable));
+	EdfWriteDataBlock(dw, &cv, sizeof(struct ComplexVariable));
+	return err;
+}
+//-----------------------------------------------------------------------------
+static int WriteTest()
+{
+	EdfWriter_t w;
+	int err = 0;
+	// TEXT write
+	err = EdfOpen(&w, "t_write.tdf", "wt");
+	WriteSample(&w);
+	EdfClose(&w);
+	// test append
+	memset(&w, 0, sizeof(EdfWriter_t));
+	err = EdfOpen(&w, "t_write.tdf", "at");
+	if (0 != err)
+		return err;
+	EdfWriteInfData(&w, Int32, "Int32 Key", &((int32_t) { 0xb1b2b3b4 }));
+	EdfClose(&w);
 
-	EdfClose(&dw);
+	// BINary write
+	err = EdfOpen(&w, "t_write.bdf", "wb");
+	WriteSample(&w);
+	EdfClose(&w);
+	// test append
+	memset(&w, 0, sizeof(EdfWriter_t));
+	if ((err = EdfOpen(&w, "t_write.bdf", "ab")))
+		return err;
+	EdfWriteInfData(&w, Int32, "Int32 Key", &((int32_t) { 0xb1b2b3b4 }));
+	EdfClose(&w);
+
+	BinToText("t_write.bdf", "t_writeConv.tdf");
+	err = CompareFiles("t_write.tdf", "t_writeConv.tdf");
+	if (err)
+		LOG_ERRF("err %d: t_write files not equal", err);
+	return err;
 }
 //-----------------------------------------------------------------------------
 static void WriteBigVar(EdfWriter_t* dw)
@@ -235,12 +283,12 @@ static void WriteTestBigVar()
 	int err = 0;
 
 	EdfWriter_t tw;
-	err = OpenTextWriter(&tw, "t_big.tdf");
+	err = EdfOpen(&tw, "t_big.tdf", "wt");
 	WriteBigVar(&tw);
 	EdfClose(&tw);
 
 	EdfWriter_t bw;
-	err = OpenBinWriter(&bw, "t_big.bdf");
+	err = EdfOpen(&bw, "t_big.bdf", "wb");
 	WriteBigVar(&bw);
 	EdfClose(&bw);
 
@@ -248,7 +296,7 @@ static void WriteTestBigVar()
 
 	err = CompareFiles("t_big.tdf", "t_bigConv.tdf");
 	if (err)
-		perror("err: t_big");
+		LOG_ERRF("err: t_big %d", err);
 }
 //-----------------------------------------------------------------------------
 static void DatFormatTest()
@@ -264,16 +312,8 @@ static void DatFormatTest()
 	DynToEdf("1D.D", "1D.tdf", 't');
 	DynToEdf("1D.D", "1D.bdf", 'b');
 	BinToText("1D.bdf", "1DConv.tdf");
-
 }
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-static void BinToTextTest(void)
-{
-	const char* src = "t_write.bdf";
-	const char* dst = "t_write.tdf";
-	BinToText(src, dst);
-}
 //-----------------------------------------------------------------------------
 int main()
 {
@@ -282,7 +322,6 @@ int main()
 	DatFormatTest();
 	TestInit();
 	WriteTest();
-	BinToTextTest();
 	TestMemStream();
 	return 0;
 }

@@ -9,11 +9,14 @@ extern "C" {
 #include "EdfWriter.h"
 #pragma pack(pop)
 //-----------------------------------------------------------------------------
-int OpenBinWriter(EdfWriter_t* w, const char* file);
-int OpenTextWriter(EdfWriter_t* w, const char* file);
-int OpenBinReader(EdfWriter_t* w, const char* file);
-int OpenTextReader(EdfWriter_t* w, const char* file);
-int EdfOpen(EdfWriter_t* w, const char* file, const char* inMode);
+// mode 
+// "wb" - Write Binary file
+// "wt" - Write Text file
+// "ab" - Append existing Binary file
+// "at" - Append existing Text file
+// "rb" - Read Binary file
+// "rt" - Read Text file
+int EdfOpen(EdfWriter_t* w, const char* file, const char* mode);
 void EdfClose(EdfWriter_t* dw);
 
 int EdfWriteHeader(EdfWriter_t* dw, const EdfHeader_t* h, size_t* writed);

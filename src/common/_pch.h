@@ -36,6 +36,9 @@
 
 #define LOG_ERR() printf("\n err: %d %s %s ", __LINE__, __FILE__, __FUNCTION__)
 
+static char errBuf[128];
+#define LOG_ERRF(fmt, ...) { snprintf(errBuf, sizeof(errBuf), fmt, __VA_ARGS__); perror(errBuf); }
+
 #define ERR_NO 0;
 #define ERR_SRC_SHORT -1;
 #define ERR_DST_SHORT 1;
