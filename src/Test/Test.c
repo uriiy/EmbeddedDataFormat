@@ -1,5 +1,6 @@
 #include "converter.h"
 #include "edf_cfg.h"
+#include "assert.h"
 
 static int CompareFiles(const char* src, const char* dst)
 {
@@ -46,34 +47,6 @@ static void TestMemStream(void)
 	Stream_t* stream = (Stream_t*)&ms;
 	err = StreamWrite(stream, &writed, test, sizeof(test) - 1);
 	err = StreamWriteFmt(stream, &writed, " format %d", 1);
-}
-//-----------------------------------------------------------------------------
-static void TestInit(void)
-{
-	TypeInfo_t tst1 =
-	{
-		.Type = UInt16,
-		.Name = "Test",
-		.Dims = { 3, (uint32_t[]) { 1,2,3 }} ,
-	};
-
-	TypeInfo_t tst2 =
-	{
-		.Type = Struct,
-		.Name = "Test2",
-		.Dims = {2, (uint32_t[]) { 11,22 }},
-		.Childs =
-		{
-			.Count = 3,
-			.Item = (TypeInfo_t[])
-			{
-				tst1,
-				{.Type = UInt32, .Name = "x" },
-				{.Type = UInt32, .Name = "y" },
-			}
-		}
-	};
-	UNUSED(tst2);
 }
 //-----------------------------------------------------------------------------
 static int WriteSample(EdfWriter_t* dw)
@@ -252,6 +225,7 @@ static int WriteTest()
 	err = CompareFiles("t_write.tdf", "t_writeConv.tdf");
 	if (err)
 		LOG_ERRF("err %d: t_write files not equal", err);
+	assert(0 == err);
 	return err;
 }
 //-----------------------------------------------------------------------------
@@ -273,8 +247,8 @@ static void WriteBigVar(EdfWriter_t* dw)
 
 	uint8_t* test2 = (uint8_t*)test;
 	EdfWriteDataBlock(dw, test2, 15);
-	EdfWriteDataBlock(dw, test2 + 15, 249);
-	EdfWriteDataBlock(dw, test2 + 15 + 249, sizeof(uint32_t) * arrLen - 15 - 249);
+	EdfWriteDataBlock(dw, test2 + 15, 149);
+	EdfWriteDataBlock(dw, test2 + 15 + 149, (sizeof(uint32_t) * arrLen) - 15 - 149);
 
 	EdfFlushDataBlock(dw, &writed);
 }
@@ -282,36 +256,40 @@ static void WriteTestBigVar()
 {
 	int err = 0;
 
-	EdfWriter_t tw;
-	err = EdfOpen(&tw, "t_big.tdf", "wt");
-	WriteBigVar(&tw);
-	EdfClose(&tw);
-
 	EdfWriter_t bw;
 	err = EdfOpen(&bw, "t_big.bdf", "wb");
 	WriteBigVar(&bw);
 	EdfClose(&bw);
 
+	EdfWriter_t tw;
+	err = EdfOpen(&tw, "t_big.tdf", "wt");
+	WriteBigVar(&tw);
+	EdfClose(&tw);
+	
 	BinToText("t_big.bdf", "t_bigConv.tdf");
 
 	err = CompareFiles("t_big.tdf", "t_bigConv.tdf");
 	if (err)
 		LOG_ERRF("err: t_big %d", err);
+	assert(0 == err);
 }
 //-----------------------------------------------------------------------------
 static void DatFormatTest()
 {
-	DatToEdf("1DAT.dat", "1DAT.tdf", 't');
-	DatToEdf("1DAT.dat", "1DAT.bdf", 'b');
-	BinToText("1DAT.bdf", "1DATConv.tdf");
+	assert(0 == DatToEdf("1DAT.dat", "1DAT.tdf", 't'));
+	assert(0 == DatToEdf("1DAT.dat", "1DAT.bdf", 'b'));
+	assert(0 == BinToText("1DAT.bdf", "1DATConv.tdf"));
+	assert(0 == CompareFiles("1DAT.tdf", "1DATConv.tdf"));
 
-	EchoToEdf("1E.E", "1E.tdf", 't');
-	EchoToEdf("1E.E", "1E.bdf", 'b');
-	BinToText("1E.bdf", "1EConv.tdf");
+	assert(0 == EchoToEdf("1E.E", "1E.tdf", 't'));
+	assert(0 == EchoToEdf("1E.E", "1E.bdf", 'b'));
+	assert(0 == BinToText("1E.bdf", "1EConv.tdf"));
+	assert(0 == CompareFiles("1E.tdf", "1EConv.tdf"));
 
-	DynToEdf("1D.D", "1D.tdf", 't');
-	DynToEdf("1D.D", "1D.bdf", 'b');
-	BinToText("1D.bdf", "1DConv.tdf");
+	assert(0 == DynToEdf("1D.D", "1D.tdf", 't'));
+	assert(0 == DynToEdf("1D.D", "1D.bdf", 'b'));
+	assert(0 == BinToText("1D.bdf", "1DConv.tdf"));
+	assert(0 == CompareFiles("1D.tdf", "1DConv.tdf"));
 }
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -320,7 +298,6 @@ int main()
 	LOG_ERR();
 	WriteTestBigVar();
 	DatFormatTest();
-	TestInit();
 	WriteTest();
 	TestMemStream();
 	return 0;
