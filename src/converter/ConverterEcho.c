@@ -155,7 +155,7 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 
 		EdfWriteDataBlock(&dw, &p, sizeof(struct Point));
 	}
-
+	fclose(f);
 	EdfClose(&dw);
 	return 0;
 }

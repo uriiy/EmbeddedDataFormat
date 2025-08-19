@@ -7,6 +7,24 @@
 //-----------------------------------------------------------------------------
 /// DYN
 //-----------------------------------------------------------------------------
+TypeInfo_t ResearchTimeInf =
+{
+	Struct, "ResearchTime", { 0, NULL },
+	.Childs =
+	{
+		.Count = 6,
+		.Item = (TypeInfo_t[])
+		{
+			{ UInt8, "Hour" },
+			{ UInt8, "Min" },
+			{ UInt8, "Sec" },
+			{ UInt8, "Day" },
+			{ UInt8, "Month" },
+			{ UInt8, "Year" },
+		}
+	}
+};
+
 // helper
 /*
 TypeInfo_t DoubleValueInf =
@@ -102,11 +120,17 @@ int DynToEdf(const char* src, const char* edf, char mode)
 	EdfWriteStringBytes(&dw, "Cluster", &dat.Id.Cluster, FIELD_SIZEOF(RESEARCH_ID_V2_0, Cluster));
 	EdfWriteStringBytes(&dw, "Well", &dat.Id.Well, FIELD_SIZEOF(RESEARCH_ID_V2_0, Well));
 
-	char cbuf[256] = { 0 };
-	snprintf(cbuf, sizeof(cbuf), "%u.%02u.%02uT%02u:%02u:%02u",
-		(uint32_t)2000 + dat.Id.Time.Year, dat.Id.Time.Month, dat.Id.Time.Day,
-		dat.Id.Time.Hour, dat.Id.Time.Min, dat.Id.Time.Sec);
-	EdfWriteInfData(&dw, CString, "DateTime", &((char*) { cbuf }));
+	EdfWriteInfo(&dw, &ResearchTimeInf, &writed);
+	EdfWriteDataBlock(&dw, &(TIME)
+	{
+		dat.Id.Time.Hour, dat.Id.Time.Min, dat.Id.Time.Sec,
+		dat.Id.Time.Day, dat.Id.Time.Month, dat.Id.Time.Year
+	}, sizeof(TIME));
+	//char cbuf[256] = { 0 };
+	//snprintf(cbuf, sizeof(cbuf), "%u.%02u.%02uT%02u:%02u:%02u",
+	//	(uint32_t)2000 + dat.Id.Time.Year, dat.Id.Time.Month, dat.Id.Time.Day,
+	//	dat.Id.Time.Hour, dat.Id.Time.Min, dat.Id.Time.Sec);
+	//EdfWriteInfData(&dw, CString, "DateTime", &((char*) { cbuf }));
 	EdfWriteInfData(&dw, UInt16, "RegType", &dat.Id.RegType);
 	EdfWriteInfData(&dw, UInt32, "RegNum", &dat.Id.RegNum);
 	// - end RESEARCH_ID_V2_0
@@ -178,6 +202,7 @@ int DynToEdf(const char* src, const char* edf, char mode)
 		p.pos += (float)(ExtractTravel(dat.Data[i]) * dat.TravelStep / 1.E4);
 		EdfWriteDataBlock(&dw, &p, sizeof(struct Point));
 	}
+	fclose(f);
 	EdfClose(&dw);
 	return 0;
 }
