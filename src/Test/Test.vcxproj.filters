@@ -36,13 +36,22 @@
     <ClCompile Include="..\common\EdfWriter.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="..\converter\converter.c">
+    <ClCompile Include="..\converter\ConverterEdf.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="..\converter\EdfImpl.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="..\common\MemStream.c">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="..\converter\ConverterDat.c">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="..\converter\ConverterDyn.c">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="..\converter\ConverterEcho.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>

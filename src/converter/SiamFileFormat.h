@@ -11,7 +11,7 @@ typedef struct
 	int32_t Temp;			// температура, 0.001 °С
 	uint16_t Vbat;			// напряжение батареи,
 	uint16_t crc;			// CRC16
-} OMEGA_DATA_FILE_V1_1;
+} OMEGA_DATA_V1_1;
 //-----------------------------------------------------------------------------
 typedef struct
 {

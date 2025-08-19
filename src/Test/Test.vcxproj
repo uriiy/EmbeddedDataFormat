@@ -165,6 +165,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\common\MemStream.c" />
+    <ClCompile Include="..\converter\ConverterDat.c" />
+    <ClCompile Include="..\converter\ConverterDyn.c" />
+    <ClCompile Include="..\converter\ConverterEcho.c" />
     <ClCompile Include="Test.c" />
     <ClCompile Include="..\common\PoType.c" />
     <ClCompile Include="..\common\BlockWriter.c" />
@@ -172,7 +175,7 @@
     <ClCompile Include="..\common\Primitives.c" />
     <ClCompile Include="..\common\TypeInfo.c" />
     <ClCompile Include="..\common\EdfWriter.c" />
-    <ClCompile Include="..\converter\converter.c" />
+    <ClCompile Include="..\converter\ConverterEdf.c" />
     <ClCompile Include="..\converter\EdfImpl.c" />
   </ItemGroup>
   <ItemGroup>
