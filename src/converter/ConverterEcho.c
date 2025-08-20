@@ -84,12 +84,12 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 	EdfWriteStringBytes(&dw, "Cluster", &dat.Id.Cluster, FIELD_SIZEOF(RESEARCH_ID_V2_0, Cluster));
 	EdfWriteStringBytes(&dw, "Well", &dat.Id.Well, FIELD_SIZEOF(RESEARCH_ID_V2_0, Well));
 
-	EdfWriteInfo(&dw, &ResearchTimeInf, &writed);
-	EdfWriteDataBlock(&dw, &(TIME)
+	EdfWriteInfo(&dw, &DateTimeInf, &writed);
+	EdfWriteDataBlock(&dw, &(DateTime_t)
 	{
+		dat.Id.Time.Year + 2000, dat.Id.Time.Month, dat.Id.Time.Day,
 		dat.Id.Time.Hour, dat.Id.Time.Min, dat.Id.Time.Sec,
-			dat.Id.Time.Day, dat.Id.Time.Month, dat.Id.Time.Year,
-	}, sizeof(TIME));
+	}, sizeof(DateTime_t));
 
 	EdfWriteInfData(&dw, UInt16, "RegType", &dat.Id.RegType);
 	EdfWriteInfData(&dw, UInt32, "RegNum", &dat.Id.RegNum);
