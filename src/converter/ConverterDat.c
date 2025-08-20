@@ -38,8 +38,8 @@ int DatToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfData(&dw, UInt32, "FileType", &dat.FileType);
 	EdfWriteStringBytes(&dw, "FileDescription", &dat.FileDescription, FIELD_SIZEOF(SPSK_FILE_V1_1, FileDescription));
 
-	EdfWriteInfo(&dw, &ResearchTimeInf, &writed);
-	EdfWriteDataBlock(&dw, &(TIME) { 0, 0, 0, dat.Day, dat.Month, dat.Year }, sizeof(TIME));
+	EdfWriteInfo(&dw, &DateTimeInf, &writed);
+	EdfWriteDataBlock(&dw, &(DateTime_t) { dat.Year + 2000, dat.Month, dat.Day, }, sizeof(DateTime_t));
 
 	EdfWriteInfData(&dw, UInt16, "Shop", &dat.Id.Shop);
 	EdfWriteInfData(&dw, UInt16, "Field", &dat.Id.Field);
@@ -155,10 +155,10 @@ int EdfToDat(const char* edfFile, const char* datFile)
 				len = MIN(len, FIELD_SIZEOF(SPSK_FILE_V1_1, FileDescription));
 				memcpy(dat.FileDescription, &br.Block[1], len);
 			}
-			else if (0 == _strnicmp(br.t->Name, ResearchTimeInf.Name, 100))
+			else if (0 == _strnicmp(br.t->Name, DateTimeInf.Name, 100))
 			{
-				TIME t = *((TIME*)br.Block);
-				dat.Year = t.Year;
+				DateTime_t t = *((DateTime_t*)br.Block);
+				dat.Year = (uint8_t)(t.Year - 2000);
 				dat.Month = t.Month;
 				dat.Day = t.Day;
 			}
@@ -172,14 +172,12 @@ int EdfToDat(const char* edfFile, const char* datFile)
 			}
 			else if (0 == _strnicmp(br.t->Name, "Cluster", 10))
 			{
-				uint8_t len = *((uint8_t*)br.Block);
-				len = MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Cluster));
+				uint8_t len = MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Cluster));
 				memcpy(dat.Id.Cluster, &br.Block[1], len);
 			}
 			else if (0 == _strnicmp(br.t->Name, "Well", 10))
 			{
-				uint8_t len = *((uint8_t*)br.Block);
-				len = MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Well));
+				uint8_t len = MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Well));
 				memcpy(dat.Id.Well, &br.Block[1], len);
 			}
 			else if (0 == _strnicmp(br.t->Name, "PlaceId", 10))

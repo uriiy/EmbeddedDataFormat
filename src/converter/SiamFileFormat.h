@@ -121,22 +121,37 @@ typedef struct
 //-----------------------------------------------------------------------------
 static const TypeInfo_t CommentsInf = { .Type = CString, .Name = "Comments" };
 //-----------------------------------------------------------------------------
-static const TypeInfo_t ResearchTimeInf =
+static const TypeInfo_t DateTimeInf =
 {
-	.Type = Struct, .Name = "Time", .Dims = { 0, NULL }, .Childs =
+	.Type = Struct, .Name = "DateTime", .Dims = { 0, NULL }, .Childs =
 	{
-		.Count = 6,
+		.Count = 8,
 		.Item = (TypeInfo_t[])
 		{
+			{ Int16, "Year" },
+			{ UInt8, "Month" },
+			{ UInt8, "Day" },
 			{ UInt8, "Hour" },
 			{ UInt8, "Min" },
 			{ UInt8, "Sec" },
-			{ UInt8, "Day" },
-			{ UInt8, "Month" },
-			{ UInt8, "Year" },
+			{ UInt16, "mSec" },
+			{ Int8, "Tz" },
 		}
 	}
 };
+
+typedef struct
+{
+	int16_t Year;
+	uint8_t Month;
+	uint8_t Day;
+	uint8_t Hour;
+	uint8_t Min;
+	uint8_t Sec;
+	uint16_t mSec;
+	int8_t Tz;
+} DateTime_t;
+
 //-----------------------------------------------------------------------------
 static const TypeInfo_t OmegaDataInf =
 {
