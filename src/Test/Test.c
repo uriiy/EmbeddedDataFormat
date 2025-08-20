@@ -265,7 +265,7 @@ static void WriteTestBigVar()
 	err = EdfOpen(&tw, "t_big.tdf", "wt");
 	WriteBigVar(&tw);
 	EdfClose(&tw);
-	
+
 	BinToText("t_big.bdf", "t_bigConv.tdf");
 
 	err = CompareFiles("t_big.tdf", "t_bigConv.tdf");
@@ -281,7 +281,7 @@ static void DatFormatTest()
 	assert(0 == BinToText("1DAT.bdf", "1DATConv.tdf"));
 	assert(0 == CompareFiles("1DAT.tdf", "1DATConv.tdf"));
 	assert(0 == EdfToDat("1DAT.bdf", "1DATConv.dat"));
-//	assert(0 == CompareFiles("1DAT.dat", "1DATConv.dat"));
+	assert(0 == CompareFiles("1DAT.dat", "1DATConv.dat"));
 
 	assert(0 == EchoToEdf("1E.E", "1E.tdf", 't'));
 	assert(0 == EchoToEdf("1E.E", "1E.bdf", 'b'));
@@ -294,10 +294,27 @@ static void DatFormatTest()
 	assert(0 == CompareFiles("1D.tdf", "1DConv.tdf"));
 }
 //-----------------------------------------------------------------------------
+static void MbCrc16accTest()
+{
+	const char* test =
+		"some test data text 1"
+		"some test data text 2"
+		"some test data text 3"
+		"some test data text 4";
+	size_t len = strnlen(test, 256);
+	uint16_t crc = MbCrc16(test, len);
+
+	uint16_t crcAcc = 0xFFFF;
+	crcAcc = MbCrc16acc(test, 17, crcAcc);
+	crcAcc = MbCrc16acc(test + 17, len - 17, crcAcc);
+	assert(crcAcc == crc);
+}
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 int main()
 {
 	LOG_ERR();
+	MbCrc16accTest();
 	WriteTestBigVar();
 	DatFormatTest();
 	WriteTest();

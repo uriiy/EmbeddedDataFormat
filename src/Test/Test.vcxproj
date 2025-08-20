@@ -168,6 +168,7 @@
     <ClCompile Include="..\converter\ConverterDat.c" />
     <ClCompile Include="..\converter\ConverterDyn.c" />
     <ClCompile Include="..\converter\ConverterEcho.c" />
+    <ClCompile Include="..\converter\MbCrc.c" />
     <ClCompile Include="Test.c" />
     <ClCompile Include="..\common\PoType.c" />
     <ClCompile Include="..\common\BlockWriter.c" />

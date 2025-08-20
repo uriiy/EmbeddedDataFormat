@@ -7,52 +7,6 @@
 //-----------------------------------------------------------------------------
 /// DYN
 //-----------------------------------------------------------------------------
-TypeInfo_t ResearchTimeInf =
-{
-	Struct, "ResearchTime", { 0, NULL },
-	.Childs =
-	{
-		.Count = 6,
-		.Item = (TypeInfo_t[])
-		{
-			{ UInt8, "Hour" },
-			{ UInt8, "Min" },
-			{ UInt8, "Sec" },
-			{ UInt8, "Day" },
-			{ UInt8, "Month" },
-			{ UInt8, "Year" },
-		}
-	}
-};
-
-// helper
-/*
-TypeInfo_t DoubleValueInf =
-{
-	Struct, "DoubleValue", { 0, NULL },
-	.Childs =
-	{
-		.Count = 4,
-		.Item = (TypeInfo_t[])
-		{
-			{ CString, "Name" },
-			{ Double, "Value" },
-			{ CString, "Unit" },
-			{ CString, "Description" },
-		}
-	}
-};
-#pragma pack(push,1)
-typedef struct DoubleValue
-{
-	char* Name;
-	double Value;
-	char* Unit;
-	char* Description;
-} DoubleValue_t;
-#pragma pack(pop)
-*/
-//-----------------------------------------------------------------------------
 static int8_t ExtractTravel(uint16_t number) // 6bit integer
 {
 	int8_t result = ((number & 0xFC00) >> 10);
@@ -89,8 +43,29 @@ int DynToEdf(const char* src, const char* edf, char mode)
 	if ((err = EdfWriteHeader(&dw, &h, &writed)))
 		return err;
 
-	TypeInfo_t commentType = { .Type = CString, .Name = "Comments" };
-	EdfWriteInfo(&dw, &commentType, &writed);
+	EdfWriteInfData(&dw, UInt32, "FileType", &dat.FileType);
+	EdfWriteStringBytes(&dw, "FileDescription", &dat.FileDescription, FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription));
+	// RESEARCH_ID_V2_0
+	EdfWriteInfData(&dw, UInt16, "ResearchType", &dat.Id.ResearchType);
+	EdfWriteInfData(&dw, UInt16, "DeviceType", &dat.Id.DeviceType);
+	EdfWriteInfData(&dw, UInt16, "DeviceNum", &dat.Id.DeviceNum);
+	EdfWriteInfData(&dw, UInt16, "Shop", &dat.Id.Shop);
+	EdfWriteInfData(&dw, UInt16, "Oper", &dat.Id.Oper);
+	EdfWriteInfData(&dw, UInt16, "Field", &dat.Id.Field);
+	EdfWriteStringBytes(&dw, "Cluster", &dat.Id.Cluster, FIELD_SIZEOF(RESEARCH_ID_V2_0, Cluster));
+	EdfWriteStringBytes(&dw, "Well", &dat.Id.Well, FIELD_SIZEOF(RESEARCH_ID_V2_0, Well));
+
+	EdfWriteInfo(&dw, &ResearchTimeInf, &writed);
+	EdfWriteDataBlock(&dw, &(TIME)
+	{
+		dat.Id.Time.Hour, dat.Id.Time.Min, dat.Id.Time.Sec,
+			dat.Id.Time.Day, dat.Id.Time.Month, dat.Id.Time.Year
+	}, sizeof(TIME));
+	EdfWriteInfData(&dw, UInt16, "RegType", &dat.Id.RegType);
+	EdfWriteInfData(&dw, UInt32, "RegNum", &dat.Id.RegNum);
+	// - end RESEARCH_ID_V2_0
+
+	EdfWriteInfo(&dw, &CommentsInf, &writed);
 	EdfWriteDataBlock(&dw, &((char*) { "Rod - диаметр штока" }), sizeof(char*));
 	EdfWriteDataBlock(&dw, &((char*) { "Aperture - номер отверстия" }), sizeof(char*));
 	EdfWriteDataBlock(&dw, &((char*) { "MaxWeight - максимальная нагрузка (кг)" }), sizeof(char*));
@@ -108,33 +83,6 @@ int DynToEdf(const char* src, const char* edf, char mode)
 	EdfWriteDataBlock(&dw, &((char*) { "Acc - напряжение аккумулятора датчика, (В)" }), sizeof(char*));
 	EdfWriteDataBlock(&dw, &((char*) { "Temp - температура датчика, (°С)" }), sizeof(char*));
 
-	EdfWriteInfData(&dw, UInt32, "FileType", &dat.FileType);
-	EdfWriteStringBytes(&dw, "FileDescription", &dat.FileDescription, FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription));
-	// RESEARCH_ID_V2_0
-	EdfWriteInfData(&dw, UInt16, "ResearchType", &dat.Id.ResearchType);
-	EdfWriteInfData(&dw, UInt16, "DeviceType", &dat.Id.DeviceType);
-	EdfWriteInfData(&dw, UInt16, "DeviceNum", &dat.Id.DeviceNum);
-	EdfWriteInfData(&dw, UInt16, "Shop", &dat.Id.Shop);
-	EdfWriteInfData(&dw, UInt16, "Oper", &dat.Id.Oper);
-	EdfWriteInfData(&dw, UInt16, "Field", &dat.Id.Field);
-	EdfWriteStringBytes(&dw, "Cluster", &dat.Id.Cluster, FIELD_SIZEOF(RESEARCH_ID_V2_0, Cluster));
-	EdfWriteStringBytes(&dw, "Well", &dat.Id.Well, FIELD_SIZEOF(RESEARCH_ID_V2_0, Well));
-
-	EdfWriteInfo(&dw, &ResearchTimeInf, &writed);
-	EdfWriteDataBlock(&dw, &(TIME)
-	{
-		dat.Id.Time.Hour, dat.Id.Time.Min, dat.Id.Time.Sec,
-		dat.Id.Time.Day, dat.Id.Time.Month, dat.Id.Time.Year
-	}, sizeof(TIME));
-	//char cbuf[256] = { 0 };
-	//snprintf(cbuf, sizeof(cbuf), "%u.%02u.%02uT%02u:%02u:%02u",
-	//	(uint32_t)2000 + dat.Id.Time.Year, dat.Id.Time.Month, dat.Id.Time.Day,
-	//	dat.Id.Time.Hour, dat.Id.Time.Min, dat.Id.Time.Sec);
-	//EdfWriteInfData(&dw, CString, "DateTime", &((char*) { cbuf }));
-	EdfWriteInfData(&dw, UInt16, "RegType", &dat.Id.RegType);
-	EdfWriteInfData(&dw, UInt32, "RegNum", &dat.Id.RegNum);
-	// - end RESEARCH_ID_V2_0
-
 	EdfWriteInfData(&dw, Single, "Rod", &((float) { dat.Rod / 10.0f }));
 	EdfWriteInfData(&dw, UInt16, "Aperture", &dat.Aperture);
 	EdfWriteInfData(&dw, UInt32, "MaxWeight", &((uint32_t) { dat.MaxWeight* dat.LoadStep }));
@@ -151,8 +99,12 @@ int DynToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfData(&dw, UInt16, "PumpType", &dat.PumpType);
 	EdfWriteInfData(&dw, Single, "Acc", &((float) { dat.Acc / 10.0f }));
 	EdfWriteInfData(&dw, Single, "Temp", &((float) { dat.Temp / 10.0f }));
-	/*
+	
 	{
+		EdfWriteInfo(&dw, &CommentsInf, &writed);
+		EdfWriteDataBlock(&dw, &((char*) { "Key-Value+Unit+Description list sample" }), sizeof(char*));
+
+
 		EdfWriteInfo(&dw, &DoubleValueInf, &writed);
 		EdfWriteDataBlock(&dw, &(DoubleValue_t)
 		{
@@ -173,34 +125,19 @@ int DynToEdf(const char* src, const char* edf, char mode)
 		EdfWriteDataBlock(&dw, &(DoubleValue_t)
 		{ "Temp", dat.Temp / 10.0f, "℃", "температура датчика" }, sizeof(DoubleValue_t));
 	}
-	*/
-#pragma pack(push,1)
-	struct Point
-	{
-		float pos;
-		float w;
-	};
-#pragma pack(pop)
-	TypeInfo_t pointType =
-	{
-		Struct, "DynChart", { 0, NULL },
-		.Childs =
-		{
-			.Count = 2,
-			.Item = (TypeInfo_t[])
-			{
-				{ Single, "Position(m)" },
-				{ Single, "Weight(t)" }, //вес в тоннах
-			}
-		}
-	};
-	EdfWriteInfo(&dw, &pointType, &writed);
-	struct Point p = { 0,0 };
+	
+	EdfWriteInfo(&dw, &CommentsInf, &writed);
+	EdfWriteDataBlock(&dw, &((char*) { "описание графика Chart2D" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "x - перемещение, м" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "y - вес в тоннах" }), sizeof(char*));
+
+	EdfWriteInfo(&dw, &Point2DInf, &writed);
+	struct Point2D p = { 0,0 };
 	for (size_t i = 0; i < 1000; i++)
 	{
-		p.w = (float)((dat.Data[i] & 1023) * dat.LoadStep * 1.0E-3);
-		p.pos += (float)(ExtractTravel(dat.Data[i]) * dat.TravelStep / 1.E4);
-		EdfWriteDataBlock(&dw, &p, sizeof(struct Point));
+		p.x += (float)(ExtractTravel(dat.Data[i]) * dat.TravelStep / 1.E4);
+		p.y = (float)((dat.Data[i] & 1023) * dat.LoadStep * 1.0E-3);
+		EdfWriteDataBlock(&dw, &p, sizeof(struct Point2D));
 	}
 	fclose(f);
 	EdfClose(&dw);

@@ -54,6 +54,9 @@
     <ClCompile Include="..\converter\ConverterEcho.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="..\converter\MbCrc.c">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\EdfWriter.h">

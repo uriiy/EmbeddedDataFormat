@@ -54,6 +54,9 @@
     <ClCompile Include="ConverterEcho.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="MbCrc.c">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\_pch.h">
