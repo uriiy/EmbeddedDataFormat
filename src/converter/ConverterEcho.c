@@ -84,17 +84,12 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 	EdfWriteStringBytes(&dw, "Cluster", &dat.Id.Cluster, FIELD_SIZEOF(RESEARCH_ID_V2_0, Cluster));
 	EdfWriteStringBytes(&dw, "Well", &dat.Id.Well, FIELD_SIZEOF(RESEARCH_ID_V2_0, Well));
 
-	char cbuf[256] = { 0 };
-	snprintf(cbuf, sizeof(cbuf), "%u.%02u.%02uT%02u:%02u:%02u",
-		(uint32_t)2000 + dat.Id.Time.Year, dat.Id.Time.Month, dat.Id.Time.Day,
-		dat.Id.Time.Hour, dat.Id.Time.Min, dat.Id.Time.Sec);
-	EdfWriteInfData(&dw, CString, "DateTime", &((char*) { cbuf }));
-	//EdfWriteInfData(&dw, UInt8, "Year", &dat.Id.Time.Year);
-	//EdfWriteInfData(&dw, UInt8, "Month", &dat.Id.Time.Month);
-	//EdfWriteInfData(&dw, UInt8, "Day", &dat.Id.Time.Day);
-	//EdfWriteInfData(&dw, UInt8, "Hour", &dat.Id.Time.Hour);
-	//EdfWriteInfData(&dw, UInt8, "Min", &dat.Id.Time.Min);
-	//EdfWriteInfData(&dw, UInt8, "Sec", &dat.Id.Time.Sec);
+	EdfWriteInfo(&dw, &ResearchTimeInf, &writed);
+	EdfWriteDataBlock(&dw, &(TIME)
+	{
+		dat.Id.Time.Hour, dat.Id.Time.Min, dat.Id.Time.Sec,
+			dat.Id.Time.Day, dat.Id.Time.Month, dat.Id.Time.Year,
+	}, sizeof(TIME));
 
 	EdfWriteInfData(&dw, UInt16, "RegType", &dat.Id.RegType);
 	EdfWriteInfData(&dw, UInt32, "RegNum", &dat.Id.RegNum);

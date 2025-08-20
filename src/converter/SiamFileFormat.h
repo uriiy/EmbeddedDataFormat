@@ -118,4 +118,40 @@ typedef struct
 
 #pragma pack(pop)
 
+
+//-----------------------------------------------------------------------------
+// edf infos
+//-----------------------------------------------------------------------------
+static const TypeInfo_t ResearchTimeInf =
+{
+	.Type = Struct, .Name = "Time", .Dims = { 0, NULL }, .Childs =
+	{
+		.Count = 6,
+		.Item = (TypeInfo_t[])
+		{
+			{ UInt8, "Hour" },
+			{ UInt8, "Min" },
+			{ UInt8, "Sec" },
+			{ UInt8, "Day" },
+			{ UInt8, "Month" },
+			{ UInt8, "Year" },
+		}
+	}
+};
+//-----------------------------------------------------------------------------
+static const TypeInfo_t OmegaDataInf =
+{
+	.Type = Struct, .Name = "OMEGA_DATA_V1_1", .Dims = { 0, NULL }, .Childs =
+	{
+		.Count = 4,
+		.Item = (TypeInfo_t[])
+		{
+			{ UInt32, "Time" },
+			{ Int32, "Press" },
+			{ Int32, "Temp" },
+			{ UInt16, "Vbat" },
+		}
+	}
+};
+//-----------------------------------------------------------------------------
 #endif

@@ -7,32 +7,6 @@
 //-----------------------------------------------------------------------------
 /// SPSK
 //-----------------------------------------------------------------------------
-TypeInfo_t recordInf =
-{
-	.Type = Struct, .Name = "OMEGA_DATA_V1_1", .Dims = {0, NULL},
-	.Childs =
-	{
-		.Count = 4,
-		.Item = (TypeInfo_t[])
-		{
-			{ UInt32, "время от начала дня(мс)" },
-			{ Int32, "давление, 0.001(атм)" },
-			{ Int32, "температура, 0.001(°С)" },
-			{ UInt16, "сопр.изоляции(кОм)" },
-		}
-	}
-};
-#pragma pack(push,1)
-typedef struct
-{
-	uint32_t Time;			// время измерения от начала дня, мс
-	int32_t Press;			// давление, 0.001 атм
-	int32_t Temp;			// температура, 0.001 °С
-	uint16_t Vbat;			// напряжение батареи,
-} Dat_t;
-#pragma pack(pop)
-
-//-----------------------------------------------------------------------------
 int DatToEdf(const char* src, const char* edf, char mode)
 {
 	FILE* f = NULL;
@@ -64,9 +38,8 @@ int DatToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfData(&dw, UInt32, "FileType", &dat.FileType);
 	EdfWriteStringBytes(&dw, "FileDescription", &dat.FileDescription, FIELD_SIZEOF(SPSK_FILE_V1_1, FileDescription));
 
-	EdfWriteInfData(&dw, UInt8, "Year", &dat.Year);
-	EdfWriteInfData(&dw, UInt8, "Month", &dat.Month);
-	EdfWriteInfData(&dw, UInt8, "Day", &dat.Day);
+	EdfWriteInfo(&dw, &ResearchTimeInf, &writed);
+	EdfWriteDataBlock(&dw, &(TIME) { 0, 0, 0, dat.Day, dat.Month, dat.Year }, sizeof(TIME));
 
 	EdfWriteInfData(&dw, UInt16, "Shop", &dat.Id.Shop);
 	EdfWriteInfData(&dw, UInt16, "Field", &dat.Id.Field);
@@ -82,7 +55,15 @@ int DatToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfData(&dw, UInt32, "SensNum", &dat.SensNum);
 	EdfWriteInfData(&dw, UInt16, "SensVer", &dat.SensVer);
 
-	if ((err = EdfWriteInfo(&dw, &recordInf, &writed)))
+	TypeInfo_t commentType = { .Type = CString, .Name = "Comments" };
+	EdfWriteInfo(&dw, &commentType, &writed);
+	EdfWriteDataBlock(&dw, &((char*) { "описание структуры OMEGA_DATA_V1_1" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "Time - время измерения от начала дня, мс" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "Press - давление, 0.001 атм" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "Temp - температура, 0.001 °С" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "Vbat - напряжение батареи V" }), sizeof(char*));
+
+	if ((err = EdfWriteInfo(&dw, &OmegaDataInf, &writed)))
 		return err;
 
 	OMEGA_DATA_V1_1 record;
@@ -114,9 +95,17 @@ int EdfToDat(const char* edfFile, const char* datFile)
 	if ((err = fopen_s(&f, datFile, "wb")))
 		return err;
 
+	// hint
+	//int const* ptr; // ptr is a pointer to constant int 
+	//int* const ptr;  // ptr is a constant pointer to int
+
 	SPSK_FILE_V1_1 dat = { 0 };
 	OMEGA_DATA_V1_1 record = { 0 };
 	size_t recN = 0;
+	const size_t data_len = sizeof(OMEGA_DATA_V1_1) - 2;// skip crc, not used yet
+	uint8_t* precord = (void*)&record;
+	uint8_t* const recordBegin = precord;
+	uint8_t* const recordEnd = recordBegin + data_len;
 
 	while (!(err = EdfReadBlock(&br)))
 	{
@@ -166,17 +155,12 @@ int EdfToDat(const char* edfFile, const char* datFile)
 				len = MIN(len, FIELD_SIZEOF(SPSK_FILE_V1_1, FileDescription));
 				memcpy(dat.FileDescription, &br.Block[1], len);
 			}
-			else if (0 == _strnicmp(br.t->Name, "Year", 10))
+			else if (0 == _strnicmp(br.t->Name, ResearchTimeInf.Name, 100))
 			{
-				dat.Year = *((uint8_t*)br.Block);
-			}
-			else if (0 == _strnicmp(br.t->Name, "Month", 10))
-			{
-				dat.Month = *((uint8_t*)br.Block);
-			}
-			else if (0 == _strnicmp(br.t->Name, "Day", 10))
-			{
-				dat.Day = *((uint8_t*)br.Block);
+				TIME t = *((TIME*)br.Block);
+				dat.Year = t.Year;
+				dat.Month = t.Month;
+				dat.Day = t.Day;
 			}
 			else if (0 == _strnicmp(br.t->Name, "Shop", 10))
 			{
@@ -222,46 +206,36 @@ int EdfToDat(const char* edfFile, const char* datFile)
 			{
 				if (0 == recN++)
 				{
+					dat.crc = MbCrc16(&dat, sizeof(SPSK_FILE_V1_1));
 					if (1 != fwrite(&dat, sizeof(SPSK_FILE_V1_1), 1, f))
 						return -1;
 				}
 				uint8_t* pblock = br.Block;
-				const size_t data_len = sizeof(OMEGA_DATA_V1_1) - 2;// skip crc
 
-				while(br.BlockLen)
+				while (0 < br.BlockLen)
 				{
-					memcpy(&record, pblock, data_len);
-					pblock += data_len;
-					br.BlockLen -= data_len;
-					if (data_len > br.BlockLen)
-						break;
-					if (1 != fwrite(&record, sizeof(OMEGA_DATA_V1_1), 1, f))
-						return -1;
-				}
-			}
-		}
+					size_t len = (size_t)MIN(br.BlockLen, (size_t)(recordEnd - precord));
+					memcpy(precord, pblock, len);
+					precord += len;
+					pblock += len;
+					br.BlockLen -= len;
+					if (recordEnd == precord)
+					{
+						precord = recordBegin;
+						if (1 != fwrite(&record, sizeof(OMEGA_DATA_V1_1), 1, f))
+							return -1;
+					}
+				}//while (0 < br.BlockLen)
+			}//else
+		}//case btVarData:
 		break;
-		}
+		}//switch (br.BlockType)
 		if (0 != err)
 		{
 			LOG_ERR();
 			break;
 		}
-	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	}//while (!(err = EdfReadBlock(&br)))
 
 	fclose(f);
 	EdfClose(&br);
