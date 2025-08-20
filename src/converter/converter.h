@@ -16,4 +16,6 @@ int EdfToEcho(const char* src, const char* dst);
 int DynToEdf(const char* src, const char* dst, char mode);
 int EdfToDyn(const char* src, const char* dst);
 
+int EchoRawToEdf(const char* src, const char* edf, char mode);
+
 #endif

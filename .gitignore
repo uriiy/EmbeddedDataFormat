@@ -56,3 +56,4 @@ Release/
 Thumbs.db
 .vs/
 doc/~$*
+*norm_8_raw*

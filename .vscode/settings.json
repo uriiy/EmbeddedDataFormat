@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "converter.h": "c",
+        "edfheader.h": "c",
+        "_pch.h": "c",
+        "edf_cfg.h": "c"
+    },
+    "cSpell.enabled": false,
+    "editor.formatOnSave": true,
+    "C_Cpp.formatting": "vcFormat",
+}

@@ -48,6 +48,11 @@ int main(int argc, char* argv[])
 			if (IsExt(dst, "bdf") && 0 == ChangeExt(dst, "d"))
 				return EdfToDyn(argv[1], dst);
 		}
+		else if (0 == _strnicmp("raw.txt", argv[2], 3))
+		{
+			if (IsExt(dst, "raw.txt") && 0 == ChangeExt(dst, "bdf"))
+				return EchoRawToEdf(argv[1], dst, 'b');
+		}
 	}
 	return 0;
 }
