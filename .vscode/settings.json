@@ -8,4 +8,10 @@
     "cSpell.enabled": false,
     "editor.formatOnSave": true,
     "C_Cpp.formatting": "vcFormat",
+    "cmake.debugConfig": {
+        "args": [
+            "src/Test/norm_8_raw.txt",
+            "raw.txt"
+        ]
+    }
 }

@@ -86,15 +86,19 @@ int EchoRawToEdf(const char* src, const char* edf, char mode)
 	if (err = EdfWriteHeader(&dw, &h, &writed))
 		return err;
 
-	TypeInfo_t t = { .Type = UInt16,
-				 .Name = "Echo_chart" };
-	EdfWriteInfo(&dw, &t, &writed);
+	EdfWriteInfo(&dw, &Point2DInf, &writed);
 
+	struct Point2D p = { 0,0 };
+	float xDiscrete = (1 / (float)SAMPLE_FREQ);
+	int maxDepthMult = 1;
+	float speed = 341.0;
 	uint16_t adc_tmp;
 	for (int i = 0; i < sig.num; i++)
 	{
 		adc_tmp = (uint16_t)sig.raw[i];
-		EdfWriteDataBlock(&dw, (uint8_t*)&adc_tmp, sizeof(int16_t));
+		p.x = xDiscrete * i * maxDepthMult * speed / 2.0;
+		p.y = (float)(adc_tmp >> 4);
+		EdfWriteDataBlock(&dw, &p, sizeof(struct Point2D));
 	}
 
 	EdfWriteInfData(&dw, UInt8, "KU", &((uint8_t) { 4 }));
@@ -102,7 +106,7 @@ int EchoRawToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfData(&dw, UInt8, "AWT", &((uint8_t) { 0 }));
 	EdfWriteInfData(&dw, UInt32, "DLIT(ms)", &((uint32_t) { 0 }));
 	EdfWriteInfData(&dw, Single, "Urov(m)", &((float) { 309.45 }));
-	EdfWriteInfData(&dw, Single, "Speed(m/s)", &((float) { 341 }));
+	EdfWriteInfData(&dw, Single, "Speed(m/s)", &((float) { speed }));
 	EdfWriteInfData(&dw, Single, "Time(s)", &((float) { 0 }));
 	EdfWriteInfData(&dw, UInt32, "Reflection", &((uint32_t) { 3 }));
 	EdfWriteInfData(&dw, UInt16, "Sample", &((uint16_t) { 1020 }));
