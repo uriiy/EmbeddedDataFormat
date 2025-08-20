@@ -94,6 +94,21 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfData(&dw, UInt16, "RegType", &dat.Id.RegType);
 	EdfWriteInfData(&dw, UInt32, "RegNum", &dat.Id.RegNum);
 
+	EdfWriteInfo(&dw, &CommentsInf, &writed);
+	EdfWriteDataBlock(&dw, &((char*) { "Reflections - число отражений" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "Level - уровень без поправки на скорость звука (для скорости 341.333 м/с), м" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "Pressure - затрубное давление (атм)" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "Table - номер таблицы скоростей" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "Speed - скорость звука, м/с" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "BufPressure - буферное давление (атм)" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "LinePressure - линейное давление (атм)" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "Current - ток, 0.1А" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "IdleHour - время простоя, ч" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "IdleMin - время простоя, мин" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "Mode - режим исследования" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "Acc - напряжение аккумулятора датчика, (В)" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "Temp - температура датчика, (°С)" }), sizeof(char*));
+
 	EdfWriteInfData(&dw, UInt16, "Reflections", &((uint16_t) { ExtractReflections(dat.Reflections) }));
 	EdfWriteInfData(&dw, Double, "Level", &((double) { ExtractLevel(dat.Level) }));
 	EdfWriteInfData(&dw, Double, "Discrete", &discrete);//!!
@@ -116,29 +131,14 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 	//for (size_t i = 0; i < 3000; i++)
 	//	EdfWriteDataBlock(&dw, &dat.Data[i], sizeof(uint8_t));
 
-#pragma pack(push,1)
-	struct Point
-	{
-		float x;
-		float y;
-	};
-#pragma pack(pop)
-	TypeInfo_t pointType =
-	{
-		Struct, "EchoChart", { 0, NULL },
-		.Childs =
-		{
-			.Count = 2,
-			.Item = (TypeInfo_t[])
-			{
-				{ Single, "x" },
-				{ Single, "y" },
-			}
-		}
-	};
-	EdfWriteInfo(&dw, &pointType, &writed);
+	EdfWriteInfo(&dw, &CommentsInf, &writed);
+	EdfWriteDataBlock(&dw, &((char*) { "описание графика Chart2D" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "x - глубина, м" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "y - амплитуда, ацп" }), sizeof(char*));
 
-	struct Point p = { 0,0 };
+	EdfWriteInfo(&dw, &Point2DInf, &writed);
+
+	struct Point2D p = { 0,0 };
 	for (size_t i = 0; i < 3000; i++)
 	{
 		if (dat.Data[i] > 127)
@@ -148,7 +148,7 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 
 		p.x = xDiscrete * i * maxDepthMult;
 
-		EdfWriteDataBlock(&dw, &p, sizeof(struct Point));
+		EdfWriteDataBlock(&dw, &p, sizeof(struct Point2D));
 	}
 	fclose(f);
 	EdfClose(&dw);

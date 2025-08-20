@@ -7,34 +7,6 @@
 //-----------------------------------------------------------------------------
 /// DYN
 //-----------------------------------------------------------------------------
-// helper
-/*
-TypeInfo_t DoubleValueInf =
-{
-	Struct, "DoubleValue", { 0, NULL },
-	.Childs =
-	{
-		.Count = 4,
-		.Item = (TypeInfo_t[])
-		{
-			{ CString, "Name" },
-			{ Double, "Value" },
-			{ CString, "Unit" },
-			{ CString, "Description" },
-		}
-	}
-};
-#pragma pack(push,1)
-typedef struct DoubleValue
-{
-	char* Name;
-	double Value;
-	char* Unit;
-	char* Description;
-} DoubleValue_t;
-#pragma pack(pop)
-*/
-//-----------------------------------------------------------------------------
 static int8_t ExtractTravel(uint16_t number) // 6bit integer
 {
 	int8_t result = ((number & 0xFC00) >> 10);
@@ -71,25 +43,6 @@ int DynToEdf(const char* src, const char* edf, char mode)
 	if ((err = EdfWriteHeader(&dw, &h, &writed)))
 		return err;
 
-	TypeInfo_t commentType = { .Type = CString, .Name = "Comments" };
-	EdfWriteInfo(&dw, &commentType, &writed);
-	EdfWriteDataBlock(&dw, &((char*) { "Rod - диаметр штока" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "Aperture - номер отверстия" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "MaxWeight - максимальная нагрузка (кг)" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "MinWeight - минимальная нагрузка (кг)" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "TopWeight - вес штанг вверху (кг)" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "BotWeight - вес штанг внизу (кг)" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "Travel - ход штока (мм)" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "BeginPos - положение штока перед первым измерением (мм)" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "Period - период качаний (мс)" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "Cycles - пропущено циклов" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "Pressure - затрубное давление (атм)" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "BufPressure - буферное давление (атм)" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "LinePressure - линейное давление (атм)" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "PumpType - тип привода станка-качалки {}" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "Acc - напряжение аккумулятора датчика, (В)" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "Temp - температура датчика, (°С)" }), sizeof(char*));
-
 	EdfWriteInfData(&dw, UInt32, "FileType", &dat.FileType);
 	EdfWriteStringBytes(&dw, "FileDescription", &dat.FileDescription, FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription));
 	// RESEARCH_ID_V2_0
@@ -112,6 +65,24 @@ int DynToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfData(&dw, UInt32, "RegNum", &dat.Id.RegNum);
 	// - end RESEARCH_ID_V2_0
 
+	EdfWriteInfo(&dw, &CommentsInf, &writed);
+	EdfWriteDataBlock(&dw, &((char*) { "Rod - диаметр штока" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "Aperture - номер отверстия" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "MaxWeight - максимальная нагрузка (кг)" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "MinWeight - минимальная нагрузка (кг)" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "TopWeight - вес штанг вверху (кг)" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "BotWeight - вес штанг внизу (кг)" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "Travel - ход штока (мм)" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "BeginPos - положение штока перед первым измерением (мм)" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "Period - период качаний (мс)" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "Cycles - пропущено циклов" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "Pressure - затрубное давление (атм)" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "BufPressure - буферное давление (атм)" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "LinePressure - линейное давление (атм)" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "PumpType - тип привода станка-качалки {}" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "Acc - напряжение аккумулятора датчика, (В)" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "Temp - температура датчика, (°С)" }), sizeof(char*));
+
 	EdfWriteInfData(&dw, Single, "Rod", &((float) { dat.Rod / 10.0f }));
 	EdfWriteInfData(&dw, UInt16, "Aperture", &dat.Aperture);
 	EdfWriteInfData(&dw, UInt32, "MaxWeight", &((uint32_t) { dat.MaxWeight* dat.LoadStep }));
@@ -128,8 +99,12 @@ int DynToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfData(&dw, UInt16, "PumpType", &dat.PumpType);
 	EdfWriteInfData(&dw, Single, "Acc", &((float) { dat.Acc / 10.0f }));
 	EdfWriteInfData(&dw, Single, "Temp", &((float) { dat.Temp / 10.0f }));
-	/*
+	
 	{
+		EdfWriteInfo(&dw, &CommentsInf, &writed);
+		EdfWriteDataBlock(&dw, &((char*) { "Key-Value+Unit+Description list sample" }), sizeof(char*));
+
+
 		EdfWriteInfo(&dw, &DoubleValueInf, &writed);
 		EdfWriteDataBlock(&dw, &(DoubleValue_t)
 		{
@@ -150,34 +125,19 @@ int DynToEdf(const char* src, const char* edf, char mode)
 		EdfWriteDataBlock(&dw, &(DoubleValue_t)
 		{ "Temp", dat.Temp / 10.0f, "℃", "температура датчика" }, sizeof(DoubleValue_t));
 	}
-	*/
-#pragma pack(push,1)
-	struct Point
-	{
-		float pos;
-		float w;
-	};
-#pragma pack(pop)
-	TypeInfo_t pointType =
-	{
-		Struct, "DynChart", { 0, NULL },
-		.Childs =
-		{
-			.Count = 2,
-			.Item = (TypeInfo_t[])
-			{
-				{ Single, "Position(m)" },
-				{ Single, "Weight(t)" }, //вес в тоннах
-			}
-		}
-	};
-	EdfWriteInfo(&dw, &pointType, &writed);
-	struct Point p = { 0,0 };
+	
+	EdfWriteInfo(&dw, &CommentsInf, &writed);
+	EdfWriteDataBlock(&dw, &((char*) { "описание графика Chart2D" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "x - перемещение, м" }), sizeof(char*));
+	EdfWriteDataBlock(&dw, &((char*) { "y - вес в тоннах" }), sizeof(char*));
+
+	EdfWriteInfo(&dw, &Point2DInf, &writed);
+	struct Point2D p = { 0,0 };
 	for (size_t i = 0; i < 1000; i++)
 	{
-		p.w = (float)((dat.Data[i] & 1023) * dat.LoadStep * 1.0E-3);
-		p.pos += (float)(ExtractTravel(dat.Data[i]) * dat.TravelStep / 1.E4);
-		EdfWriteDataBlock(&dw, &p, sizeof(struct Point));
+		p.x += (float)(ExtractTravel(dat.Data[i]) * dat.TravelStep / 1.E4);
+		p.y = (float)((dat.Data[i] & 1023) * dat.LoadStep * 1.0E-3);
+		EdfWriteDataBlock(&dw, &p, sizeof(struct Point2D));
 	}
 	fclose(f);
 	EdfClose(&dw);

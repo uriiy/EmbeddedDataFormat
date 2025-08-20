@@ -116,11 +116,10 @@ typedef struct
 	uint16_t crc;						//crc16
 } DYN_FILE_V2_0;
 
-#pragma pack(pop)
-
-
 //-----------------------------------------------------------------------------
 // edf infos
+//-----------------------------------------------------------------------------
+static const TypeInfo_t CommentsInf = { .Type = CString, .Name = "Comments" };
 //-----------------------------------------------------------------------------
 static const TypeInfo_t ResearchTimeInf =
 {
@@ -153,5 +152,50 @@ static const TypeInfo_t OmegaDataInf =
 		}
 	}
 };
+//-----------------------------------------------------------------------------
+static const TypeInfo_t DoubleValueInf =
+{
+	Struct, "DoubleValue", { 0, NULL },
+	.Childs =
+	{
+		.Count = 4,
+		.Item = (TypeInfo_t[])
+		{
+			{ CString, "Name" },
+			{ Double, "Value" },
+			{ CString, "Unit" },
+			{ CString, "Description" },
+		}
+	}
+};
+typedef struct DoubleValue
+{
+	char* Name;
+	double Value;
+	char* Unit;
+	char* Description;
+} DoubleValue_t;
+//-----------------------------------------------------------------------------
+static const TypeInfo_t Point2DInf =
+{
+	Struct, "Chart2D", { 0, NULL },
+	.Childs =
+	{
+		.Count = 2,
+		.Item = (TypeInfo_t[])
+		{
+			{ Single, "x" },
+			{ Single, "y" },
+		}
+	}
+};
+struct Point2D
+{
+	float x;
+	float y;
+};
+
+//-----------------------------------------------------------------------------
+#pragma pack(pop)
 //-----------------------------------------------------------------------------
 #endif
