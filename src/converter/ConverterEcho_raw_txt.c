@@ -6,6 +6,7 @@
 #include "math.h"
 #include "stdlib.h"
 #include "stdbool.h"
+#include "time.h"
 //-----------------------------------------------------------------------------
 /// ECHO_RAW_TXT
 //-----------------------------------------------------------------------------
@@ -79,15 +80,31 @@ int EchoRawToEdf(const char* src, const char* edf, char mode)
 	} while (file_cnt);
 	sig.num = meas_cnt - 1;
 	fclose(f);
-
+	//-----------------------------------------------------------------------------
 	EdfOpen(&dw, edf, "wb");
-
+	//-----------------------------------------------------------------------------
 	EdfHeader_t h = MakeHeaderDefault();
 	if (err = EdfWriteHeader(&dw, &h, &writed))
 		return err;
+	//-----------------------------------------------------------------------------
+	EdfWriteInfo(&dw, &DateTimeInf, &writed);
+	struct tm local_time;
+	_getsystime(&local_time);
+	DateTime_t date_time = {
+	 .Year = local_time.tm_year + 1900,
+	.Month = local_time.tm_mon + 1,
+	.Day = local_time.tm_mday,
+	.Hour = local_time.tm_hour,
+	.Min = local_time.tm_min,
+	.Sec = local_time.tm_sec,
+	.mSec = 0,
+	.Tz = 0,
+	};
+	EdfWriteDataBlock(&dw, &date_time, sizeof(date_time));
+	//-----------------------------------------------------------------------------
 
+	//-----------------------------------------------------------------------------
 	EdfWriteInfo(&dw, &Point2DInf, &writed);
-
 	struct Point2D p = { 0,0 };
 	float xDiscrete = (1 / (float)SAMPLE_FREQ);
 	int maxDepthMult = 1;
@@ -100,7 +117,7 @@ int EchoRawToEdf(const char* src, const char* edf, char mode)
 		p.y = (float)(adc_tmp >> 4);
 		EdfWriteDataBlock(&dw, &p, sizeof(struct Point2D));
 	}
-
+	//-----------------------------------------------------------------------------
 	EdfWriteInfData(&dw, UInt8, "KU", &((uint8_t) { 4 }));
 	EdfWriteInfData(&dw, UInt8, "SHUNT", &((uint8_t) { 1 }));
 	EdfWriteInfData(&dw, UInt8, "AWT", &((uint8_t) { 0 }));
