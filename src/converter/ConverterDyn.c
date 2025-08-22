@@ -59,12 +59,12 @@ int DynToEdf(const char* src, const char* edf, char mode)
 	EdfWriteDataBlock(&dw, &(DateTime_t)
 	{
 		dat.Id.Time.Year + 2000, dat.Id.Time.Month, dat.Id.Time.Day,
-		dat.Id.Time.Hour, dat.Id.Time.Min, dat.Id.Time.Sec,
+			dat.Id.Time.Hour, dat.Id.Time.Min, dat.Id.Time.Sec,
 	}, sizeof(DateTime_t));
 	EdfWriteInfData(&dw, UInt16, "RegType", &dat.Id.RegType);
 	EdfWriteInfData(&dw, UInt32, "RegNum", &dat.Id.RegNum);
 	// - end RESEARCH_ID_V2_0
-
+	/*
 	EdfWriteInfo(&dw, &CommentsInf, &writed);
 	EdfWriteDataBlock(&dw, &((char*) { "Rod - диаметр штока" }), sizeof(char*));
 	EdfWriteDataBlock(&dw, &((char*) { "Aperture - номер отверстия" }), sizeof(char*));
@@ -99,37 +99,49 @@ int DynToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfData(&dw, UInt16, "PumpType", &dat.PumpType);
 	EdfWriteInfData(&dw, Single, "Acc", &((float) { dat.Acc / 10.0f }));
 	EdfWriteInfData(&dw, Single, "Temp", &((float) { dat.Temp / 10.0f }));
-	
+	*/
 	{
 		EdfWriteInfo(&dw, &CommentsInf, &writed);
-		EdfWriteDataBlock(&dw, &((char*) { "Key-Value+Unit+Description list sample" }), sizeof(char*));
+		EdfWriteDataBlock(&dw, &((char*) { "Key-Value-Unit-Description list sample" }), sizeof(char*));
 
+		EdfWriteInfo(&dw, &UInt16ValueInf, &writed);
+		EdfWriteDataBlock(&dw, &(UInt16Value_t[])
+		{
+			{ "Aperture", dat.Aperture, "", "номер отверстия 1" },
+			{ "Cycles", dat.Cycles, "", "пропущено циклов" },
+			{ "PumpType", dat.PumpType, "", "тип привода станка-качалки {}" },
+		}, sizeof(UInt16Value_t[3]));
+
+		EdfWriteInfo(&dw, &UInt32ValueInf, &writed);
+		EdfWriteDataBlock(&dw, &(UInt32Value_t[])
+		{
+			{ "MaxWeight", dat.MaxWeight* dat.LoadStep, "кг", "максимальная нагрузка" },
+			{ "MinWeight", dat.MinWeight * dat.LoadStep, "кг", "инимальная нагрузка" },
+			{ "TopWeight", dat.TopWeight * dat.LoadStep, "кг", "вес штанг вверху" },
+			{ "BotWeight", dat.BotWeight * dat.LoadStep, "кг", "вес штанг внизу" },
+			{ "Period", dat.Period * dat.TimeStep, "мм", "ход штока" },
+		}, sizeof(UInt32Value_t[3]));
 
 		EdfWriteInfo(&dw, &DoubleValueInf, &writed);
-		EdfWriteDataBlock(&dw, &(DoubleValue_t)
+		EdfWriteDataBlock(&dw, &(DoubleValue_t[])
 		{
-			.Name = "Rod", .Value = dat.Rod / 10.0f, .Unit = "mm",
-				.Description = "диаметр штока"
-		}, sizeof(DoubleValue_t));
-
-		EdfWriteDataBlock(&dw, &(DoubleValue_t)
-		{ "Cycles", dat.Cycles, "", "пропущено циклов" }, sizeof(DoubleValue_t));
-		EdfWriteDataBlock(&dw, &(DoubleValue_t)
-		{ "Pressure", dat.Pressure / 10.0f, "атм", "затрубное давление" }, sizeof(DoubleValue_t));
-		EdfWriteDataBlock(&dw, &(DoubleValue_t)
-		{ "BufPressure", dat.BufPressure / 10.0f, "атм", "буферное давление" }, sizeof(DoubleValue_t));
-		EdfWriteDataBlock(&dw, &(DoubleValue_t)
-		{ "LinePressure", dat.LinePressure / 10.0f, "атм", "линейное давление" }, sizeof(DoubleValue_t));
-		EdfWriteDataBlock(&dw, &(DoubleValue_t)
-		{ "Acc", dat.Acc / 10.0f, "V", .Description = "напряжение аккумулятора"}, sizeof(DoubleValue_t));
-		EdfWriteDataBlock(&dw, &(DoubleValue_t)
-		{ "Temp", dat.Temp / 10.0f, "℃", "температура датчика" }, sizeof(DoubleValue_t));
+			{ "Rod", dat.Rod / 10.0f, "мм", "диаметр штока" },
+			{ "Travel", dat.Travel * dat.TravelStep / 10.0f, "мм", "ход штока" },
+			{ "BeginPos", dat.BeginPos * dat.TravelStep / 10.0f, "мм", "положение штока перед первым измерением" },
+			{ "Pressure", dat.Pressure / 10.0f, "атм", "затрубное давление" },
+			{ "BufPressure", dat.BufPressure / 10.0f, "атм", "буферное давление" },
+			{ "LinePressure", dat.LinePressure / 10.0f, "атм", "линейное давление" },
+			{ "Acc",  dat.Acc / 10.0f, "V", .Description = "напряжение аккумулятора" },
+			{ "Temp", dat.Temp / 10.0f, "℃", "температура датчика" },
+		}, sizeof(DoubleValue_t[8]));
 	}
-	
-	EdfWriteInfo(&dw, &CommentsInf, &writed);
-	EdfWriteDataBlock(&dw, &((char*) { "описание графика Chart2D" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "x - перемещение, м" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "y - вес в тоннах" }), sizeof(char*));
+
+	EdfWriteInfo(&dw, &DescriptionChart2DInf, &writed);
+	EdfWriteDataBlock(&dw, &((struct DescriptionChart2D)
+	{
+		"динамограмма", "перемещение, м", "вес в тоннах"
+	})
+		, sizeof(struct DescriptionChart2D));
 
 	EdfWriteInfo(&dw, &Point2DInf, &writed);
 	struct Point2D p = { 0,0 };
@@ -144,8 +156,209 @@ int DynToEdf(const char* src, const char* edf, char mode)
 	return 0;
 }
 //-----------------------------------------------------------------------------
-int EdfToDyn(const char* src, const char* dst)
+static size_t DeSerialize(const uint8_t* b, UInt16Value_t* s)
 {
+	size_t offset = 0;
+	uint8_t len = MIN(b[offset], (uint8_t)0xFE);
+	s->Name = (char*)&b[1 + offset];
+	offset += 1 + len;
+	s->Value = *((uint16_t*)&b[offset]);
+	offset += sizeof(uint16_t);
+	len = MIN(b[offset], (uint8_t)0xFE);
+	s->Unit = (char*)&b[1 + offset];
+	offset += 1 + len;
+	len = MIN(b[offset], (uint8_t)0xFE);
+	s->Description = (char*)&b[1 + offset];
+	offset += 1 + len;
+	return offset;
+}
+
+
+
+int EdfToDyn(const char* edfFile, const char* dynFile)
+{
+	int err = 0;
+
+	EdfWriter_t br;
+	size_t writed = 0;
+	if ((err = EdfOpen(&br, edfFile, "rb")))
+		return err;
+
+	FILE* f = NULL;
+	if ((err = fopen_s(&f, dynFile, "wb")))
+		return err;
+
+	// hint
+	//int const* ptr; // ptr is a pointer to constant int 
+	//int* const ptr;  // ptr is a constant pointer to int
+
+	DYN_FILE_V2_0 dat = { 0 };
+	Point2D_t record = { 0 };
+	size_t recN = 0;
+	const size_t data_len = sizeof(Point2D_t);
+	uint8_t* precord = (void*)&record;
+	uint8_t* const recordBegin = precord;
+	uint8_t* const recordEnd = recordBegin + data_len;
+
+	uint8_t bbuf[1024];
+	EdfWriter_t brdr = { 0 };
+	MemStream_t ms = { 0 };
+	if ((err = MemStreamOpen(&ms, bbuf, sizeof(bbuf), NULL)))
+		return err;
+	EdfOpenStream(&brdr, (Stream_t*)&ms, "wb");
+
+	while (!(err = EdfReadBlock(&br)))
+	{
+		switch (br.BlockType)
+		{
+		default: break;
+		case btHeader:
+			if (16 == br.BlockLen)
+			{
+				//EdfHeader_t h = { 0 };
+				//err = MakeHeaderFromBytes(br.Block, br.BlockLen, &h);
+				//if (!err)
+				//	err = EdfWriteHeader(&tw, &h, &writed);
+			}
+			break;
+		case btVarInfo:
+		{
+			br.t = NULL;
+			uint8_t* srcData = br.Block;
+			uint8_t* mem = (uint8_t*)&br.Buf;
+			size_t memLen = sizeof(br.Buf);
+			err = InfoFromBytes(&srcData, (TypeInfo_t*)&br.Buf, &mem, memLen);
+			writed = mem - br.Buf;
+			if (!err)
+			{
+				br.t = (TypeInfo_t*)&br.Buf;
+				writed = 0;
+			}
+			else
+			{
+				err = 0;
+				//return err;// ignore wrong or too big info block
+			}
+		}
+		break;
+		case btVarData:
+		{
+			//EdfWriteDataBlock(&tw, &br.Block, br.BlockLen);
+			//EdfFlushDataBlock(&tw, &writed);
+			if (0 == _stricmp(br.t->Name, "FileType"))
+				dat.FileType = *((uint32_t*)br.Block);
+			else if (0 == _stricmp(br.t->Name, "FileDescription"))
+			{
+				uint8_t len = *((uint8_t*)br.Block);
+				len = MIN(len, FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription));
+				memcpy(dat.FileDescription, &br.Block[1], len);
+			}
+			else if (0 == _stricmp(br.t->Name, "ResearchType"))
+				dat.Id.ResearchType = *((uint16_t*)br.Block);
+			else if (0 == _stricmp(br.t->Name, "DeviceType"))
+				dat.Id.DeviceType = *((uint16_t*)br.Block);
+			else if (0 == _stricmp(br.t->Name, "DeviceNum"))
+				dat.Id.DeviceNum = *((uint32_t*)br.Block);
+			else if (0 == _stricmp(br.t->Name, "Oper"))
+				dat.Id.Oper = *((uint16_t*)br.Block);
+			else if (0 == _stricmp(br.t->Name, "Shop"))
+				dat.Id.Shop = *((uint16_t*)br.Block);
+			else if (0 == _stricmp(br.t->Name, "Field"))
+				dat.Id.Field = *((uint16_t*)br.Block);
+			else if (0 == _stricmp(br.t->Name, "Cluster"))
+			{
+				uint8_t len = MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Cluster));
+				memcpy(dat.Id.Cluster, &br.Block[1], len);
+			}
+			else if (0 == _stricmp(br.t->Name, "Well"))
+			{
+				uint8_t len = MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Well));
+				memcpy(dat.Id.Well, &br.Block[1], len);
+			}
+			else if (0 == _stricmp(br.t->Name, DateTimeInf.Name))
+			{
+				DateTime_t t = *((DateTime_t*)br.Block);
+				dat.Id.Time.Year = (uint8_t)(t.Year - 2000);
+				dat.Id.Time.Month = t.Month;
+				dat.Id.Time.Day = t.Day;
+				dat.Id.Time.Hour = t.Hour;
+				dat.Id.Time.Min = t.Min;
+				dat.Id.Time.Sec = t.Sec;
+			}
+			else if (0 == _stricmp(br.t->Name, "RegType"))
+				dat.Id.RegType = *((uint16_t*)br.Block);
+			else if (0 == _stricmp(br.t->Name, "Cycles"))
+				dat.Id.RegNum = *((uint32_t*)br.Block);
+
+
+			else if (0 == _stricmp(br.t->Name, "UInt16Value"))
+			{
+				brdr.t = br.t;
+				int wr = EdfWriteDataBlock(&brdr, br.Block, br.BlockLen);
+				if (0 == wr && ms.Buffer)
+				{
+					int err = EdfFlushDataBlock(&brdr, &writed);
+					uint8_t* pdata = &ms.Buffer[4];
+					size_t pdataLen = brdr.Stream.Impl.Mem.Pos - 4;
+
+					while (pdataLen)
+					{
+						UInt16Value_t s;
+						size_t itemlen = DeSerialize(pdata, &s);
+
+						if (0 == strcmp("Aperture", s.Name))
+							dat.Aperture = s.Value;
+						else if (0 == strcmp("Cycles", s.Name))
+							dat.Cycles = s.Value;
+						else if (0 == strcmp("PumpType", s.Name))
+							dat.PumpType = s.Value;
+						pdata += itemlen;
+						pdataLen -= itemlen;
+					}
+					ms.Pos = 0;
+				}
+				br.BlockLen = 0;
+			}
+
+			else if (0 == _stricmp(br.t->Name, "Chart2D"))
+			{
+				uint8_t* pblock = br.Block;
+
+				while (0 < br.BlockLen)
+				{
+					size_t len = (size_t)MIN(br.BlockLen, (size_t)(recordEnd - precord));
+					memcpy(precord, pblock, len);
+					precord += len;
+					pblock += len;
+					br.BlockLen -= len;
+					if (recordEnd == precord)
+					{
+						precord = recordBegin;
+						//dat.Data[recN] = TODO
+						recN++;
+					}
+					if (1000 <= recN)
+					{
+						if (1 != fwrite(&dat, sizeof(DYN_FILE_V2_0), 1, f))
+							return -1;
+					}
+
+				}//while (0 < br.BlockLen)
+
+
+			}//else
+		}//case btVarData:
+		break;
+		}//switch (br.BlockType)
+		if (0 != err)
+		{
+			LOG_ERR();
+			break;
+		}
+	}//while (!(err = EdfReadBlock(&br)))
+
+	fclose(f);
+	EdfClose(&br);
 	return 0;
 }
 //-----------------------------------------------------------------------------

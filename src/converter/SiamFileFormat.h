@@ -168,6 +168,94 @@ static const TypeInfo_t OmegaDataInf =
 	}
 };
 //-----------------------------------------------------------------------------
+static const TypeInfo_t Point2DInf =
+{
+	Struct, "Chart2D", { 0, NULL },
+	.Childs =
+	{
+		.Count = 2,
+		.Item = (TypeInfo_t[])
+		{
+			{ Single, "x" },
+			{ Single, "y" },
+		}
+	}
+};
+typedef struct Point2D
+{
+	float x;
+	float y;
+} Point2D_t;
+
+//-----------------------------------------------------------------------------
+static const TypeInfo_t DescriptionChart2DInf =
+{
+	Struct, "DescriptionChart2DInf", { 0, NULL },
+	.Childs =
+	{
+		.Count = 3,
+		.Item = (TypeInfo_t[])
+		{
+			{ CString, "Name" },
+			{ CString, "AxisX" },
+			{ CString, "AxisY" },
+		}
+	}
+};
+struct DescriptionChart2D
+{
+	char* Name;
+	char* AxisX;
+	char* AxisY;
+};
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+static const TypeInfo_t UInt16ValueInf =
+{
+	Struct, "UInt16Value", { 0, NULL },
+	.Childs =
+	{
+		.Count = 4,
+		.Item = (TypeInfo_t[])
+		{
+			{ CString, "Name" },
+			{ UInt16, "Value" },
+			{ CString, "Unit" },
+			{ CString, "Description" },
+		}
+	}
+};
+typedef struct UInt16Value
+{
+	char* Name;
+	uint16_t Value;
+	char* Unit;
+	char* Description;
+} UInt16Value_t;
+//-----------------------------------------------------------------------------
+static const TypeInfo_t UInt32ValueInf =
+{
+	Struct, "UInt32Value", { 0, NULL },
+	.Childs =
+	{
+		.Count = 4,
+		.Item = (TypeInfo_t[])
+		{
+			{ CString, "Name" },
+			{ UInt32, "Value" },
+			{ CString, "Unit" },
+			{ CString, "Description" },
+		}
+	}
+};
+typedef struct UInt32Value
+{
+	char* Name;
+	uint32_t Value;
+	char* Unit;
+	char* Description;
+} UInt32Value_t;
+//-----------------------------------------------------------------------------
 static const TypeInfo_t DoubleValueInf =
 {
 	Struct, "DoubleValue", { 0, NULL },
@@ -190,26 +278,6 @@ typedef struct DoubleValue
 	char* Unit;
 	char* Description;
 } DoubleValue_t;
-//-----------------------------------------------------------------------------
-static const TypeInfo_t Point2DInf =
-{
-	Struct, "Chart2D", { 0, NULL },
-	.Childs =
-	{
-		.Count = 2,
-		.Item = (TypeInfo_t[])
-		{
-			{ Single, "x" },
-			{ Single, "y" },
-		}
-	}
-};
-struct Point2D
-{
-	float x;
-	float y;
-};
-
 //-----------------------------------------------------------------------------
 #pragma pack(pop)
 //-----------------------------------------------------------------------------
