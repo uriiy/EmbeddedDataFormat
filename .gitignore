@@ -56,5 +56,6 @@ Release/
 Thumbs.db
 .vs/
 doc/~$*
-norm_8_raw.bdf
-norm_8_raw.tdf
+src/Test/*.tdf
+src/Test/*.bdf
+src/Test/*Conv.*

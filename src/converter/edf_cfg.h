@@ -10,6 +10,8 @@ extern "C" {
 #define BLOCK_SIZE 256
 #endif
 
+//#define LOG_ERR
+//#define LOG_ERRF
 //#define STREAM_BUF_SIZE 64
 
 // !!! use UTF-8 (no BOM) as source files in MSVC strlen

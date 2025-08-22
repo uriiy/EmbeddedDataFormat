@@ -287,11 +287,15 @@ static void DatFormatTest()
 	assert(0 == EchoToEdf("1E.E", "1E.bdf", 'b'));
 	assert(0 == BinToText("1E.bdf", "1EConv.tdf"));
 	assert(0 == CompareFiles("1E.tdf", "1EConv.tdf"));
+	//assert(0 == EdfToEch("1E.bdf", "1EConv.E"));
+	//assert(0 == CompareFiles("1E.E", "1EConv.E"));
 
 	assert(0 == DynToEdf("1D.D", "1D.tdf", 't'));
 	assert(0 == DynToEdf("1D.D", "1D.bdf", 'b'));
 	assert(0 == BinToText("1D.bdf", "1DConv.tdf"));
 	assert(0 == CompareFiles("1D.tdf", "1DConv.tdf"));
+	//assert(0 == EdfToDyn("1D.bdf", "1DConv.D"));
+	//assert(0 == CompareFiles("1D.D", "1DConv.D"));
 }
 //-----------------------------------------------------------------------------
 static void MbCrc16accTest()
@@ -301,7 +305,7 @@ static void MbCrc16accTest()
 		"some test data text 2"
 		"some test data text 3"
 		"some test data text 4";
-	size_t len = strnlen(test, 256);
+	size_t len = strnlength(test, 256);
 	uint16_t crc = MbCrc16(test, len);
 
 	uint16_t crcAcc = 0xFFFF;

@@ -37,10 +37,16 @@ uint16_t MbCrc16acc(const void* d, size_t len, uint16_t crc);
 #define UNUSED(x) (void)(x);
 #endif 
 
+#ifndef LOG_ERR
 #define LOG_ERR() printf("\n err: %d %s %s ", __LINE__, __FILE__, __FUNCTION__)
+#endif
 
-static char errBuf[128];
-#define LOG_ERRF(fmt, ...) { snprintf(errBuf, sizeof(errBuf), fmt, __VA_ARGS__); perror(errBuf); }
+#ifndef LOG_ERRF
+void Log_ErrF(const char* const fmt, ...);
+#define LOG_ERRF(fmt, ...) Log_ErrF(fmt, __VA_ARGS__)
+#endif
+
+size_t strnlength(const char* s, size_t n);
 
 #define ERR_NO 0;
 #define ERR_SRC_SHORT -1;

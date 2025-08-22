@@ -164,6 +164,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\common\EdfUtils.c" />
     <ClCompile Include="..\common\MemStream.c" />
     <ClCompile Include="..\converter\ConverterDat.c" />
     <ClCompile Include="..\converter\ConverterDyn.c" />
