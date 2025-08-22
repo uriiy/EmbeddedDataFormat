@@ -196,7 +196,9 @@ int EdfWriteDataBlock(EdfWriter_t* dw, void* vsrc, size_t xsrcLen)
 		if (0 < wr || 0 == dstLen)
 		{
 			w = 0;
-			EdfFlushDataBlock(dw, &w);
+			int err = EdfFlushDataBlock(dw, &w);
+			if (err)
+				return err;
 			wr = 0;
 			dst -= w;
 			dstLen += w;

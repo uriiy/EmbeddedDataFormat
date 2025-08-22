@@ -61,8 +61,7 @@ int StreamWriteInfoBin(Stream_t* s, const TypeInfo_t* t, size_t* writed)
 		if ((err = StreamWrite(s, writed, &err, 1)))//val=0
 			return err;
 	}
-
-	size_t nameSize = t->Name ? strnlen(t->Name, 255) : 0;
+	size_t nameSize = t->Name ? strnlength(t->Name, 255) : 0;
 
 	if ((err = StreamWrite(s, writed, &nameSize, 1)) ||
 		(err = StreamWrite(s, writed, t->Name, nameSize)))
@@ -127,7 +126,6 @@ int StreamWriteInfoTxt(Stream_t* s, const TypeInfo_t* t, int noffset, size_t* wr
 				return err;
 	}
 	// NAME
-	//size_t nameSize = t->Name ? strnlen(t->Name, 255) : 0;
 	if ((err = StreamWriteFmt(s, writed, " \'%.255s\'", t->Name)))
 		return err;
 	// CHILDS

@@ -147,7 +147,7 @@ static int OpenTextReader(EdfWriter_t* w, const char* file)
 //-----------------------------------------------------------------------------
 int EdfOpen(EdfWriter_t* f, const char* file, const char* mode)
 {
-	if (2 > strnlen(mode, 2))
+	if (2 > strnlength(mode, 2))
 		return -1;
 	int err = 0;
 	if (0 == strncmp("wb", mode, 2) || 0 == strncmp("ab", mode, 2))
@@ -278,7 +278,7 @@ int EdfWriteSep(const char* const src,
 		(*skip)--;
 		return 0;
 	}
-	size_t srcLen = src ? strnlen(src, 10) : 0;
+	size_t srcLen = src ? strnlength(src, 10) : 0;
 	if (!srcLen)
 	{
 		(*wqty)++;
@@ -319,7 +319,7 @@ int EdfWriteStringBytes(EdfWriter_t* dw, char* name, void* str, size_t len)
 	uint8_t strBuf[256] = { 0 };
 	if (NULL == str)
 		return 0;
-	len = MIN(len, strnlen(str, 0xFE));
+	len = MIN(len, strnlength(str, 0xFE));
 	strBuf[0] = (uint8_t)len;
 	memcpy(strBuf + 1, str, len);
 	return EdfWriteDataBlock(dw, strBuf, len + 1);
