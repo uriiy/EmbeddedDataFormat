@@ -178,7 +178,7 @@
     <ClCompile Include="..\common\TypeInfo.c" />
     <ClCompile Include="..\common\EdfWriter.c" />
     <ClCompile Include="..\converter\ConverterEdf.c" />
-    <ClCompile Include="..\converter\EdfImpl.c" />
+    <ClCompile Include="..\converter\FileStreamImpl.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\EdfWriter.h" />

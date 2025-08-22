@@ -30,7 +30,7 @@
     <ClCompile Include="..\common\TypeInfo.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="EdfImpl.c">
+    <ClCompile Include="FileStreamImpl.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="..\common\EdfWriter.c">

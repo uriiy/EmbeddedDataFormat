@@ -16,8 +16,9 @@ extern "C" {
 // "at" - Append existing Text file
 // "rb" - Read Binary file
 // "rt" - Read Text file
+int EdfOpenStream(EdfWriter_t* w, Stream_t* stream, const char* mode);
 int EdfOpen(EdfWriter_t* w, const char* file, const char* mode);
-void EdfClose(EdfWriter_t* dw);
+int EdfClose(EdfWriter_t* dw);
 
 int EdfWriteHeader(EdfWriter_t* dw, const EdfHeader_t* h, size_t* writed);
 int EdfWriteInfo(EdfWriter_t* dw, const TypeInfo_t* t, size_t* writed);

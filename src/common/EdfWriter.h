@@ -23,7 +23,7 @@ typedef struct EdfWriter
 {
 	EdfHeader_t h;
 	const TypeInfo_t* t;
-	FileStream_t Stream;
+	Stream_t Stream;
 	size_t Skip;
 
 	uint8_t BlockType;

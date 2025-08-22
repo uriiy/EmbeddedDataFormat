@@ -39,7 +39,7 @@
     <ClCompile Include="..\converter\ConverterEdf.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="..\converter\EdfImpl.c">
+    <ClCompile Include="..\converter\FileStreamImpl.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="..\common\MemStream.c">

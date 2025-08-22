@@ -70,6 +70,16 @@ static int StreamWriteFormatImpl(void* stream, size_t* writed, const char* forma
 #endif
 }
 //-----------------------------------------------------------------------------
+static int FileStreamClose(void* stream)
+{
+	FILE* f = (FILE*)((FileStream_t*)stream)->Instance;
+	fflush(f);
+	int ret = fclose(f);
+	if (!ret)
+		((FileStream_t*)stream)->Instance = NULL;
+	return ret;
+}
+//-----------------------------------------------------------------------------
 int FileStreamOpen(FileStream_t* s, const char* file, const char* inMode)
 {
 	const char a[] = "ab+";
@@ -98,18 +108,13 @@ int FileStreamOpen(FileStream_t* s, const char* file, const char* inMode)
 				.Write = StreamWriteImpl,
 				.Read = StreamReadImpl,
 				.WriteFmt = StreamWriteFormatImpl,
+				.Close = FileStreamClose,
 			};
 			return 0;
 		}
 	}
 	LOG_ERR();
 	return err;
-}
-//-----------------------------------------------------------------------------
-int FileStreamClose(FileStream_t* w)
-{
-	fflush((FILE*)(w->Instance));
-	return fclose((FILE*)(w->Instance));
 }
 
 //-----------------------------------------------------------------------------
