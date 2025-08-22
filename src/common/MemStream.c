@@ -7,7 +7,7 @@ static int MemStreamWriteImpl(void* stream, size_t* writed, void const* data, si
 	MemStream_t* s = (MemStream_t*)stream;
 	if (len > s->Size - s->Pos)
 		return (size_t)-1;
-	memcpy(&s->Mem[s->Pos], data, len);
+	memcpy(&s->Buffer[s->Pos], data, len);
 	s->Pos += len;
 	*writed += len;
 	return 0;
@@ -19,7 +19,7 @@ static int MemStreamWriteFormatImpl(void* stream, size_t* writed, const char* fo
 	size_t bufFreeLen = s->Size - s->Pos;
 	va_list arglist;
 	va_start(arglist, format);
-	size_t ret = vsnprintf((char*)&s->Mem[s->Pos], bufFreeLen - 1, format, arglist);
+	size_t ret = vsnprintf((char*)&s->Buffer[s->Pos], bufFreeLen - 1, format, arglist);
 	va_end(arglist);
 	if (bufFreeLen < ret)
 		return -1;
@@ -32,11 +32,11 @@ static int MemStreamReadImpl(void* stream, size_t* readed, void* dst, size_t len
 {
 	MemStream_t* s = (MemStream_t*)stream;
 	len = MIN(len, s->Pos);
-	memcpy(dst, s->Mem, len);
+	memcpy(dst, s->Buffer, len);
 	s->Pos -= len;
 	*readed += len;
 	if (s->Pos)
-		memcpy(s->Mem, &s->Mem[s->Pos], s->Pos);//memmove
+		memcpy(s->Buffer, &s->Buffer[s->Pos], s->Pos);//memmove
 	return 0;
 }
 //-----------------------------------------------------------------------------
@@ -55,7 +55,7 @@ int MemStreamOpen(MemStream_t* s, uint8_t* buf, size_t size, const char* inMode)
 		s->Read = MemStreamReadImpl;
 		s->WriteFmt = MemStreamWriteFormatImpl;
 		s->Close = MemStreamClose;
-		s->Mem = buf;
+		s->Buffer = buf;
 		s->Size = size;
 		s->Pos = 0;
 		return 0;
@@ -66,7 +66,7 @@ int MemStreamOpen(MemStream_t* s, uint8_t* buf, size_t size, const char* inMode)
 		s->Read = NULL;
 		s->WriteFmt = MemStreamWriteFormatImpl;
 		s->Close = MemStreamClose;
-		s->Mem = buf;
+		s->Buffer = buf;
 		s->Size = size;
 		s->Pos = 0;
 		return 0;
@@ -77,7 +77,7 @@ int MemStreamOpen(MemStream_t* s, uint8_t* buf, size_t size, const char* inMode)
 		s->Read = MemStreamReadImpl;
 		s->Close = MemStreamClose;
 		s->WriteFmt = NULL;
-		s->Mem = buf;
+		s->Buffer = buf;
 		s->Size = size;
 		s->Pos = 0;
 		return 0;

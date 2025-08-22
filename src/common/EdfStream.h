@@ -62,7 +62,7 @@ typedef struct MemStream
 	ReadFn Read;
 	WriteFmtFn WriteFmt;
 	CloseFn Close;
-	uint8_t* Mem;
+	uint8_t* Buffer;
 	size_t Size;
 	size_t Pos;
 } MemStream_t;
