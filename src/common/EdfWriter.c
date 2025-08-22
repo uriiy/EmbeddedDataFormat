@@ -115,46 +115,14 @@ static int SeekEnd(EdfWriter_t* f)
 	return err;
 }
 //-----------------------------------------------------------------------------
-static int OpenBinReader(EdfWriter_t* w, const char* file)
-{
-	int err = FileStreamOpen(&w->Stream, file, "rb");
-	if (err)
-		return -1;
-	w->Seq = 0;
-	w->Skip = 0;
-	w->BlockLen = 0;
-	w->BufLen = 0;
-	w->WritePrimitive = BinToStr;
-	w->FlushHeader = NULL;
-	w->FlushInfo = NULL;
-	w->FlushData = NULL;
-	w->BeginStruct = NULL;
-	w->EndStruct = NULL;
-	w->BeginArray = NULL;
-	w->EndArray = NULL;
-	w->SepVarEnd = NULL;
-	w->RecBegin = NULL;
-	w->RecEnd = NULL;
-	return 0;
-}
-//-----------------------------------------------------------------------------
-static int OpenTextReader(EdfWriter_t* w, const char* file)
-{
-	UNUSED(w);
-	UNUSED(file);
-	return -1;
-}
-//-----------------------------------------------------------------------------
-int EdfOpen(EdfWriter_t* f, const char* file, const char* mode)
+int EdfOpenStream(EdfWriter_t* f, Stream_t* stream, const char* mode)
 {
 	if (2 > strnlength(mode, 2))
 		return -1;
 	int err = 0;
 	if (0 == strncmp("wb", mode, 2) || 0 == strncmp("ab", mode, 2))
 	{
-		err = FileStreamOpen(&f->Stream, file, mode);
-		if (err)
-			return -1;
+		f->Stream = *stream;
 		f->Seq = 0;
 		f->Skip = 0;
 		f->BlockLen = 0;
@@ -170,24 +138,14 @@ int EdfOpen(EdfWriter_t* f, const char* file, const char* mode)
 		f->SepVarEnd = NULL;
 		f->RecBegin = NULL;
 		f->RecEnd = NULL;
-		if (!err && 'a' == mode[0])
+		if ('a' == mode[0])
 		{
 			err = SeekEnd(f);
 		}
-		return err;
 	}
-	if (0 == strncmp("wt", mode, 2) || 0 == strncmp("at", mode, 2))
+	else if (0 == strncmp("wt", mode, 2) || 0 == strncmp("at", mode, 2))
 	{
-		char* filemode;
-		if (0 == strcmp("wt", mode))
-			filemode = "wb";
-		else if (0 == strcmp("at", mode))
-			filemode = "ab";
-		else
-			return -1;
-		err = FileStreamOpen(&f->Stream, file, filemode);
-		if (err)
-			return -1;
+		f->Stream = *stream;
 		f->Seq = 0;
 		f->Skip = 0;
 		f->BlockLen = 0;
@@ -205,10 +163,69 @@ int EdfOpen(EdfWriter_t* f, const char* file, const char* mode)
 		f->RecEnd = SepRecEnd;
 		return err;
 	}
-	if (0 == strncmp("rb", mode, 2))
-		return OpenBinReader(f, file);
+	else if (0 == strncmp("rb", mode, 2))
+	{
+		f->Stream = *stream;
+		f->Seq = 0;
+		f->Skip = 0;
+		f->BlockLen = 0;
+		f->BufLen = 0;
+		f->WritePrimitive = BinToStr;
+		f->FlushHeader = NULL;
+		f->FlushInfo = NULL;
+		f->FlushData = NULL;
+		f->BeginStruct = NULL;
+		f->EndStruct = NULL;
+		f->BeginArray = NULL;
+		f->EndArray = NULL;
+		f->SepVarEnd = NULL;
+		f->RecBegin = NULL;
+		f->RecEnd = NULL;
+	}
 	if (0 == strncmp("rt", mode, 2))
-		return OpenTextReader(f, file);
+	{
+		err = -1;
+	}
+	return err;
+}
+//-----------------------------------------------------------------------------
+int EdfOpen(EdfWriter_t* f, const char* file, const char* mode)
+{
+	if (2 > strnlength(mode, 2))
+		return -1;
+	int err = 0;
+	if (0 == strncmp("wb", mode, 2) || 0 == strncmp("ab", mode, 2))
+	{
+		err = FileStreamOpen((FileStream_t*)&f->Stream, file, mode);
+		if (err)
+			return -1;
+		return EdfOpenStream(f, &f->Stream, mode);
+	}
+	else if (0 == strncmp("wt", mode, 2) || 0 == strncmp("at", mode, 2))
+	{
+		char* filemode;
+		if (0 == strcmp("wt", mode))
+			filemode = "wb";
+		else if (0 == strcmp("at", mode))
+			filemode = "ab";
+		else
+			return -1;
+		err = FileStreamOpen((FileStream_t*)&f->Stream, file, filemode);
+		if (err)
+			return -1;
+		return EdfOpenStream(f, &f->Stream, mode);
+	}
+	else if (0 == strncmp("rb", mode, 2))
+	{
+		err = FileStreamOpen((FileStream_t*)&f->Stream, file, "rb");
+		if (err)
+			return -1;
+		return EdfOpenStream(f, &f->Stream, mode);
+	}
+	else if (0 == strncmp("rt", mode, 2))
+	{
+		return -1;
+	}
 	return -1;
 }
 //-----------------------------------------------------------------------------
@@ -257,15 +274,15 @@ int EdfFlushDataBlock(EdfWriter_t* dw, size_t* writed)
 	return err;
 }
 //-----------------------------------------------------------------------------
-void EdfClose(EdfWriter_t* dw)
+int EdfClose(EdfWriter_t* dw)
 {
-	if (dw->Stream.Instance)
-	{
-		size_t w = 0;
-		EdfFlushDataBlock(dw, &w);
-		FileStreamClose(&dw->Stream);
-		dw->Stream.Instance = NULL;
-	}
+	int err = 0;
+	size_t w = 0;
+	if ((err = EdfFlushDataBlock(dw, &w)))
+		return err;
+	if (dw->Stream.Close)
+		err = (*dw->Stream.Close)(&dw->Stream);
+	return err;
 }
 //-----------------------------------------------------------------------------
 int EdfWriteSep(const char* const src,

@@ -13,7 +13,7 @@ static int MemStreamWriteImpl(void* stream, size_t* writed, void const* data, si
 	return 0;
 }
 //-----------------------------------------------------------------------------
-static int StreamWriteFormatImpl(void* stream, size_t* writed, const char* format, ...)
+static int MemStreamWriteFormatImpl(void* stream, size_t* writed, const char* format, ...)
 {
 	MemStream_t* s = (MemStream_t*)stream;
 	size_t bufFreeLen = s->Size - s->Pos;
@@ -31,21 +31,41 @@ static int StreamWriteFormatImpl(void* stream, size_t* writed, const char* forma
 static int MemStreamReadImpl(void* stream, size_t* readed, void* dst, size_t len)
 {
 	MemStream_t* s = (MemStream_t*)stream;
-	if (len > s->Size - s->Pos)
-		return (size_t)-1;
-	memcpy(dst, &s->Mem[s->Pos], len);
-	s->Pos += len;
+	len = MIN(len, s->Pos);
+	memcpy(dst, s->Mem, len);
+	s->Pos -= len;
 	*readed += len;
+	if (s->Pos)
+		memcpy(s->Mem, &s->Mem[s->Pos], s->Pos);//memmove
+	return 0;
+}
+//-----------------------------------------------------------------------------
+static int MemStreamClose(void* stream)
+{
+	MemStream_t* s = (MemStream_t*)stream;
+	memset(s, 0, sizeof(MemStream_t));
 	return 0;
 }
 //-----------------------------------------------------------------------------
 int MemStreamOpen(MemStream_t* s, uint8_t* buf, size_t size, const char* inMode)
 {
-	if (0 == strcmp("w", inMode) || 0 == strcmp("wb", inMode))
+	if (NULL == inMode)
+	{
+		s->Write = MemStreamWriteImpl;
+		s->Read = MemStreamReadImpl;
+		s->WriteFmt = MemStreamWriteFormatImpl;
+		s->Close = MemStreamClose;
+		s->Mem = buf;
+		s->Size = size;
+		s->Pos = 0;
+		return 0;
+	}
+	else if (0 == strcmp("w", inMode) || 0 == strcmp("wb", inMode))
 	{
 		s->Write = MemStreamWriteImpl;
 		s->Read = NULL;
-		s->WriteFmt = StreamWriteFormatImpl;
+		s->WriteFmt = MemStreamWriteFormatImpl;
+		s->Close = MemStreamClose;
 		s->Mem = buf;
 		s->Size = size;
 		s->Pos = 0;
@@ -55,6 +75,7 @@ int MemStreamOpen(MemStream_t* s, uint8_t* buf, size_t size, const char* inMode)
 	{
 		s->Write = NULL;
 		s->Read = MemStreamReadImpl;
+		s->Close = MemStreamClose;
 		s->WriteFmt = NULL;
 		s->Mem = buf;
 		s->Size = size;
@@ -62,11 +83,4 @@ int MemStreamOpen(MemStream_t* s, uint8_t* buf, size_t size, const char* inMode)
 		return 0;
 	}
 	return -1;
-}
-//-----------------------------------------------------------------------------
-int MemStreamClose(MemStream_t* stream)
-{
-	MemStream_t* s = (MemStream_t*)stream;
-	memset(s, 0, sizeof(MemStream_t));
-	return 0;
 }

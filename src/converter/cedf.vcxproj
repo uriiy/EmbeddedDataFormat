@@ -29,7 +29,7 @@
     <ClCompile Include="ConverterDat.c" />
     <ClCompile Include="ConverterDyn.c" />
     <ClCompile Include="ConverterEcho.c" />
-    <ClCompile Include="EdfImpl.c" />
+    <ClCompile Include="FileStreamImpl.c" />
     <ClCompile Include="..\common\EdfWriter.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="..\common\PoType.c" />
