@@ -56,3 +56,6 @@ Release/
 Thumbs.db
 .vs/
 doc/~$*
+src/Test/*.tdf
+src/Test/*.bdf
+src/Test/*Conv.*
