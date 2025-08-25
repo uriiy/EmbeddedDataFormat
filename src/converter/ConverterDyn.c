@@ -1,4 +1,5 @@
 #include "_pch.h"
+#include "KeyValue.h"
 #include "converter.h"
 #include "SiamFileFormat.h"
 #include "assert.h"
@@ -110,7 +111,8 @@ int DynToEdf(const char* src, const char* edf, char mode)
 			{ "Aperture", dat.Aperture, "", "номер отверстия 1" },
 			{ "Cycles", dat.Cycles, "", "пропущено циклов" },
 			{ "PumpType", dat.PumpType, "", "тип привода станка-качалки {}" },
-		}, sizeof(UInt16Value_t[3]));
+			{ "TravelStep", dat.TravelStep, "", "величина дискреты перемещения, 0.1 мм" },
+		}, sizeof(UInt16Value_t[4]));
 
 		EdfWriteInfo(&dw, &UInt32ValueInf, &writed);
 		EdfWriteDataBlock(&dw, &(UInt32Value_t[])
@@ -126,7 +128,7 @@ int DynToEdf(const char* src, const char* edf, char mode)
 		EdfWriteDataBlock(&dw, &(DoubleValue_t[])
 		{
 			{ "Rod", dat.Rod / 10.0f, "мм", "диаметр штока" },
-			{ "Travel", dat.Travel * dat.TravelStep / 10.0f, "мм", "ход штока" },
+			{ "Travel", dat.Travel * dat.TravelStep / 10.0f, "мм", "ход штока123456789" },
 			{ "BeginPos", dat.BeginPos * dat.TravelStep / 10.0f, "мм", "положение штока перед первым измерением" },
 			{ "Pressure", dat.Pressure / 10.0f, "атм", "затрубное давление" },
 			{ "BufPressure", dat.BufPressure / 10.0f, "атм", "буферное давление" },
@@ -156,24 +158,43 @@ int DynToEdf(const char* src, const char* edf, char mode)
 	return 0;
 }
 //-----------------------------------------------------------------------------
-static size_t DeSerialize(const uint8_t* b, UInt16Value_t* s)
+//-----------------------------------------------------------------------------
+static void DoOnDoubleItem(DoubleValue_t s, void* state)
 {
-	size_t offset = 0;
-	uint8_t len = MIN(b[offset], (uint8_t)0xFE);
-	s->Name = (char*)&b[1 + offset];
-	offset += 1 + len;
-	s->Value = *((uint16_t*)&b[offset]);
-	offset += sizeof(uint16_t);
-	len = MIN(b[offset], (uint8_t)0xFE);
-	s->Unit = (char*)&b[1 + offset];
-	offset += 1 + len;
-	len = MIN(b[offset], (uint8_t)0xFE);
-	s->Description = (char*)&b[1 + offset];
-	offset += 1 + len;
-	return offset;
+	DYN_FILE_V2_0* dat = (DYN_FILE_V2_0*)state;
+
+	if (0 == strcmp("Rod", s.Name))
+		dat->Rod = s.Value * 10;
+	else if (0 == strcmp("Travel", s.Name))
+		dat->Travel = s.Value * 10.0f / dat->TravelStep;
+	else if (0 == strcmp("BeginPos", s.Name))
+		dat->BeginPos = s.Value;
+	else if (0 == strcmp("Pressure", s.Name))
+		dat->Pressure = s.Value;
+	else if (0 == strcmp("BufPressure", s.Name))
+		dat->BufPressure = s.Value;
+	else if (0 == strcmp("LinePressure", s.Name))
+		dat->LinePressure = s.Value;
+	else if (0 == strcmp("Acc", s.Name))
+		dat->Acc = s.Value;
+	else if (0 == strcmp("Temp", s.Name))
+		dat->Temp = s.Value;
 }
+//-----------------------------------------------------------------------------
+static void DoOnUInt16Item(UInt16Value_t s, void* state)
+{
+	DYN_FILE_V2_0* dat = (DYN_FILE_V2_0*)state;
 
-
+	if (0 == strcmp("Aperture", s.Name))
+		dat->Aperture = s.Value;
+	else if (0 == strcmp("Cycles", s.Name))
+		dat->Cycles = s.Value;
+	else if (0 == strcmp("PumpType", s.Name))
+		dat->PumpType = s.Value;
+	else if (0 == strcmp("TravelStep", s.Name))
+		dat->TravelStep = s.Value;
+}
+//-----------------------------------------------------------------------------
 
 int EdfToDyn(const char* edfFile, const char* dynFile)
 {
@@ -200,12 +221,9 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 	uint8_t* const recordBegin = precord;
 	uint8_t* const recordEnd = recordBegin + data_len;
 
-	uint8_t bbuf[1024];
-	EdfWriter_t brdr = { 0 };
-	MemStream_t ms = { 0 };
-	if ((err = MemStreamOpen(&ms, bbuf, sizeof(bbuf), NULL)))
-		return err;
-	EdfOpenStream(&brdr, (Stream_t*)&ms, "wb");
+	uint8_t buf[3 * 256 + 8] = { 0 };
+	uint8_t* pbuf = buf;
+	uint8_t* const pbufEnd = buf + sizeof(buf);
 
 	while (!(err = EdfReadBlock(&br)))
 	{
@@ -223,6 +241,7 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 			break;
 		case btVarInfo:
 		{
+			pbuf = buf;
 			br.t = NULL;
 			uint8_t* srcData = br.Block;
 			uint8_t* mem = (uint8_t*)&br.Buf;
@@ -290,35 +309,12 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 			else if (0 == _stricmp(br.t->Name, "Cycles"))
 				dat.Id.RegNum = *((uint32_t*)br.Block);
 
-
 			else if (0 == _stricmp(br.t->Name, "UInt16Value"))
-			{
-				brdr.t = br.t;
-				int wr = EdfWriteDataBlock(&brdr, br.Block, br.BlockLen);
-				if (0 == wr && ms.Buffer)
-				{
-					int err = EdfFlushDataBlock(&brdr, &writed);
-					uint8_t* pdata = &ms.Buffer[4];
-					size_t pdataLen = brdr.Stream.Impl.Mem.Pos - 4;
-
-					while (pdataLen)
-					{
-						UInt16Value_t s;
-						size_t itemlen = DeSerialize(pdata, &s);
-
-						if (0 == strcmp("Aperture", s.Name))
-							dat.Aperture = s.Value;
-						else if (0 == strcmp("Cycles", s.Name))
-							dat.Cycles = s.Value;
-						else if (0 == strcmp("PumpType", s.Name))
-							dat.PumpType = s.Value;
-						pdata += itemlen;
-						pdataLen -= itemlen;
-					}
-					ms.Pos = 0;
-				}
-				br.BlockLen = 0;
-			}
+				DeSerializeUInt16KeyVal(br.Block, br.Block + br.BlockLen,
+					&pbuf, buf, pbufEnd, DoOnUInt16Item, &dat);
+			else if (0 == _stricmp(br.t->Name, "DoubleValue"))
+				DeSerializeDoubleKeyVal(br.Block, br.Block + br.BlockLen,
+					&pbuf, buf, pbufEnd, DoOnDoubleItem, &dat);
 
 			else if (0 == _stricmp(br.t->Name, "Chart2D"))
 			{
@@ -361,4 +357,6 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 	EdfClose(&br);
 	return 0;
 }
+
+
 //-----------------------------------------------------------------------------

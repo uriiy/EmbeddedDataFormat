@@ -1,7 +1,7 @@
 #ifndef SIAMFILEFORMAT_H
 #define SIAMFILEFORMAT_H
 
-#include "stdint.h"
+#include "edf.h"
 //-----------------------------------------------------------------------------
 #pragma pack(push,1)
 typedef struct
@@ -209,75 +209,6 @@ struct DescriptionChart2D
 	char* AxisY;
 };
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-static const TypeInfo_t UInt16ValueInf =
-{
-	Struct, "UInt16Value", { 0, NULL },
-	.Childs =
-	{
-		.Count = 4,
-		.Item = (TypeInfo_t[])
-		{
-			{ CString, "Name" },
-			{ UInt16, "Value" },
-			{ CString, "Unit" },
-			{ CString, "Description" },
-		}
-	}
-};
-typedef struct UInt16Value
-{
-	char* Name;
-	uint16_t Value;
-	char* Unit;
-	char* Description;
-} UInt16Value_t;
-//-----------------------------------------------------------------------------
-static const TypeInfo_t UInt32ValueInf =
-{
-	Struct, "UInt32Value", { 0, NULL },
-	.Childs =
-	{
-		.Count = 4,
-		.Item = (TypeInfo_t[])
-		{
-			{ CString, "Name" },
-			{ UInt32, "Value" },
-			{ CString, "Unit" },
-			{ CString, "Description" },
-		}
-	}
-};
-typedef struct UInt32Value
-{
-	char* Name;
-	uint32_t Value;
-	char* Unit;
-	char* Description;
-} UInt32Value_t;
-//-----------------------------------------------------------------------------
-static const TypeInfo_t DoubleValueInf =
-{
-	Struct, "DoubleValue", { 0, NULL },
-	.Childs =
-	{
-		.Count = 4,
-		.Item = (TypeInfo_t[])
-		{
-			{ CString, "Name" },
-			{ Double, "Value" },
-			{ CString, "Unit" },
-			{ CString, "Description" },
-		}
-	}
-};
-typedef struct DoubleValue
-{
-	char* Name;
-	double Value;
-	char* Unit;
-	char* Description;
-} DoubleValue_t;
 //-----------------------------------------------------------------------------
 #pragma pack(pop)
 //-----------------------------------------------------------------------------
