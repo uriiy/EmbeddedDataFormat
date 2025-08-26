@@ -37,6 +37,7 @@
     <ClCompile Include="MbCrc.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\Charts.h" />
     <ClInclude Include="..\common\EdfWriter.h" />
     <ClInclude Include="..\common\EdfHeader.h" />
     <ClInclude Include="..\common\edf.h" />

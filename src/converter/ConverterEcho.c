@@ -1,5 +1,7 @@
 #include "_pch.h"
 #include "converter.h"
+#include "KeyValue.h"
+#include "Charts.h"
 #include "SiamFileFormat.h"
 #include "assert.h"
 #include "edf_cfg.h"
@@ -131,14 +133,15 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 	//for (size_t i = 0; i < 3000; i++)
 	//	EdfWriteDataBlock(&dw, &dat.Data[i], sizeof(uint8_t));
 
-	EdfWriteInfo(&dw, &CommentsInf, &writed);
-	EdfWriteDataBlock(&dw, &((char*) { "описание графика Chart2D" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "x - глубина, м" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "y - амплитуда, ацп" }), sizeof(char*));
+	EdfWriteInfo(&dw, &ChartXYDescriptionInf, &writed);
+	EdfWriteDataBlock(&dw, &((struct ChartXYDesct)
+	{
+		"'эхограмма", "x - глубина, м", "y - амплитуда, ацп"
+	}), sizeof(struct ChartXYDesct));
 
 	EdfWriteInfo(&dw, &Point2DInf, &writed);
 
-	struct Point2D p = { 0,0 };
+	struct PointXY p = { 0,0 };
 	for (size_t i = 0; i < 3000; i++)
 	{
 		if (dat.Data[i] > 127)
@@ -148,7 +151,7 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 
 		p.x = xDiscrete * i * maxDepthMult;
 
-		EdfWriteDataBlock(&dw, &p, sizeof(struct Point2D));
+		EdfWriteDataBlock(&dw, &p, sizeof(struct PointXY));
 	}
 	fclose(f);
 	EdfClose(&dw);

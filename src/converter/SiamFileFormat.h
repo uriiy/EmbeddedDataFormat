@@ -167,47 +167,7 @@ static const TypeInfo_t OmegaDataInf =
 		}
 	}
 };
-//-----------------------------------------------------------------------------
-static const TypeInfo_t Point2DInf =
-{
-	Struct, "Chart2D", { 0, NULL },
-	.Childs =
-	{
-		.Count = 2,
-		.Item = (TypeInfo_t[])
-		{
-			{ Single, "x" },
-			{ Single, "y" },
-		}
-	}
-};
-typedef struct Point2D
-{
-	float x;
-	float y;
-} Point2D_t;
 
-//-----------------------------------------------------------------------------
-static const TypeInfo_t DescriptionChart2DInf =
-{
-	Struct, "DescriptionChart2DInf", { 0, NULL },
-	.Childs =
-	{
-		.Count = 3,
-		.Item = (TypeInfo_t[])
-		{
-			{ CString, "Name" },
-			{ CString, "AxisX" },
-			{ CString, "AxisY" },
-		}
-	}
-};
-struct DescriptionChart2D
-{
-	char* Name;
-	char* AxisX;
-	char* AxisY;
-};
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 #pragma pack(pop)

@@ -1,5 +1,6 @@
 #include "_pch.h"
 #include "KeyValue.h"
+#include "Charts.h"
 #include "converter.h"
 #include "SiamFileFormat.h"
 #include "assert.h"
@@ -102,8 +103,8 @@ int DynToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfData(&dw, Single, "Temp", &((float) { dat.Temp / 10.0f }));
 	*/
 	{
-		EdfWriteInfo(&dw, &CommentsInf, &writed);
-		EdfWriteDataBlock(&dw, &((char*) { "Key-Value-Unit-Description list sample" }), sizeof(char*));
+		//EdfWriteInfo(&dw, &CommentsInf, &writed);
+		//EdfWriteDataBlock(&dw, &((char*) { "Key-Value-Unit-Description list sample" }), sizeof(char*));
 
 		EdfWriteInfo(&dw, &UInt16ValueInf, &writed);
 		EdfWriteDataBlock(&dw, &(UInt16Value_t[])
@@ -138,20 +139,19 @@ int DynToEdf(const char* src, const char* edf, char mode)
 		}, sizeof(DoubleValue_t[8]));
 	}
 
-	EdfWriteInfo(&dw, &DescriptionChart2DInf, &writed);
-	EdfWriteDataBlock(&dw, &((struct DescriptionChart2D)
+	EdfWriteInfo(&dw, &ChartXYDescriptionInf, &writed);
+	EdfWriteDataBlock(&dw, &((struct ChartXYDesct)
 	{
 		"динамограмма", "перемещение, м", "вес в тоннах"
-	})
-		, sizeof(struct DescriptionChart2D));
+	}), sizeof(struct ChartXYDesct));
 
 	EdfWriteInfo(&dw, &Point2DInf, &writed);
-	struct Point2D p = { 0,0 };
+	struct PointXY p = { 0,0 };
 	for (size_t i = 0; i < 1000; i++)
 	{
 		p.x += (float)(ExtractTravel(dat.Data[i]) * dat.TravelStep / 1.E4);
 		p.y = (float)((dat.Data[i] & 1023) * dat.LoadStep * 1.0E-3);
-		EdfWriteDataBlock(&dw, &p, sizeof(struct Point2D));
+		EdfWriteDataBlock(&dw, &p, sizeof(struct PointXY));
 	}
 	fclose(f);
 	EdfClose(&dw);
@@ -168,17 +168,17 @@ static void DoOnDoubleItem(DoubleValue_t s, void* state)
 	else if (0 == strcmp("Travel", s.Name))
 		dat->Travel = s.Value * 10.0f / dat->TravelStep;
 	else if (0 == strcmp("BeginPos", s.Name))
-		dat->BeginPos = s.Value;
+		dat->BeginPos = s.Value * 10.0f / dat->TravelStep;
 	else if (0 == strcmp("Pressure", s.Name))
-		dat->Pressure = s.Value;
+		dat->Pressure = round(s.Value * 10);
 	else if (0 == strcmp("BufPressure", s.Name))
-		dat->BufPressure = s.Value;
+		dat->BufPressure = round(s.Value * 10);
 	else if (0 == strcmp("LinePressure", s.Name))
-		dat->LinePressure = s.Value;
+		dat->LinePressure = round(s.Value * 10);
 	else if (0 == strcmp("Acc", s.Name))
-		dat->Acc = s.Value;
+		dat->Acc = round(s.Value * 10.f);
 	else if (0 == strcmp("Temp", s.Name))
-		dat->Temp = s.Value;
+		dat->Temp = round(s.Value * 10.f);
 }
 //-----------------------------------------------------------------------------
 static void DoOnUInt16Item(UInt16Value_t s, void* state)
@@ -214,9 +214,9 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 	//int* const ptr;  // ptr is a constant pointer to int
 
 	DYN_FILE_V2_0 dat = { 0 };
-	Point2D_t record = { 0 };
+	PointXY_t record = { 0 };
 	size_t recN = 0;
-	const size_t data_len = sizeof(Point2D_t);
+	const size_t data_len = sizeof(PointXY_t);
 	uint8_t* precord = (void*)&record;
 	uint8_t* const recordBegin = precord;
 	uint8_t* const recordEnd = recordBegin + data_len;
@@ -268,8 +268,7 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 				dat.FileType = *((uint32_t*)br.Block);
 			else if (0 == _stricmp(br.t->Name, "FileDescription"))
 			{
-				uint8_t len = *((uint8_t*)br.Block);
-				len = MIN(len, FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription));
+				uint8_t len = MIN(MIN(0xFD, *((uint8_t*)br.Block)), FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription));
 				memcpy(dat.FileDescription, &br.Block[1], len);
 			}
 			else if (0 == _stricmp(br.t->Name, "ResearchType"))

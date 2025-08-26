@@ -1,6 +1,8 @@
 #include "_pch.h"
 #include "converter.h"
 #include "SiamFileFormat.h"
+#include "KeyValue.h"
+#include "Charts.h"
 #include "assert.h"
 #include "edf_cfg.h"
 #include "math.h"
@@ -55,6 +57,7 @@ int DatToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfData(&dw, UInt32, "SensNum", &dat.SensNum);
 	EdfWriteInfData(&dw, UInt16, "SensVer", &dat.SensVer);
 
+	/*
 	TypeInfo_t commentType = { .Type = CString, .Name = "Comments" };
 	EdfWriteInfo(&dw, &commentType, &writed);
 	EdfWriteDataBlock(&dw, &((char*) { "описание структуры OMEGA_DATA_V1_1" }), sizeof(char*));
@@ -62,6 +65,14 @@ int DatToEdf(const char* src, const char* edf, char mode)
 	EdfWriteDataBlock(&dw, &((char*) { "Press - давление, 0.001 атм" }), sizeof(char*));
 	EdfWriteDataBlock(&dw, &((char*) { "Temp - температура, 0.001 °С" }), sizeof(char*));
 	EdfWriteDataBlock(&dw, &((char*) { "Vbat - напряжение батареи V" }), sizeof(char*));
+	*/
+	EdfWriteInfo(&dw, &ChartXYDescriptionInf, &writed);
+	EdfWriteDataBlock(&dw, &((ChartXYDesct_t[])
+	{
+		{ "давление, 0.001 атм", "Press", "Time" },
+		{ "температура, 0.001 °С", "Temp", "Time" },
+		{ "напряжение батареи V", "Vbat", "Time" },
+	}), sizeof(ChartXYDesct_t) * 3);
 
 	if ((err = EdfWriteInfo(&dw, &OmegaDataInf, &writed)))
 		return err;
