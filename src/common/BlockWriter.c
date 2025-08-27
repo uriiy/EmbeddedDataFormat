@@ -215,6 +215,69 @@ int EdfWriteDataBlock(EdfWriter_t* dw, void* vsrc, size_t xsrcLen)
 	return wr;
 }
 //-----------------------------------------------------------------------------
+int EdfSreamBinToCBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, void** presult)
+{
+	if (0 > t->Type || CString < t->Type)
+		return -2;
+
+	size_t itemCLen = GetTypeCSize(t);
+	int err = 0;
+	uint8_t* ti = NULL;
+	if (*presult)
+		ti = *presult;
+	else
+	{
+		if ((err = MemAlloc(mem, itemCLen, &ti)))
+			return err;
+		*presult = ti;
+	}
+
+	switch (t->Type)
+	{
+	case Struct:
+		if (t->Childs.Count)
+		{
+			for (size_t j = 0; j < t->Childs.Count; j++)
+			{
+				const TypeInfo_t* s = &t->Childs.Item[j];
+				size_t childCLen = GetTypeCSize(s);
+				int wr = EdfSreamBinToCBin(s, src, mem, &ti);
+				if (0 != wr)
+					return wr;
+				ti += childCLen;
+			}
+		}
+		break;
+	case String:
+	case CString:
+	{
+		uint8_t sLen;
+		uint8_t* pstr = NULL;
+		if ((err = StreamRead(src, NULL, &sLen, 1)) ||
+			(err = MemAlloc(mem, sLen, &pstr)) ||
+			(err = StreamRead(src, NULL, pstr, sLen)))
+			return err;
+		if (sLen && 0 != pstr[sLen - 1])
+		{
+			uint8_t* pStrEnd = NULL;
+			if ((err = MemAlloc(mem, 1, &pStrEnd)))
+				return err;
+			//pStrEnd[0] = 0;
+		}
+		*(void**)ti = pstr;
+		ti += itemCLen;
+	}
+	break;
+	default:
+		if ((err = StreamRead(src, NULL, ti, itemCLen)))
+			return err;
+		ti += itemCLen;
+		break;
+	}//switch
+	return 0;
+}
+
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 int EdfReadBlock(EdfWriter_t* dw)

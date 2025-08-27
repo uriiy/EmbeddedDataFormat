@@ -49,6 +49,89 @@ static void TestMemStream(void)
 	err = StreamWriteFmt(stream, &writed, " format %d", 1);
 }
 //-----------------------------------------------------------------------------
+static int PackUnpack()
+{
+	size_t writed = 0;
+	int err = 0;
+#pragma pack(push,1)
+	typedef struct TestStruct
+	{
+		char* Key;
+		char* Value;
+		uint8_t Arr[3];
+	} TestStruct_t;
+	TypeInfo_t TestStructInf =
+	{
+		.Type = Struct, .Name = "KeyValue", .Dims = {1, (uint32_t[]) { 2 } } ,
+		.Childs =
+		{
+			.Count = (uint8_t)3,
+			.Item = (TypeInfo_t[])
+			{
+				{ CString, "Key" },
+				{ CString, "Value" },
+				{ 
+					.Type = Struct, .Name = "Internal", 
+					.Childs =
+					{
+						.Count = 1,
+						.Item = (TypeInfo_t[])
+						{
+							{ UInt8, "Test", .Dims = {1, (uint32_t[]) { 3 } } },
+						}
+					}
+				}
+			}
+		}
+	};
+
+#pragma pack(pop)
+	EdfWriter_t w;
+	EdfWriter_t* dw = &w;
+
+	uint8_t binBuf[1024] = { 0 };
+	MemStream_t fstream = { 0 };
+	if ((err = MemStreamOpen(&fstream, binBuf, sizeof(binBuf), "w")))
+		return err;
+	err = EdfOpenStream(dw, (Stream_t*)&fstream, "wb");
+	err = EdfWriteInfo(dw, &TestStructInf, &writed);
+	dw->Stream.Impl.Mem.Pos = 0;
+
+	TestStruct_t val1 = { "Key1", "Value1", { 11,22,33 } };
+	TestStruct_t val2 = { "Key2", "Value2", { 11,22,33 } };
+	EdfWriteDataBlock(dw, &val1, sizeof(TestStruct_t));
+	EdfWriteDataBlock(dw, &val2, sizeof(TestStruct_t));
+	EdfClose(dw);
+
+	MemStream_t mssrc = { 0 };
+	if ((err = MemStreamOpen(&mssrc, &binBuf[4], 100, "r")))
+		return err;
+	uint8_t buf[1024] = { 0 };
+	MemStream_t mem = { 0 };
+	if ((err = MemStreamOpen(&mem, buf, sizeof(buf), "w")))
+		return err;
+
+	TestStruct_t* kv = NULL;
+	if ((err = EdfSreamBinToCBin(&TestStructInf, &mssrc, &mem, &kv)))
+		return err;
+
+	if (0 != strcmp(val1.Key, kv->Key)
+		|| 0 != strcmp(val1.Value, kv->Value)
+		|| 0 != memcmp(&val1.Arr, &kv->Arr, FIELD_SIZEOF(TestStruct_t, Arr)))
+		return 1;
+
+	if ((err = EdfSreamBinToCBin(&TestStructInf, &mssrc, &mem, &kv)))
+		return err;
+
+	if (0 != strcmp(val2.Key, kv->Key)
+		|| 0 != strcmp(val2.Value, kv->Value)
+		|| 0 != memcmp(&val2.Arr, &kv->Arr, FIELD_SIZEOF(TestStruct_t, Arr)))
+		return 1;
+
+	return 0;
+}
+
+//-----------------------------------------------------------------------------
 static int WriteSample(EdfWriter_t* dw)
 {
 	size_t writed = 0;
@@ -318,6 +401,7 @@ static void MbCrc16accTest()
 int main()
 {
 	LOG_ERR();
+	assert(0 == PackUnpack());
 	MbCrc16accTest();
 	WriteTestBigVar();
 	DatFormatTest();
