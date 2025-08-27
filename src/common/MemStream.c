@@ -6,10 +6,11 @@ static int MemStreamWriteImpl(void* stream, size_t* writed, void const* data, si
 {
 	MemStream_t* s = (MemStream_t*)stream;
 	if (len > s->Size - s->Pos)
-		return (size_t)-1;
+		return EOF;
 	memcpy(&s->Buffer[s->Pos], data, len);
 	s->Pos += len;
-	*writed += len;
+	if (writed)
+		*writed += len;
 	return 0;
 }
 //-----------------------------------------------------------------------------
@@ -22,21 +23,22 @@ static int MemStreamWriteFormatImpl(void* stream, size_t* writed, const char* fo
 	size_t ret = vsnprintf((char*)&s->Buffer[s->Pos], bufFreeLen - 1, format, arglist);
 	va_end(arglist);
 	if (bufFreeLen < ret)
-		return -1;
+		return EOF;
 	s->Pos += ret - 1;
-	*writed += ret - 1;
+	if (writed)
+		*writed += ret - 1;
 	return 0;
 }
 //-----------------------------------------------------------------------------
 static int MemStreamReadImpl(void* stream, size_t* readed, void* dst, size_t len)
 {
 	MemStream_t* s = (MemStream_t*)stream;
-	len = MIN(len, s->Pos);
-	memcpy(dst, s->Buffer, len);
-	s->Pos -= len;
-	*readed += len;
-	if (s->Pos)
-		memcpy(s->Buffer, &s->Buffer[s->Pos], s->Pos);//memmove
+	if (len > s->Size - s->Pos)
+		return EOF;
+	memcpy(dst, &s->Buffer[s->Pos], len);
+	s->Pos += len;
+	if (readed)
+		*readed += len;
 	return 0;
 }
 //-----------------------------------------------------------------------------
@@ -49,18 +51,7 @@ static int MemStreamClose(void* stream)
 //-----------------------------------------------------------------------------
 int MemStreamOpen(MemStream_t* s, uint8_t* buf, size_t size, const char* inMode)
 {
-	if (NULL == inMode)
-	{
-		s->Write = MemStreamWriteImpl;
-		s->Read = MemStreamReadImpl;
-		s->WriteFmt = MemStreamWriteFormatImpl;
-		s->Close = MemStreamClose;
-		s->Buffer = buf;
-		s->Size = size;
-		s->Pos = 0;
-		return 0;
-	}
-	else if (0 == strcmp("w", inMode) || 0 == strcmp("wb", inMode))
+	if (0 == strcmp("w", inMode) || 0 == strcmp("wb", inMode))
 	{
 		s->Write = MemStreamWriteImpl;
 		s->Read = NULL;
