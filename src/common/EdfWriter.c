@@ -66,7 +66,7 @@ int EdfWriteInfoBin(EdfWriter_t* dw, const TypeInfo_t* t, size_t* writed)
 	dw->Block[0] = (uint8_t)btVarInfo;
 	dw->Block[1] = (uint8_t)dw->Seq;
 	MemStream_t ms = { 0 };
-	if ((err = MemStreamOpen(&ms, &dw->Block[4], sizeof(dw->Block) - 4, "wb")) ||
+	if ((err = MemStreamOpen(&ms, &dw->Block[4], sizeof(dw->Block) - 4, "w")) ||
 		(err = StreamWriteInfoBin((Stream_t*)&ms, t, writed)))
 		return err;
 	*((uint16_t*)&dw->Block[2]) = (uint16_t)ms.Pos;

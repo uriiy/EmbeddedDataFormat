@@ -42,7 +42,7 @@ static void TestMemStream(void)
 	size_t writed = 0;
 	MemStream_t ms = { 0 };
 	uint8_t buf[256];
-	int err = MemStreamOpen(&ms, buf, sizeof(buf), "wb");
+	int err = MemStreamOpen(&ms, buf, sizeof(buf), "w");
 	const char test[] = "qwe test 123";
 	Stream_t* stream = (Stream_t*)&ms;
 	err = StreamWrite(stream, &writed, test, sizeof(test) - 1);

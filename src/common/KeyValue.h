@@ -28,7 +28,7 @@ typedef struct UInt16Value
 	char* Description;
 } UInt16Value_t;
 
-typedef void (*DoOnItemUInt16)(UInt16Value_t s, void* state);
+typedef void (*DoOnItemUInt16)(UInt16Value_t* s, void* state);
 
 int DeSerializeUInt16KeyVal(uint8_t* psrc, const uint8_t* const psrcEnd,
 	uint8_t** ppbuf, uint8_t* const pbufBegin, uint8_t* const pbufEnd,
@@ -80,7 +80,7 @@ typedef struct DoubleValue
 	char* Description;
 } DoubleValue_t;
 
-typedef void (*DoOnItemDoubleFn)(DoubleValue_t s, void* state);
+typedef void (*DoOnItemDoubleFn)(DoubleValue_t* s, void* state);
 
 int DeSerializeDoubleKeyVal(uint8_t* psrc, const uint8_t* const psrcEnd,
 	uint8_t** ppbuf, uint8_t* const pbufBegin, uint8_t* const pbufEnd,

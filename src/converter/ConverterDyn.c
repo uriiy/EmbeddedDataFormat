@@ -159,40 +159,40 @@ int DynToEdf(const char* src, const char* edf, char mode)
 }
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-static void DoOnDoubleItem(DoubleValue_t s, void* state)
+static void DoOnDoubleItem(DoubleValue_t* s, void* state)
 {
 	DYN_FILE_V2_0* dat = (DYN_FILE_V2_0*)state;
 
-	if (0 == strcmp("Rod", s.Name))
-		dat->Rod = s.Value * 10;
-	else if (0 == strcmp("Travel", s.Name))
-		dat->Travel = s.Value * 10.0f / dat->TravelStep;
-	else if (0 == strcmp("BeginPos", s.Name))
-		dat->BeginPos = s.Value * 10.0f / dat->TravelStep;
-	else if (0 == strcmp("Pressure", s.Name))
-		dat->Pressure = round(s.Value * 10);
-	else if (0 == strcmp("BufPressure", s.Name))
-		dat->BufPressure = round(s.Value * 10);
-	else if (0 == strcmp("LinePressure", s.Name))
-		dat->LinePressure = round(s.Value * 10);
-	else if (0 == strcmp("Acc", s.Name))
-		dat->Acc = round(s.Value * 10.f);
-	else if (0 == strcmp("Temp", s.Name))
-		dat->Temp = round(s.Value * 10.f);
+	if (0 == strcmp("Rod", s->Name))
+		dat->Rod = s->Value * 10;
+	else if (0 == strcmp("Travel", s->Name))
+		dat->Travel = s->Value * 10.0f / dat->TravelStep;
+	else if (0 == strcmp("BeginPos", s->Name))
+		dat->BeginPos = s->Value * 10.0f / dat->TravelStep;
+	else if (0 == strcmp("Pressure", s->Name))
+		dat->Pressure = round(s->Value * 10);
+	else if (0 == strcmp("BufPressure", s->Name))
+		dat->BufPressure = round(s->Value * 10);
+	else if (0 == strcmp("LinePressure", s->Name))
+		dat->LinePressure = round(s->Value * 10);
+	else if (0 == strcmp("Acc", s->Name))
+		dat->Acc = round(s->Value * 10.f);
+	else if (0 == strcmp("Temp", s->Name))
+		dat->Temp = round(s->Value * 10.f);
 }
 //-----------------------------------------------------------------------------
-static void DoOnUInt16Item(UInt16Value_t s, void* state)
+static void DoOnUInt16Item(UInt16Value_t* s, void* state)
 {
 	DYN_FILE_V2_0* dat = (DYN_FILE_V2_0*)state;
 
-	if (0 == strcmp("Aperture", s.Name))
-		dat->Aperture = s.Value;
-	else if (0 == strcmp("Cycles", s.Name))
-		dat->Cycles = s.Value;
-	else if (0 == strcmp("PumpType", s.Name))
-		dat->PumpType = s.Value;
-	else if (0 == strcmp("TravelStep", s.Name))
-		dat->TravelStep = s.Value;
+	if (0 == strcmp("Aperture", s->Name))
+		dat->Aperture = s->Value;
+	else if (0 == strcmp("Cycles", s->Name))
+		dat->Cycles = s->Value;
+	else if (0 == strcmp("PumpType", s->Name))
+		dat->PumpType = s->Value;
+	else if (0 == strcmp("TravelStep", s->Name))
+		dat->TravelStep = s->Value;
 }
 //-----------------------------------------------------------------------------
 

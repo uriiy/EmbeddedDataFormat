@@ -59,7 +59,7 @@ int DeSerializeUInt16KeyVal(uint8_t* psrc, const uint8_t* const psrcEnd,
 		while (0 == DeSerializeUInt16KeyValItem(rBegin, pbuf - rBegin, &s, &itemlen))
 		{
 			rBegin += itemlen;
-			(*DoOnItem)(s, state);
+			(*DoOnItem)(&s, state);
 		}
 		memcpy(pbufBegin, rBegin, pbuf - rBegin);// move to buffer begin
 		pbuf = pbufBegin + (pbuf - rBegin);// set pointer to begin data
@@ -129,7 +129,7 @@ int DeSerializeDoubleKeyVal(uint8_t* psrc, const uint8_t* const psrcEnd,
 		while (0 == DeSerializeDoubleKeyValItem(rBegin, pbuf - rBegin, &s, &itemlen))
 		{
 			rBegin += itemlen;
-			(*DoOnItem)(s, state);
+			(*DoOnItem)(&s, state);
 		}
 		memcpy(pbufBegin, rBegin, pbuf - rBegin);// move to buffer begin
 		pbuf = pbufBegin + (pbuf - rBegin);// set pointer to begin data
