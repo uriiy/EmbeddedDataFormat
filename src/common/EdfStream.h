@@ -69,4 +69,13 @@ typedef struct MemStream
 
 int MemStreamOpen(MemStream_t* s, uint8_t* buf, size_t size, const char* mode);
 //-----------------------------------------------------------------------------
+static int MemAlloc(MemStream_t* s, size_t len, void** pptr)
+{
+	if (len > s->Size - s->Pos)
+		return (size_t)-1;
+	*pptr = &s->Buffer[s->Pos];
+	memset(&s->Buffer[s->Pos], 0, len);
+	s->Pos += len;
+	return 0;
+}
 #endif

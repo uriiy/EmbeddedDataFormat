@@ -135,14 +135,9 @@ int EdfToDat(const char* edfFile, const char* datFile)
 		case btVarInfo:
 		{
 			br.t = NULL;
-			uint8_t* srcData = br.Block;
-			uint8_t* mem = (uint8_t*)&br.Buf;
-			size_t memLen = sizeof(br.Buf);
-			err = InfoFromBytes(&srcData, (TypeInfo_t*)&br.Buf, &mem, memLen);
-			writed = mem - br.Buf;
+			err = StreamWriteBinToCBin(br.Block, br.BlockLen, NULL, br.Buf, sizeof(br.Buf), NULL, &br.t);
 			if (!err)
 			{
-				br.t = (TypeInfo_t*)&br.Buf;
 				writed = 0;
 			}
 			else

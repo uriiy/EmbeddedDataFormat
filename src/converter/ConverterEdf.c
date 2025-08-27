@@ -61,14 +61,9 @@ int BinToText(const char* src, const char* dst)
 		case btVarInfo:
 		{
 			tw.t = NULL;
-			uint8_t* srcData = br.Block;
-			uint8_t* mem = (uint8_t*)&br.Buf;
-			size_t memLen = sizeof(br.Buf);
-			err = InfoFromBytes(&srcData, (TypeInfo_t*)&br.Buf, &mem, memLen);
-			writed = mem - br.Buf;
+			err = StreamWriteBinToCBin(br.Block, br.BlockLen, NULL, br.Buf, sizeof(br.Buf), NULL, &tw.t);
 			if (!err)
 			{
-				tw.t = (TypeInfo_t*)&br.Buf;
 				writed = 0;
 				err = EdfWriteInfo(&tw, tw.t, &writed);
 			}

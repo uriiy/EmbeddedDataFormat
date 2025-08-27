@@ -25,9 +25,12 @@ TypeInfo_t MakeTypeInfo(char* name, PoType type
 	, uint8_t dimCount, uint32_t* dims
 	, uint8_t childCount, TypeInfo_t* childs);
 
-uint32_t GetValueSize(const TypeInfo_t* t);
+uint32_t GetTypeCSize(const TypeInfo_t* t);
 int StreamWriteInfoBin(Stream_t* s, const TypeInfo_t* t, size_t* writed);
 int StreamWriteInfoTxt(Stream_t* buf, const TypeInfo_t* t, int noffset, size_t* writed);
-int InfoFromBytes(uint8_t** src, TypeInfo_t* t, uint8_t** mem, size_t memLen);
+int StreamBinToCBin(MemStream_t* src, MemStream_t* mem, TypeInfo_t** t);
+int StreamWriteBinToCBin(uint8_t* src, size_t srcLen, size_t* readed,
+	uint8_t* dst, size_t dstLen, size_t* writed,
+	TypeInfo_t** t);
 
 #endif
