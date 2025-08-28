@@ -93,8 +93,7 @@ static int PackUnpack()
 	};
 
 #pragma pack(pop)
-	size_t skip = 0;
-	size_t wqty = 0;
+	int skip = 0;
 	EdfWriter_t w = { 0 };
 	EdfWriter_t* dw = &w;
 
@@ -121,7 +120,7 @@ static int PackUnpack()
 		return err;
 
 	TestStruct_t* kv = NULL;
-	if ((err = EdfSreamBinToCBin(&TestStructInf, &mssrc, &mem, &kv, &skip, &wqty)))
+	if ((err = EdfSreamBinToCBin(&TestStructInf, &mssrc, &mem, &kv, &skip)))
 		return err;
 
 	if (0 != strcmp(val1.Key, kv->Key)
@@ -129,7 +128,7 @@ static int PackUnpack()
 		|| 0 != memcmp(&val1.Arr, &kv->Arr, FIELD_SIZEOF(TestStruct_t, Arr)))
 		return 1;
 
-	if ((err = EdfSreamBinToCBin(&TestStructInf, &mssrc, &mem, &kv, &skip, &wqty)))
+	if ((err = EdfSreamBinToCBin(&TestStructInf, &mssrc, &mem, &kv, &skip)))
 		return err;
 
 	if (0 != strcmp(val2.Key, kv->Key)

@@ -30,9 +30,8 @@ typedef struct UInt16Value
 
 typedef void (*DoOnItemUInt16)(UInt16Value_t* s, void* state);
 
-int DeSerializeUInt16KeyVal(uint8_t* psrc, const uint8_t* const psrcEnd,
-	uint8_t** ppbuf, uint8_t* const pbufBegin, uint8_t* const pbufEnd,
-	DoOnItemUInt16 DoOnItem, void* state);
+int UnpackUInt16KeyVal(MemStream_t* src, MemStream_t* dst,
+	int* skip, DoOnItemUInt16 DoOnItem, void* state);
 //-----------------------------------------------------------------------------
 static const TypeInfo_t UInt32ValueInf =
 {
@@ -82,8 +81,7 @@ typedef struct DoubleValue
 
 typedef void (*DoOnItemDoubleFn)(DoubleValue_t* s, void* state);
 int UnpackDoubleKeyVal(MemStream_t* src, MemStream_t* dst,
-	size_t* skip, size_t* wqty,
-	DoOnItemDoubleFn DoOnItem, void* state);
+	int* skip, DoOnItemDoubleFn DoOnItem, void* state);
 //-----------------------------------------------------------------------------
 #pragma pack(pop)
 //-----------------------------------------------------------------------------

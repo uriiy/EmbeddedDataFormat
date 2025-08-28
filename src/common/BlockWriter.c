@@ -219,7 +219,6 @@ static int TryReadString(MemStream_t* tsrc, MemStream_t* tmem, void** ti)
 {
 	MemStream_t src = *tsrc;
 	MemStream_t mem = *tmem;
-
 	int err = 0;
 	uint8_t sLen;
 	uint8_t* pstr = NULL;
@@ -237,15 +236,13 @@ static int TryReadString(MemStream_t* tsrc, MemStream_t* tmem, void** ti)
 		//pStrEnd[0] = 0;
 	}
 	*(void**)(*ti) = pstr;
-
 	*tsrc = src;
 	*tmem = mem;
-
 	return 0;
 }
 //-----------------------------------------------------------------------------
 int EdfSreamBinToCBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, void** presult,
-	size_t* skip, size_t* wqty)
+	int* skip)
 {
 	if (0 > t->Type || CString < t->Type)
 		return -2;
@@ -257,15 +254,9 @@ int EdfSreamBinToCBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, v
 		ti = *presult;
 	else
 	{
-		if (0 < (*skip))
-			(*skip)--;
-		else
-		{
-			if ((err = MemAlloc(mem, itemCLen, &ti)))
-				return 1;
-			(*wqty)++;
-			*presult = ti;
-		}
+		if ((err = MemAlloc(mem, itemCLen, &ti)))
+			return 1;
+		*presult = ti;
 	}
 
 	switch (t->Type)
@@ -277,7 +268,7 @@ int EdfSreamBinToCBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, v
 			{
 				const TypeInfo_t* s = &t->Childs.Item[j];
 				size_t childCLen = GetTypeCSize(s);
-				if ((err = EdfSreamBinToCBin(s, src, mem, &ti, skip, wqty)))
+				if ((err = EdfSreamBinToCBin(s, src, mem, &ti, skip)))
 					return err;
 				ti += childCLen;
 			}
@@ -286,26 +277,16 @@ int EdfSreamBinToCBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, v
 	case String:
 	case CString:
 	{
-		if (0 < (*skip))
-			(*skip)--;
-		else
-		{
+		if (0 <= ++(*skip))
 			if ((err = TryReadString(src, mem, &ti)))
 				return err;
-			(*wqty)++;
-		}
 		ti += itemCLen;
 	}
 	break;
 	default:
-		if (0 < (*skip))
-			(*skip)--;
-		else
-		{
+		if (0 <= ++(*skip))
 			if ((err = StreamRead(src, NULL, ti, itemCLen)))
 				return -1;
-			(*wqty)++;
-		}
 		ti += itemCLen;
 		break;
 	}//switch

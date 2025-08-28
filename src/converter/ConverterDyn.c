@@ -1,11 +1,11 @@
 #include "_pch.h"
-#include "KeyValue.h"
+#include "assert.h"
 #include "Charts.h"
 #include "converter.h"
-#include "SiamFileFormat.h"
-#include "assert.h"
 #include "edf_cfg.h"
+#include "KeyValue.h"
 #include "math.h"
+#include "SiamFileFormat.h"
 //-----------------------------------------------------------------------------
 /// DYN
 //-----------------------------------------------------------------------------
@@ -221,12 +221,7 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 	uint8_t* const recordBegin = precord;
 	uint8_t* const recordEnd = recordBegin + data_len;
 
-	uint8_t buf[256] = { 0 };
-	uint8_t* pbuf = buf;
-	uint8_t* const pbufEnd = buf + sizeof(buf);
-
-	size_t skip = 0;
-	size_t wqty = 0;
+	int skip = 0;
 	uint8_t bDst[3 * 256 + 8] = { 0 };
 	MemStream_t msDst = { 0 };
 	if ((err = MemStreamOpen(&msDst, bDst, sizeof(bDst), 0, "w")))
@@ -234,6 +229,10 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 
 	while (!(err = EdfReadBlock(&br)))
 	{
+		MemStream_t src = { 0 };
+		if ((err = MemStreamInOpen(&src, br.Block, br.BlockLen)))
+			return err;
+
 		switch (br.BlockType)
 		{
 		default: break;
@@ -248,8 +247,8 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 			break;
 		case btVarInfo:
 		{
-			pbuf = buf;
-			memset(buf, 0, sizeof(buf));
+			skip = 0;
+			msDst.WPos = 0;
 			br.t = NULL;
 			err = StreamWriteBinToCBin(br.Block, br.BlockLen, NULL, br.Buf, sizeof(br.Buf), NULL, &br.t);
 			if (!err)
@@ -298,13 +297,16 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 			}
 			else if (0 == _stricmp(br.t->Name, DateTimeInf.Name))
 			{
-				DateTime_t t = *((DateTime_t*)br.Block);
-				dat.Id.Time.Year = (uint8_t)(t.Year - 2000);
-				dat.Id.Time.Month = t.Month;
-				dat.Id.Time.Day = t.Day;
-				dat.Id.Time.Hour = t.Hour;
-				dat.Id.Time.Min = t.Min;
-				dat.Id.Time.Sec = t.Sec;
+				DateTime_t* t = NULL;
+				if (!(err = EdfSreamBinToCBin(&DateTimeInf, &src, &msDst, &t, &skip)))
+				{
+					dat.Id.Time.Year = (uint8_t)(t->Year - 2000);
+					dat.Id.Time.Month = t->Month;
+					dat.Id.Time.Day = t->Day;
+					dat.Id.Time.Hour = t->Hour;
+					dat.Id.Time.Min = t->Min;
+					dat.Id.Time.Sec = t->Sec;
+				}
 			}
 			else if (0 == _stricmp(br.t->Name, "RegType"))
 				dat.Id.RegType = *((uint16_t*)br.Block);
@@ -312,15 +314,12 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 				dat.Id.RegNum = *((uint32_t*)br.Block);
 
 			else if (0 == _stricmp(br.t->Name, "UInt16Value"))
-				DeSerializeUInt16KeyVal(br.Block, br.Block + br.BlockLen,
-					&pbuf, buf, pbufEnd, DoOnUInt16Item, &dat);
+			{
+				UnpackUInt16KeyVal(&src, &msDst, &skip, DoOnUInt16Item, &dat);
+			}
 			else if (0 == _stricmp(br.t->Name, "DoubleValue"))
 			{
-				MemStream_t src = { 0 };
-				if ((err = MemStreamInOpen(&src, br.Block, br.BlockLen)))
-					return err;
-
-				UnpackDoubleKeyVal(&src, &msDst, &skip, &wqty, DoOnDoubleItem, &dat);
+				UnpackDoubleKeyVal(&src, &msDst, &skip, DoOnDoubleItem, &dat);
 			}
 
 			else if (0 == _stricmp(br.t->Name, "Chart2D"))
