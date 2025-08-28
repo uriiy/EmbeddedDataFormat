@@ -75,12 +75,12 @@ int MemAlloc(MemStream_t* s, size_t len, void** pptr)
 	return 0;
 }
 //-----------------------------------------------------------------------------
-size_t StreamLen(MemStream_t* s)
+size_t StreamLen(const MemStream_t* s)
 {
 	return s->WPos - s->RPos;
 }
 //-----------------------------------------------------------------------------
-size_t StreamEmptyLen(MemStream_t* s)
+size_t StreamEmptyLen(const MemStream_t* s)
 {
 	return s->Size - (s->WPos - s->RPos);
 }

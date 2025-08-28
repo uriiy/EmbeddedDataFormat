@@ -78,7 +78,7 @@ int BinToBin(PoType t,
 	return 0;
 	case CString:
 	{
-		char* str = *(char**)src;
+		const char* str = *(char**)src;
 		size_t len = (NULL == str) ? 0 : strnlength(str, 0xFD) + 1;
 		if (dstLen < len + 1)
 			return 1;
@@ -183,7 +183,7 @@ int BinToStr(PoType t,
 	case CString:
 	{
 		// print text without buf
-		char* str = *(char**)src;
+		const char* str = *(char**)src;
 		size_t len = (NULL == str) ? 0 : strnlength(str, 0xFD);
 		if (dstLen < len + 2)
 			return 1;
@@ -193,7 +193,6 @@ int BinToStr(PoType t,
 		dst += len;
 		*dst++ = '"';
 		return 0;
-	}
-	break;//case CString:
+	}//case CString:
 	}//switch (t)
 }
