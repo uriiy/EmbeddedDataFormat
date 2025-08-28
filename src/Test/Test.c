@@ -37,22 +37,20 @@ static int CompareFiles(const char* src, const char* dst)
 }
 
 //-----------------------------------------------------------------------------
-static int TestMemStream(void)
+static void TestMemStream(void)
 {
 	size_t writed = 0;
 	MemStream_t ms = { 0 };
 	uint8_t buf[256];
-	int err = MemStreamOpen(&ms, buf, sizeof(buf), 0, "rw");
+	assert(!MemStreamOpen(&ms, buf, sizeof(buf), 0, "rw"));
 	const char test[] = "test 123";
 	Stream_t* stream = (Stream_t*)&ms;
-	if ((err = StreamWrite(stream, &writed, test, sizeof(test) - 1)))
-		return err;
-	if ((err = StreamWriteFmt(stream, &writed, " format %d", 1)))
-		return err;
+	assert(!StreamWrite(stream, &writed, test, sizeof(test) - 1));
+	assert(!StreamWriteFmt(stream, &writed, " format %d", 1));
 
 	size_t readed = 0;
 	char outBuf[256] = { 0 };
-	err = StreamRead(stream, &readed, outBuf, writed);
+	assert(!StreamRead(stream, &readed, outBuf, writed));
 
 	assert(writed == readed);
 	assert(0 == memcmp("test 123 format 1", outBuf, readed));
@@ -95,7 +93,7 @@ static int PackUnpack()
 	};
 
 #pragma pack(pop)
-	EdfWriter_t w = {0};
+	EdfWriter_t w = { 0 };
 	EdfWriter_t* dw = &w;
 
 	uint8_t binBuf[1024] = { 0 };

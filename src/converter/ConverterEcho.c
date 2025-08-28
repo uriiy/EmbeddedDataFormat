@@ -160,5 +160,7 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 //-----------------------------------------------------------------------------
 int EdfToEcho(const char* src, const char* dst)
 {
+	UNUSED(src);
+	UNUSED(dst);
 	return 0;
 }

@@ -94,5 +94,7 @@ int BinToText(const char* src, const char* dst)
 //-----------------------------------------------------------------------------
 int TextToBin(const char* src, const char* dst)
 {
+	UNUSED(src);
+	UNUSED(dst);
 	return 0;
 }
