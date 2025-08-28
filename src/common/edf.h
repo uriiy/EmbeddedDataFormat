@@ -24,7 +24,8 @@ int EdfWriteHeader(EdfWriter_t* dw, const EdfHeader_t* h, size_t* writed);
 int EdfWriteInfo(EdfWriter_t* dw, const TypeInfo_t* t, size_t* writed);
 int EdfWriteDataBlock(EdfWriter_t* dw, void* src, size_t srcLen);
 int EdfFlushDataBlock(EdfWriter_t* dw, size_t* writed);
-int EdfSreamBinToCBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, void** presult);
+int EdfSreamBinToCBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, void** presult,
+	size_t* skip, size_t* wqty);
 int EdfReadBlock(EdfWriter_t* dr);
 
 //shortcut

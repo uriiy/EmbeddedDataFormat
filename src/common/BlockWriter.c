@@ -215,7 +215,37 @@ int EdfWriteDataBlock(EdfWriter_t* dw, void* vsrc, size_t xsrcLen)
 	return wr;
 }
 //-----------------------------------------------------------------------------
-int EdfSreamBinToCBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, void** presult)
+static int TryReadString(MemStream_t* tsrc, MemStream_t* tmem, void** ti)
+{
+	MemStream_t src = *tsrc;
+	MemStream_t mem = *tmem;
+
+	int err = 0;
+	uint8_t sLen;
+	uint8_t* pstr = NULL;
+	if ((err = StreamRead(&src, NULL, &sLen, 1)))
+		return -1;
+	if ((err = MemAlloc(&mem, sLen, &pstr)))
+		return 1;
+	if ((err = StreamRead(&src, NULL, pstr, sLen)))
+		return -1;
+	if (sLen && 0 != pstr[sLen - 1])
+	{
+		uint8_t* pStrEnd = NULL;
+		if ((err = MemAlloc(&mem, 1, &pStrEnd)))
+			return 1;
+		//pStrEnd[0] = 0;
+	}
+	*(void**)(*ti) = pstr;
+
+	*tsrc = src;
+	*tmem = mem;
+
+	return 0;
+}
+//-----------------------------------------------------------------------------
+int EdfSreamBinToCBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, void** presult,
+	size_t* skip, size_t* wqty)
 {
 	if (0 > t->Type || CString < t->Type)
 		return -2;
@@ -227,9 +257,15 @@ int EdfSreamBinToCBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, v
 		ti = *presult;
 	else
 	{
-		if ((err = MemAlloc(mem, itemCLen, &ti)))
-			return err;
-		*presult = ti;
+		if (0 < (*skip))
+			(*skip)--;
+		else
+		{
+			if ((err = MemAlloc(mem, itemCLen, &ti)))
+				return 1;
+			(*wqty)++;
+			*presult = ti;
+		}
 	}
 
 	switch (t->Type)
@@ -241,9 +277,8 @@ int EdfSreamBinToCBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, v
 			{
 				const TypeInfo_t* s = &t->Childs.Item[j];
 				size_t childCLen = GetTypeCSize(s);
-				int wr = EdfSreamBinToCBin(s, src, mem, &ti);
-				if (0 != wr)
-					return wr;
+				if ((err = EdfSreamBinToCBin(s, src, mem, &ti, skip, wqty)))
+					return err;
 				ti += childCLen;
 			}
 		}
@@ -251,26 +286,26 @@ int EdfSreamBinToCBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, v
 	case String:
 	case CString:
 	{
-		uint8_t sLen;
-		uint8_t* pstr = NULL;
-		if ((err = StreamRead(src, NULL, &sLen, 1)) ||
-			(err = MemAlloc(mem, sLen, &pstr)) ||
-			(err = StreamRead(src, NULL, pstr, sLen)))
-			return err;
-		if (sLen && 0 != pstr[sLen - 1])
+		if (0 < (*skip))
+			(*skip)--;
+		else
 		{
-			uint8_t* pStrEnd = NULL;
-			if ((err = MemAlloc(mem, 1, &pStrEnd)))
+			if ((err = TryReadString(src, mem, &ti)))
 				return err;
-			//pStrEnd[0] = 0;
+			(*wqty)++;
 		}
-		*(void**)ti = pstr;
 		ti += itemCLen;
 	}
 	break;
 	default:
-		if ((err = StreamRead(src, NULL, ti, itemCLen)))
-			return err;
+		if (0 < (*skip))
+			(*skip)--;
+		else
+		{
+			if ((err = StreamRead(src, NULL, ti, itemCLen)))
+				return -1;
+			(*wqty)++;
+		}
 		ti += itemCLen;
 		break;
 	}//switch

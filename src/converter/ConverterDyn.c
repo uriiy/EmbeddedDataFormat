@@ -164,21 +164,21 @@ static void DoOnDoubleItem(DoubleValue_t* s, void* state)
 	DYN_FILE_V2_0* dat = (DYN_FILE_V2_0*)state;
 
 	if (0 == strcmp("Rod", s->Name))
-		dat->Rod = s->Value * 10;
+		dat->Rod = (uint16_t)round(s->Value * 10);
 	else if (0 == strcmp("Travel", s->Name))
-		dat->Travel = s->Value * 10.0f / dat->TravelStep;
+		dat->Travel = (uint16_t)round(s->Value * 10.0f / dat->TravelStep);
 	else if (0 == strcmp("BeginPos", s->Name))
-		dat->BeginPos = s->Value * 10.0f / dat->TravelStep;
+		dat->BeginPos = (uint16_t)round(s->Value * 10.0f / dat->TravelStep);
 	else if (0 == strcmp("Pressure", s->Name))
-		dat->Pressure = round(s->Value * 10);
+		dat->Pressure = (int16_t)round(s->Value * 10);
 	else if (0 == strcmp("BufPressure", s->Name))
-		dat->BufPressure = round(s->Value * 10);
+		dat->BufPressure = (int16_t)round(s->Value * 10);
 	else if (0 == strcmp("LinePressure", s->Name))
-		dat->LinePressure = round(s->Value * 10);
+		dat->LinePressure = (int16_t)round(s->Value * 10);
 	else if (0 == strcmp("Acc", s->Name))
-		dat->Acc = round(s->Value * 10.f);
+		dat->Acc = (uint16_t)round(s->Value * 10.f);
 	else if (0 == strcmp("Temp", s->Name))
-		dat->Temp = round(s->Value * 10.f);
+		dat->Temp = (int16_t)round(s->Value * 10.f);
 }
 //-----------------------------------------------------------------------------
 static void DoOnUInt16Item(UInt16Value_t* s, void* state)
@@ -221,9 +221,16 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 	uint8_t* const recordBegin = precord;
 	uint8_t* const recordEnd = recordBegin + data_len;
 
-	uint8_t buf[3 * 256 + 8] = { 0 };
+	uint8_t buf[256] = { 0 };
 	uint8_t* pbuf = buf;
 	uint8_t* const pbufEnd = buf + sizeof(buf);
+
+	size_t skip = 0;
+	size_t wqty = 0;
+	uint8_t bDst[3 * 256 + 8] = { 0 };
+	MemStream_t msDst = { 0 };
+	if ((err = MemStreamOpen(&msDst, bDst, sizeof(bDst), 0, "w")))
+		return err;
 
 	while (!(err = EdfReadBlock(&br)))
 	{
@@ -242,7 +249,7 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 		case btVarInfo:
 		{
 			pbuf = buf;
-			memset(buf,0, sizeof(buf));
+			memset(buf, 0, sizeof(buf));
 			br.t = NULL;
 			err = StreamWriteBinToCBin(br.Block, br.BlockLen, NULL, br.Buf, sizeof(br.Buf), NULL, &br.t);
 			if (!err)
@@ -308,8 +315,13 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 				DeSerializeUInt16KeyVal(br.Block, br.Block + br.BlockLen,
 					&pbuf, buf, pbufEnd, DoOnUInt16Item, &dat);
 			else if (0 == _stricmp(br.t->Name, "DoubleValue"))
-				DeSerializeDoubleKeyVal(br.Block, br.Block + br.BlockLen,
-					&pbuf, buf, pbufEnd, DoOnDoubleItem, &dat);
+			{
+				MemStream_t src = { 0 };
+				if ((err = MemStreamInOpen(&src, br.Block, br.BlockLen)))
+					return err;
+
+				UnpackDoubleKeyVal(&src, &msDst, &skip, &wqty, DoOnDoubleItem, &dat);
+			}
 
 			else if (0 == _stricmp(br.t->Name, "Chart2D"))
 			{

@@ -69,71 +69,22 @@ int DeSerializeUInt16KeyVal(uint8_t* psrc, const uint8_t* const psrcEnd,
 	return 0;
 }
 
-
-
 //-----------------------------------------------------------------------------
-static int DeSerializeDoubleKeyValItem(const uint8_t* src, size_t srcLen,
-	DoubleValue_t* s, size_t* dstLen)
-{
-	size_t offset = 0;
-	uint8_t len = 0;
-
-	if (srcLen < 1 + offset)
-		return -1;
-	len = MIN(src[offset], (uint8_t)0xFE);
-	if (srcLen < 1 + len + offset)
-		return -1;
-	s->Name = (char*)&src[1];
-	offset += 1 + len;
-
-	len = sizeof(double);
-	if (srcLen < len + offset)
-		return -1;
-	s->Value = *((double*)&src[offset]);
-	offset += len;
-
-	len = MIN(src[offset], (uint8_t)0xFE);
-	if (srcLen < 1 + len + offset)
-		return -1;
-	s->Unit = (char*)&src[1 + offset];
-	offset += 1 + len;
-
-	len = MIN(src[offset], (uint8_t)0xFE);
-	if (srcLen < 1 + len + offset)
-		return -1;
-	s->Description = (char*)&src[1 + offset];
-	offset += 1 + len;
-
-	*dstLen = offset;
-	return 0;
-}
-//-----------------------------------------------------------------------------
-int DeSerializeDoubleKeyVal(uint8_t* psrc, const uint8_t* const psrcEnd,
-	uint8_t** ppbuf, uint8_t* const pbufBegin, uint8_t* const pbufEnd,
+int UnpackDoubleKeyVal(MemStream_t* src, MemStream_t* dst,
+	size_t* skip, size_t* wqty,
 	DoOnItemDoubleFn DoOnItem, void* state)
 {
-	uint8_t* pbuf = *ppbuf;
-	uint8_t* rBegin = NULL;
-	size_t itemlen = 0;
-	DoubleValue_t s;
-	do
+	int err = 0;
+	DoubleValue_t* s = (*skip) ? (DoubleValue_t*)dst->Buffer : NULL;
+	while ((err != EdfSreamBinToCBin(&DoubleValueInf, src, dst, &s, skip, wqty)))
 	{
-		size_t len = MIN(pbufEnd - pbuf, psrcEnd - psrc);
-		if (0 < len)
-		{
-			memcpy(pbuf, psrc, len);
-			psrc += len;
-			pbuf += len;
-		}
-		rBegin = pbufBegin;
-		while (0 == DeSerializeDoubleKeyValItem(rBegin, pbuf - rBegin, &s, &itemlen))
-		{
-			rBegin += itemlen;
-			(*DoOnItem)(&s, state);
-		}
-		memcpy(pbufBegin, rBegin, pbuf - rBegin);// move to buffer begin
-		pbuf = pbufBegin + (pbuf - rBegin);// set pointer to begin data
-	} while (psrcEnd > psrc);
-	*ppbuf = pbuf;
-	return 0;
+		(*DoOnItem)(s, state);
+		s = NULL;
+		*wqty = 0;
+		dst->WPos = 0;
+	}
+	*skip = *wqty - 1;
+	*wqty = 0;
+	return err;
 }
+//-----------------------------------------------------------------------------

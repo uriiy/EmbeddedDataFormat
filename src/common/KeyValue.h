@@ -81,11 +81,9 @@ typedef struct DoubleValue
 } DoubleValue_t;
 
 typedef void (*DoOnItemDoubleFn)(DoubleValue_t* s, void* state);
-
-int DeSerializeDoubleKeyVal(uint8_t* psrc, const uint8_t* const psrcEnd,
-	uint8_t** ppbuf, uint8_t* const pbufBegin, uint8_t* const pbufEnd,
+int UnpackDoubleKeyVal(MemStream_t* src, MemStream_t* dst,
+	size_t* skip, size_t* wqty,
 	DoOnItemDoubleFn DoOnItem, void* state);
-
 //-----------------------------------------------------------------------------
 #pragma pack(pop)
 //-----------------------------------------------------------------------------
