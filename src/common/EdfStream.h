@@ -75,6 +75,7 @@ int MemStreamOutOpen(MemStream_t* s, uint8_t* buf, size_t size);
 
 int MemAlloc(MemStream_t* s, size_t len, void** pptr);
 size_t StreamLen(MemStream_t* s);
+size_t StreamEmptyLen(MemStream_t* s);
 int StreamCpy(MemStream_t* src, MemStream_t* dst, size_t len);
 //-----------------------------------------------------------------------------
 #endif //EDFSTREAM_H

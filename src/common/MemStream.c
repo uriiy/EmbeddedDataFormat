@@ -1,6 +1,15 @@
 #include "_pch.h"
 #include "edf.h"
-
+//-----------------------------------------------------------------------------
+static void MemStreamMove(MemStream_t* s)
+{
+	if (s->RPos)
+	{
+		s->WPos -= s->RPos;//dataLen
+		memcpy(s->Buffer, &s->Buffer[s->RPos], s->WPos);
+		s->RPos = 0;
+	}
+}
 //-----------------------------------------------------------------------------
 static int MemStreamWriteImpl(void* stream, size_t* writed, void const* data, size_t len)
 {
@@ -10,11 +19,7 @@ static int MemStreamWriteImpl(void* stream, size_t* writed, void const* data, si
 	if (len > rempty + wempty)
 		return EOF;
 	if (len > wempty)
-	{
-		s->WPos -= s->RPos;//dataLen
-		memcpy(s->Buffer, &s->Buffer[s->RPos], s->WPos);
-		s->RPos = 0;
-	}
+		MemStreamMove(s);
 	memcpy(&s->Buffer[s->WPos], data, len);
 	s->WPos += len;
 	if (writed)
@@ -25,12 +30,7 @@ static int MemStreamWriteImpl(void* stream, size_t* writed, void const* data, si
 static int MemStreamWriteFormatImpl(void* stream, size_t* writed, const char* format, ...)
 {
 	MemStream_t* s = (MemStream_t*)stream;
-	if (s->RPos)
-	{
-		s->WPos -= s->RPos;//dataLen
-		memcpy(s->Buffer, &s->Buffer[s->RPos], s->WPos);
-		s->RPos = 0;
-	}
+	MemStreamMove(s);
 	size_t bufFreeLen = s->Size - s->WPos;
 	if (0 == bufFreeLen)
 		return EOF;
@@ -80,13 +80,21 @@ size_t StreamLen(MemStream_t* s)
 	return s->WPos - s->RPos;
 }
 //-----------------------------------------------------------------------------
+size_t StreamEmptyLen(MemStream_t* s)
+{
+	return s->Size - (s->WPos - s->RPos);
+}
+//-----------------------------------------------------------------------------
 int StreamCpy(MemStream_t* src, MemStream_t* dst, size_t len)
 {
 	if (StreamLen(src) < len)
 		return -1;
-	if (StreamLen(dst) < len)
+	if (StreamEmptyLen(dst) < len)
 		return 1;
-	memcpy(&dst->Buffer[dst->RPos], &src->Buffer[src->WPos], len);
+	MemStreamMove(dst);
+	memcpy(&dst->Buffer[dst->WPos], &src->Buffer[src->RPos], len);
+	dst->WPos += len;
+	src->RPos += len;
 	return 0;
 }
 //-----------------------------------------------------------------------------
