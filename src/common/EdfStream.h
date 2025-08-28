@@ -26,7 +26,8 @@ typedef struct Stream
 		{
 			uint8_t* Buffer;
 			size_t Size;
-			size_t Pos;
+			size_t RPos;
+			size_t WPos;
 		} Mem;
 	} Impl;
 } Stream_t;
@@ -64,18 +65,16 @@ typedef struct MemStream
 	CloseFn Close;
 	uint8_t* Buffer;
 	size_t Size;
-	size_t Pos;
+	size_t RPos;
+	size_t WPos;
 } MemStream_t;
 
-int MemStreamOpen(MemStream_t* s, uint8_t* buf, size_t size, const char* mode);
+int MemStreamOpen(MemStream_t* s, uint8_t* buf, size_t size, size_t datalen, const char* mode);
+int MemStreamInOpen(MemStream_t* s, uint8_t* buf, size_t size);
+int MemStreamOutOpen(MemStream_t* s, uint8_t* buf, size_t size);
+
+int MemAlloc(MemStream_t* s, size_t len, void** pptr);
+size_t StreamLen(MemStream_t* s);
+int StreamCpy(MemStream_t* src, MemStream_t* dst, size_t len);
 //-----------------------------------------------------------------------------
-static int MemAlloc(MemStream_t* s, size_t len, void** pptr)
-{
-	if (len > s->Size - s->Pos)
-		return (size_t)-1;
-	*pptr = &s->Buffer[s->Pos];
-	memset(&s->Buffer[s->Pos], 0, len);
-	s->Pos += len;
-	return 0;
-}
-#endif
+#endif //EDFSTREAM_H

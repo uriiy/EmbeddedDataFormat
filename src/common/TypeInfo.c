@@ -192,18 +192,18 @@ int StreamWriteBinToCBin(uint8_t* src, size_t srcLen, size_t* readed,
 {
 	int err = 0;
 	MemStream_t mssrc = { 0 };
-	if ((err = MemStreamOpen(&mssrc, src, srcLen, "r")))
+	if ((err = MemStreamInOpen(&mssrc, src, srcLen)))
 		return err;
 
 	MemStream_t msdst = { 0 };
-	if ((err = MemStreamOpen(&msdst, dst, dstLen, "w")))
+	if ((err = MemStreamOutOpen(&msdst, dst, dstLen)))
 		return err;
 	if ((err = StreamBinToCBin(&mssrc, &msdst, t)))
 		return err;
 	if (readed)
-		*readed = mssrc.Pos;
+		*readed = mssrc.RPos;
 	if (writed)
-		*writed = msdst.Pos;
+		*writed = msdst.WPos;
 	return err;
 }
 //-----------------------------------------------------------------------------

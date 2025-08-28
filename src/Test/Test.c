@@ -37,16 +37,25 @@ static int CompareFiles(const char* src, const char* dst)
 }
 
 //-----------------------------------------------------------------------------
-static void TestMemStream(void)
+static int TestMemStream(void)
 {
 	size_t writed = 0;
 	MemStream_t ms = { 0 };
 	uint8_t buf[256];
-	int err = MemStreamOpen(&ms, buf, sizeof(buf), "w");
-	const char test[] = "qwe test 123";
+	int err = MemStreamOpen(&ms, buf, sizeof(buf), 0, "rw");
+	const char test[] = "test 123";
 	Stream_t* stream = (Stream_t*)&ms;
-	err = StreamWrite(stream, &writed, test, sizeof(test) - 1);
-	err = StreamWriteFmt(stream, &writed, " format %d", 1);
+	if ((err = StreamWrite(stream, &writed, test, sizeof(test) - 1)))
+		return err;
+	if ((err = StreamWriteFmt(stream, &writed, " format %d", 1)))
+		return err;
+
+	size_t readed = 0;
+	char outBuf[256] = { 0 };
+	err = StreamRead(stream, &readed, outBuf, writed);
+
+	assert(writed == readed);
+	assert(0 == memcmp("test 123 format 1", outBuf, readed));
 }
 //-----------------------------------------------------------------------------
 static int PackUnpack()
@@ -70,8 +79,8 @@ static int PackUnpack()
 			{
 				{ CString, "Key" },
 				{ CString, "Value" },
-				{ 
-					.Type = Struct, .Name = "Internal", 
+				{
+					.Type = Struct, .Name = "Internal",
 					.Childs =
 					{
 						.Count = 1,
@@ -86,16 +95,16 @@ static int PackUnpack()
 	};
 
 #pragma pack(pop)
-	EdfWriter_t w;
+	EdfWriter_t w = {0};
 	EdfWriter_t* dw = &w;
 
 	uint8_t binBuf[1024] = { 0 };
 	MemStream_t fstream = { 0 };
-	if ((err = MemStreamOpen(&fstream, binBuf, sizeof(binBuf), "w")))
+	if ((err = MemStreamOutOpen(&fstream, binBuf, sizeof(binBuf))))
 		return err;
 	err = EdfOpenStream(dw, (Stream_t*)&fstream, "wb");
 	err = EdfWriteInfo(dw, &TestStructInf, &writed);
-	dw->Stream.Impl.Mem.Pos = 0;
+	dw->Stream.Impl.Mem.WPos = 0;
 
 	TestStruct_t val1 = { "Key1", "Value1", { 11,22,33 } };
 	TestStruct_t val2 = { "Key2", "Value2", { 11,22,33 } };
@@ -104,11 +113,11 @@ static int PackUnpack()
 	EdfClose(dw);
 
 	MemStream_t mssrc = { 0 };
-	if ((err = MemStreamOpen(&mssrc, &binBuf[4], 100, "r")))
+	if ((err = MemStreamInOpen(&mssrc, &binBuf[4], 100)))
 		return err;
 	uint8_t buf[1024] = { 0 };
 	MemStream_t mem = { 0 };
-	if ((err = MemStreamOpen(&mem, buf, sizeof(buf), "w")))
+	if ((err = MemStreamOutOpen(&mem, buf, sizeof(buf))))
 		return err;
 
 	TestStruct_t* kv = NULL;
