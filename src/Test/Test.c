@@ -379,7 +379,7 @@ static void DatFormatTest()
 	assert(0 == BinToText("1E.bdf", "1EConv.tdf"));
 	assert(0 == CompareFiles("1E.tdf", "1EConv.tdf"));
 	assert(0 == EdfToEcho("1E.bdf", "1EConv.E"));
-	//assert(0 == CompareFiles("1E.E", "1EConv.E"));
+	assert(0 == CompareFiles("1E.E", "1EConv.E"));
 
 	assert(0 == DynToEdf("1D.D", "1D.tdf", 't'));
 	assert(0 == DynToEdf("1D.D", "1D.bdf", 'b'));
