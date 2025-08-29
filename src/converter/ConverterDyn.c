@@ -46,11 +46,16 @@ int DynToEdf(const char* src, const char* edf, char mode)
 		return err;
 
 	EdfWriteInfData(&dw, UInt32, "FileType", &dat.FileType);
-	EdfWriteStringBytes(&dw, "FileDescription", &dat.FileDescription, FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription));
+
+	EdfWriteInfo(&dw, &FileDescriptionInf, &writed);
+	EdfWriteDataBlock(&dw, &dat.FileDescription, FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription));
+
+
+	//EdfWriteStringBytes(&dw, "FileDescription", &dat.FileDescription, FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription));
 	// RESEARCH_ID_V2_0
 	EdfWriteInfData(&dw, UInt16, "ResearchType", &dat.Id.ResearchType);
 	EdfWriteInfData(&dw, UInt16, "DeviceType", &dat.Id.DeviceType);
-	EdfWriteInfData(&dw, UInt16, "DeviceNum", &dat.Id.DeviceNum);
+	EdfWriteInfData(&dw, UInt32, "DeviceNum", &dat.Id.DeviceNum);
 	EdfWriteInfData(&dw, UInt16, "Shop", &dat.Id.Shop);
 	EdfWriteInfData(&dw, UInt16, "Oper", &dat.Id.Oper);
 	EdfWriteInfData(&dw, UInt16, "Field", &dat.Id.Field);
@@ -113,7 +118,9 @@ int DynToEdf(const char* src, const char* edf, char mode)
 			{ "Cycles", dat.Cycles, "", "пропущено циклов" },
 			{ "PumpType", dat.PumpType, "", "тип привода станка-качалки {}" },
 			{ "TravelStep", dat.TravelStep, "", "величина дискреты перемещения, 0.1 мм" },
-		}, sizeof(UInt16Value_t[4]));
+			{ "LoadStep", dat.LoadStep, "", "величина дискреты нагрузки, кг" },
+			{ "TimeStep", dat.TimeStep, "", "величина дискреты времени, мс" },
+		}, sizeof(UInt16Value_t[6]));
 
 		EdfWriteInfo(&dw, &UInt32ValueInf, &writed);
 		EdfWriteDataBlock(&dw, &(UInt32Value_t[])
@@ -123,7 +130,7 @@ int DynToEdf(const char* src, const char* edf, char mode)
 			{ "TopWeight", dat.TopWeight * dat.LoadStep, "кг", "вес штанг вверху" },
 			{ "BotWeight", dat.BotWeight * dat.LoadStep, "кг", "вес штанг внизу" },
 			{ "Period", dat.Period * dat.TimeStep, "мм", "ход штока" },
-		}, sizeof(UInt32Value_t[3]));
+		}, sizeof(UInt32Value_t[5]));
 
 		EdfWriteInfo(&dw, &DoubleValueInf, &writed);
 		EdfWriteDataBlock(&dw, &(DoubleValue_t[])
@@ -162,7 +169,6 @@ int DynToEdf(const char* src, const char* edf, char mode)
 static void DoOnDoubleItem(DoubleValue_t* s, void* state)
 {
 	DYN_FILE_V2_0* dat = (DYN_FILE_V2_0*)state;
-
 	if (0 == strcmp("Rod", s->Name))
 		dat->Rod = (uint16_t)round(s->Value * 10);
 	else if (0 == strcmp("Travel", s->Name))
@@ -184,7 +190,6 @@ static void DoOnDoubleItem(DoubleValue_t* s, void* state)
 static void DoOnUInt16Item(UInt16Value_t* s, void* state)
 {
 	DYN_FILE_V2_0* dat = (DYN_FILE_V2_0*)state;
-
 	if (0 == strcmp("Aperture", s->Name))
 		dat->Aperture = s->Value;
 	else if (0 == strcmp("Cycles", s->Name))
@@ -193,8 +198,28 @@ static void DoOnUInt16Item(UInt16Value_t* s, void* state)
 		dat->PumpType = s->Value;
 	else if (0 == strcmp("TravelStep", s->Name))
 		dat->TravelStep = s->Value;
+	else if (0 == strcmp("LoadStep", s->Name))
+		dat->LoadStep = s->Value;
+	else if (0 == strcmp("TimeStep", s->Name))
+		dat->TimeStep = s->Value;
 }
 //-----------------------------------------------------------------------------
+static void DoOnUInt32Item(UInt32Value_t* s, void* state)
+{
+	DYN_FILE_V2_0* dat = (DYN_FILE_V2_0*)state;
+	if (0 == strcmp("MaxWeight", s->Name))
+		dat->MaxWeight = (uint16_t)round(s->Value / dat->LoadStep);
+	else if (0 == strcmp("MinWeight", s->Name))
+		dat->MinWeight = (uint16_t)round(s->Value / dat->LoadStep);
+	else if (0 == strcmp("TopWeight", s->Name))
+		dat->TopWeight = (uint16_t)round(s->Value / dat->LoadStep);
+	else if (0 == strcmp("BotWeight", s->Name))
+		dat->BotWeight = (uint16_t)round(s->Value / dat->LoadStep);
+	else if (0 == strcmp("Period", s->Name))
+		dat->Period = (uint16_t)round(s->Value / dat->TimeStep);
+}
+//-----------------------------------------------------------------------------
+
 
 int EdfToDyn(const char* edfFile, const char* dynFile)
 {
@@ -209,17 +234,9 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 	if ((err = fopen_s(&f, dynFile, "wb")))
 		return err;
 
-	// hint
-	//int const* ptr; // ptr is a pointer to constant int 
-	//int* const ptr;  // ptr is a constant pointer to int
-
 	DYN_FILE_V2_0 dat = { 0 };
-	PointXY_t record = { 0 };
 	size_t recN = 0;
-	const size_t data_len = sizeof(PointXY_t);
-	uint8_t* precord = (void*)&record;
-	uint8_t* const recordBegin = precord;
-	uint8_t* const recordEnd = recordBegin + data_len;
+	PointXY_t record = { 0 };
 
 	int skip = 0;
 	uint8_t bDst[3 * 256 + 8] = { 0 };
@@ -270,8 +287,8 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 				dat.FileType = *((uint32_t*)br.Block);
 			else if (0 == _stricmp(br.t->Name, "FileDescription"))
 			{
-				uint8_t len = MIN(MIN(0xFD, *((uint8_t*)br.Block)), FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription));
-				memcpy(dat.FileDescription, &br.Block[1], len);
+				err = EdfSreamBinToCBin(&FileDescriptionInf, &src, &msDst,
+					&(void*){dat.FileDescription}, & skip);
 			}
 			else if (0 == _stricmp(br.t->Name, "ResearchType"))
 				dat.Id.ResearchType = *((uint16_t*)br.Block);
@@ -310,12 +327,16 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 			}
 			else if (0 == _stricmp(br.t->Name, "RegType"))
 				dat.Id.RegType = *((uint16_t*)br.Block);
-			else if (0 == _stricmp(br.t->Name, "Cycles"))
+			else if (0 == _stricmp(br.t->Name, "RegNum"))
 				dat.Id.RegNum = *((uint32_t*)br.Block);
 
 			else if (0 == _stricmp(br.t->Name, "UInt16Value"))
 			{
 				UnpackUInt16KeyVal(&src, &msDst, &skip, DoOnUInt16Item, &dat);
+			}
+			else if (0 == _stricmp(br.t->Name, "UInt32Value"))
+			{
+				UnpackUInt32KeyVal(&src, &msDst, &skip, DoOnUInt32Item, &dat);
 			}
 			else if (0 == _stricmp(br.t->Name, "DoubleValue"))
 			{
@@ -324,30 +345,22 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 
 			else if (0 == _stricmp(br.t->Name, "Chart2D"))
 			{
-				uint8_t* pblock = br.Block;
-
-				while (0 < br.BlockLen)
+				PointXY_t* s = NULL;
+				while (!(err = EdfSreamBinToCBin(&Point2DInf, &src, &msDst, &s, &skip))
+					&& recN <= FIELD_SIZEOF(DYN_FILE_V2_0, Data))
 				{
-					size_t len = (size_t)MIN(br.BlockLen, (size_t)(recordEnd - precord));
-					memcpy(precord, pblock, len);
-					precord += len;
-					pblock += len;
-					br.BlockLen -= len;
-					if (recordEnd == precord)
-					{
-						precord = recordBegin;
-						//dat.Data[recN] = TODO
-						recN++;
-					}
-					if (1000 <= recN)
-					{
-						if (1 != fwrite(&dat, sizeof(DYN_FILE_V2_0), 1, f))
-							return -1;
-					}
-
-				}//while (0 < br.BlockLen)
-
-
+					double posDif = recN ? s->x - record.x : s->x;
+					//double posDif = s->x;
+					uint16_t tr = (((uint16_t)round(posDif * 1.0E4 / dat.TravelStep) & 0x003f)) << 10;
+					uint16_t w = ((uint16_t)(round(s->y * 1.0E3 / dat.LoadStep)) & 0x003f);
+					dat.Data[recN++] = tr | w;
+					record = *s;
+					s = NULL;
+					skip = 0;
+					msDst.WPos = 0;
+				}
+				skip = -skip;
+				err = 0;
 			}//else
 		}//case btVarData:
 		break;
@@ -358,6 +371,11 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 			break;
 		}
 	}//while (!(err = EdfReadBlock(&br)))
+
+	dat.crc = MbCrc16(&dat, sizeof(DYN_FILE_V2_0) - 2);
+
+	if (1 != fwrite(&dat, sizeof(DYN_FILE_V2_0), 1, f))
+		return -1;
 
 	fclose(f);
 	EdfClose(&br);

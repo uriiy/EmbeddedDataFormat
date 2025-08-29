@@ -386,7 +386,7 @@ static void DatFormatTest()
 	assert(0 == BinToText("1D.bdf", "1DConv.tdf"));
 	assert(0 == CompareFiles("1D.tdf", "1DConv.tdf"));
 	assert(0 == EdfToDyn("1D.bdf", "1DConv.D"));
-	//assert(0 == CompareFiles("1D.D", "1DConv.D"));
+	assert(0 == CompareFiles("1D.D", "1DConv.D"));
 }
 //-----------------------------------------------------------------------------
 static void MbCrc16accTest()

@@ -14,7 +14,23 @@ int UnpackUInt16KeyVal(MemStream_t* src, MemStream_t* dst,
 		*skip = 0;
 		dst->WPos = 0;
 	}
-	*skip = 1 - (*skip);
+	*skip = 0 - (*skip);
+	return err;
+}
+//-----------------------------------------------------------------------------
+int UnpackUInt32KeyVal(MemStream_t* src, MemStream_t* dst,
+	int* skip, DoOnItemUInt32Fn DoOnItem, void* state)
+{
+	int err = 0;
+	UInt32Value_t* s = (*skip) ? (UInt32Value_t*)dst->Buffer : NULL;
+	while (!(err = EdfSreamBinToCBin(&UInt32ValueInf, src, dst, &s, skip)))
+	{
+		(*DoOnItem)(s, state);
+		s = NULL;
+		*skip = 0;
+		dst->WPos = 0;
+	}
+	*skip = 0 - (*skip);
 	return err;
 }
 //-----------------------------------------------------------------------------

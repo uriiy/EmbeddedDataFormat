@@ -121,6 +121,12 @@ typedef struct
 //-----------------------------------------------------------------------------
 static const TypeInfo_t CommentsInf = { .Type = CString, .Name = "Comments" };
 //-----------------------------------------------------------------------------
+static const TypeInfo_t FileDescriptionInf =
+{
+	.Type = Char, .Name = "FileDescription",
+	.Dims = { 1, (uint32_t[]) { FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription) } }
+};
+//-----------------------------------------------------------------------------
 static const TypeInfo_t DateTimeInf =
 {
 	.Type = Struct, .Name = "DateTime", .Dims = { 0, NULL }, .Childs =

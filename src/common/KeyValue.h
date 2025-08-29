@@ -55,6 +55,11 @@ typedef struct UInt32Value
 	char* Unit;
 	char* Description;
 } UInt32Value_t;
+
+typedef void (*DoOnItemUInt32Fn)(UInt32Value_t* s, void* state);
+
+int UnpackUInt32KeyVal(MemStream_t* src, MemStream_t* dst,
+	int* skip, DoOnItemUInt32Fn DoOnItem, void* state);
 //-----------------------------------------------------------------------------
 static const TypeInfo_t DoubleValueInf =
 {
