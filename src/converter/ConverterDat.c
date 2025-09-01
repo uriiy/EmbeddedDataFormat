@@ -58,7 +58,7 @@ int DatToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfData(&dw, UInt16, "SensVer", &dat.SensVer);
 
 	/*
-	TypeInfo_t commentType = { .Type = CString, .Name = "Comments" };
+	TypeInfo_t commentType = { .Type = String, .Name = "Comments" };
 	EdfWriteInfo(&dw, &commentType, &writed);
 	EdfWriteDataBlock(&dw, &((char*) { "описание структуры OMEGA_DATA_V1_1" }), sizeof(char*));
 	EdfWriteDataBlock(&dw, &((char*) { "Time - время измерения от начала дня, мс" }), sizeof(char*));

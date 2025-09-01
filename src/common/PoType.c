@@ -11,7 +11,6 @@ uint8_t GetSizeOf(enum PoType p)
 	case UInt8:
 	case Int8:
 	case Char:
-	case String:
 		return 1;
 	case UInt16:
 	case Int16:
@@ -25,7 +24,7 @@ uint8_t GetSizeOf(enum PoType p)
 	case Int64:
 	case Double:
 		return 8;
-	case CString:
+	case String:
 		return sizeof(char*);
 	}
 }

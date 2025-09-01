@@ -32,6 +32,7 @@ static const char SepRecEnd[] = {0};
 typedef enum PoType
 {
 	Struct = 0,
+	Char,// char array strings 
 	// integres
 	Int8,
 	UInt8,
@@ -46,9 +47,7 @@ typedef enum PoType
 	Single,
 	Double,
 	// strings
-	Char,
 	String,
-	CString,
 } PoType;
 
 uint8_t GetSizeOf(enum PoType p);

@@ -13,9 +13,9 @@ static const TypeInfo_t ChartXYDescriptionInf =
 		.Count = 3,
 		.Item = (TypeInfo_t[])
 		{
-			{ CString, "Name" },
-			{ CString, "AxisX" },
-			{ CString, "AxisY" },
+			{ String, "Name" },
+			{ String, "AxisX" },
+			{ String, "AxisY" },
 		}
 	}
 };

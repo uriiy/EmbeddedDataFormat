@@ -119,7 +119,7 @@ typedef struct
 //-----------------------------------------------------------------------------
 // edf infos
 //-----------------------------------------------------------------------------
-static const TypeInfo_t CommentsInf = { .Type = CString, .Name = "Comments" };
+static const TypeInfo_t CommentsInf = { .Type = String, .Name = "Comments" };
 //-----------------------------------------------------------------------------
 static const TypeInfo_t FileDescriptionInf =
 {

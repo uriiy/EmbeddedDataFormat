@@ -21,7 +21,7 @@ int StreamWriteInfoBin(Stream_t* s, const TypeInfo_t* t, size_t* writed)
 {
 	int err = 0;
 	// TYPE
-	if ((err = StreamWrite(s, writed, &(uint8_t){ CString == t->Type ? String : t->Type }, 1)))
+	if ((err = StreamWrite(s, writed, &(uint8_t){ t->Type }, 1)))
 		return err;
 	if (t->Dims.Item && t->Dims.Count)
 	{
@@ -72,7 +72,6 @@ static int StreamPrintType(Stream_t* s, PoType po, size_t* writed)
 	case UInt8: POT_PRINT_S(s, PoTypeUInt8);
 	case Char: POT_PRINT_S(s, PoTypeChar);
 	case String: POT_PRINT_S(s, PoTypeString);
-	case CString: POT_PRINT_S(s, PoTypeString);
 	case UInt16: POT_PRINT_S(s, PoTypeUInt16);
 	case Int16: POT_PRINT_S(s, PoTypeInt16);
 	case Half: POT_PRINT_S(s, PoTypeHalf);
@@ -219,10 +218,6 @@ uint32_t GetTypeCSize(const TypeInfo_t* t)
 			for (uint32_t i = 0; i < t->Childs.Count; i++)
 				sz += GetTypeCSize(&t->Childs.Item[i]);
 		}
-		break;
-	case String:
-	case CString:
-		sz += sizeof(char*);
 		break;
 	default:
 		sz = GetSizeOf(t->Type);

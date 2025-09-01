@@ -244,7 +244,7 @@ static int TryReadString(MemStream_t* tsrc, MemStream_t* tmem, void** ti)
 int EdfSreamBinToCBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, void** presult,
 	int* skip)
 {
-	if (CString < t->Type)
+	if (String < t->Type)
 		return -2;
 
 	size_t itemCLen = GetTypeCSize(t);
@@ -275,7 +275,6 @@ int EdfSreamBinToCBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, v
 		}
 		break;
 	case String:
-	case CString:
 	{
 		if (0 <= ++(*skip))
 			if ((err = TryReadString(src, mem, &ti)))

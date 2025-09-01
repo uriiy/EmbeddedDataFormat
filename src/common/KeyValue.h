@@ -13,10 +13,10 @@ static const TypeInfo_t UInt16ValueInf =
 		.Count = 4,
 		.Item = (TypeInfo_t[])
 		{
-			{ CString, "Name" },
+			{ String, "Name" },
 			{ UInt16, "Value" },
-			{ CString, "Unit" },
-			{ CString, "Description" },
+			{ String, "Unit" },
+			{ String, "Description" },
 		}
 	}
 };
@@ -41,10 +41,10 @@ static const TypeInfo_t UInt32ValueInf =
 		.Count = 4,
 		.Item = (TypeInfo_t[])
 		{
-			{ CString, "Name" },
+			{ String, "Name" },
 			{ UInt32, "Value" },
-			{ CString, "Unit" },
-			{ CString, "Description" },
+			{ String, "Unit" },
+			{ String, "Description" },
 		}
 	}
 };
@@ -69,10 +69,10 @@ static const TypeInfo_t DoubleValueInf =
 		.Count = 4,
 		.Item = (TypeInfo_t[])
 		{
-			{ CString, "Name" },
+			{ String, "Name" },
 			{ Double, "Value" },
-			{ CString, "Unit" },
-			{ CString, "Description" },
+			{ String, "Unit" },
+			{ String, "Description" },
 		}
 	}
 };

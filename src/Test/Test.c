@@ -2,6 +2,20 @@
 #include "edf_cfg.h"
 #include "assert.h"
 
+
+//-----------------------------------------------------------------------------
+static size_t GetCString(const char* str, uint32_t arr_len, uint8_t* dst, size_t dst_len)
+{
+	if (NULL == str)
+		return 0;
+	size_t len = strnlength(str, 0xFE - 1) + 1;
+	if (0 == len || len > dst_len)
+		return 0;
+	memcpy(dst, str, len);
+	memset(dst + len, 0, arr_len - len);
+	return arr_len;
+}
+//-----------------------------------------------------------------------------
 static int CompareFiles(const char* src, const char* dst)
 {
 	int ret = 0;
@@ -35,7 +49,6 @@ static int CompareFiles(const char* src, const char* dst)
 	fclose(f2);
 	return ret;
 }
-
 //-----------------------------------------------------------------------------
 static void TestMemStream(void)
 {
@@ -75,8 +88,8 @@ static int PackUnpack()
 			.Count = (uint8_t)3,
 			.Item = (TypeInfo_t[])
 			{
-				{ CString, "Key" },
-				{ CString, "Value" },
+				{ String, "Key" },
+				{ String, "Value" },
 				{
 					.Type = Struct, .Name = "Internal",
 					.Childs =
@@ -139,6 +152,8 @@ static int PackUnpack()
 	return 0;
 }
 
+
+
 //-----------------------------------------------------------------------------
 static int WriteSample(EdfWriter_t* dw)
 {
@@ -162,8 +177,8 @@ static int WriteSample(EdfWriter_t* dw)
 			.Count = 2,
 			.Item = (TypeInfo_t[])
 			{
-				{ CString, "Key" },
-				{ CString, "Value" },
+				{ String, "Key" },
+				{ String, "Value" },
 			}
 		}
 	};
@@ -192,16 +207,8 @@ static int WriteSample(EdfWriter_t* dw)
 	dd = 3.1;
 	EdfWriteDataBlock(dw, &dd, sizeof(double));
 
-	err = EdfWriteInfo(dw, &((TypeInfo_t) { .Type = String, .Name = "BString Text" }), &writed);
-	size_t len = 0;
-	len += GetBString("Char", test + len, sizeof(test));
-	len += GetBString("Value", test + len, sizeof(test) - len);
-	len += GetBString("Array     Value", test + len, sizeof(test) - len);
-	EdfWriteDataBlock(dw, test, len);
-	EdfFlushDataBlock(dw, &writed);
-
 	err = EdfWriteInfo(dw, &((TypeInfo_t) { .Type = Char, .Name = "Char Text", { 1, (uint32_t[]) { 20 } } }), &writed);
-	len = 0;
+	size_t len = 0;
 	len += GetCString("Char", 20, test + len, sizeof(test));
 	len += GetCString("Value", 20, test + len, sizeof(test) - len);
 	len += GetCString("Array     Value", 20, test + len, sizeof(test) - len);
