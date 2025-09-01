@@ -13,7 +13,7 @@ static int WriteStringCBinToStr(uint8_t* src, size_t srcLen, uint8_t* dst, size_
 		return -1;
 	// print text without buf
 	const char* str = *(char**)src;
-	size_t len = (NULL == str) ? 0 : strnlength(str, 0xFD);
+	size_t len = (NULL == str) ? 0 : strnlength(str, 0xFE);
 	if (dstLen < len + 2)
 		return 1;
 	*w = 2 + len;
@@ -69,7 +69,7 @@ static int WriteStringCBinToBin(uint8_t* src, size_t srcLen, uint8_t* dst, size_
 	if (srcLen < *r)
 		return -1;
 	const char* str = *(char**)src;
-	size_t len = (NULL == str) ? 0 : strnlength(str, 0xFD) + 1;
+	size_t len = (NULL == str) ? 0 : strnlength(str, 0xFE) + 1;
 	if (dstLen < len + 1)
 		return 1;
 	(*dst) = (uint8_t)len;
