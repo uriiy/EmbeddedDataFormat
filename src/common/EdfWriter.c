@@ -207,9 +207,9 @@ int EdfOpen(EdfWriter_t* f, const char* file, const char* mode)
 	else if (0 == strncmp("wt", mode, 2) || 0 == strncmp("at", mode, 2))
 	{
 		char* filemode;
-		if (0 == strcmp("wt", mode))
+		if (0 == strncmp("wt", mode, 2))
 			filemode = "wb";
-		else if (0 == strcmp("at", mode))
+		else if (0 == strncmp("at", mode, 2))
 			filemode = "ab";
 		else
 			return -1;
