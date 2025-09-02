@@ -23,6 +23,11 @@ static double ExtractLevel(uint16_t level)
 	return level & 0xBFFF;
 }
 //-----------------------------------------------------------------------------
+static uint16_t PackLevel(double level, double discrete)
+{
+	return ((uint16_t)round(level)) | (Discrete6000 == discrete ? 0x4000 : 0);
+}
+//-----------------------------------------------------------------------------
 static uint16_t ExtractReflections(uint16_t val)
 {
 	// ахтунг! параметр передаётся в двоично десятичном виде :-(
@@ -31,6 +36,20 @@ static uint16_t ExtractReflections(uint16_t val)
 	uint16_t sig = (uint16_t)(val & mask);
 	int refect = dec + sig;
 	return (refect > 99) ? (uint16_t)99 : (uint16_t)refect;
+}
+//-----------------------------------------------------------------------------
+// функция преобразования двоичного в 2/10 число. 0xffff=>65535
+static uint16_t PackReflections(int16_t  chisl)
+{
+	int16_t  pr;
+	uint32_t  sum = 0;
+	for (int i = 0; i != 5; i++)
+	{
+		pr = chisl / 10; 
+		sum += ((uint32_t)(chisl - pr * 10)) << (4 * i);
+		chisl = pr;
+	}
+	return(sum);
 }
 //-----------------------------------------------------------------------------
 static double UnPow(double v, double p)
@@ -81,8 +100,7 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 		return err;
 
 	EdfWriteInfData(&dw, UInt32, "FileType", &dat.FileType);
-	EdfWriteInfo(&dw, &FileDescriptionInf, &writed);
-	EdfWriteDataBlock(&dw, &dat.FileDescription, FIELD_SIZEOF(ECHO_FILE_V2_0, FileDescription));
+	EdfWriteStringBytes(&dw, "FileDescription", &dat.FileDescription, FIELD_SIZEOF(ECHO_FILE_V2_0, FileDescription));
 
 	EdfWriteInfData(&dw, UInt16, "ResearchType", &dat.Id.ResearchType);
 	EdfWriteInfData(&dw, UInt16, "DeviceType", &dat.Id.DeviceType);
@@ -118,9 +136,9 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 	EdfWriteDataBlock(&dw, &((char*) { "Acc - напряжение аккумулятора датчика, (В)" }), sizeof(char*));
 	EdfWriteDataBlock(&dw, &((char*) { "Temp - температура датчика, (°С)" }), sizeof(char*));
 
+	EdfWriteInfData(&dw, Double, "Discrete", &discrete);//!!
 	EdfWriteInfData(&dw, UInt16, "Reflections", &((uint16_t) { ExtractReflections(dat.Reflections) }));
 	EdfWriteInfData(&dw, Double, "Level", &((double) { ExtractLevel(dat.Level) }));
-	EdfWriteInfData(&dw, Double, "Discrete", &discrete);//!!
 
 	EdfWriteInfData(&dw, Double, "Pressure", &((double) { dat.Pressure / 10.0f }));
 	EdfWriteInfData(&dw, UInt16, "Table", &dat.Table);
@@ -178,6 +196,7 @@ int EdfToEcho(const char* edfFile, const char* echoFile)
 	if ((err = fopen_s(&f, echoFile, "wb")))
 		return err;
 
+	double discrete = Discrete3000;
 	ECHO_FILE_V2_0 dat = { 0 };
 	size_t recN = 0;
 	PointXY_t record = { 0 };
@@ -230,8 +249,13 @@ int EdfToEcho(const char* edfFile, const char* echoFile)
 			if (0 == _stricmp(br.t->Name, "FileType"))
 				dat.FileType = *((uint32_t*)br.Block);
 			else if (0 == _stricmp(br.t->Name, "FileDescription"))
-				err = EdfSreamBinToCBin(&FileDescriptionInf, &src, &msDst,
-					&(void*){dat.FileDescription}, & skip);
+			{
+				//err = EdfSreamBinToCBin(&FileDescriptionInf, &src, &msDst,
+				//	&(void*){dat.FileDescription}, & skip);
+				uint8_t len = MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(ECHO_FILE_V2_0, FileDescription));
+				memset(dat.FileDescription, 0, FIELD_SIZEOF(ECHO_FILE_V2_0, FileDescription));
+				memcpy(dat.FileDescription, &br.Block[1], len);
+			}
 			else if (0 == _stricmp(br.t->Name, "ResearchType"))
 				dat.Id.ResearchType = *((uint16_t*)br.Block);
 			else if (0 == _stricmp(br.t->Name, "DeviceType"))
@@ -272,10 +296,12 @@ int EdfToEcho(const char* edfFile, const char* echoFile)
 			else if (0 == _stricmp(br.t->Name, "RegNum"))
 				dat.Id.RegNum = *((uint32_t*)br.Block);
 
+			else if (0 == _stricmp(br.t->Name, "Discrete"))
+				discrete = *((double*)br.Block);
 			else if (0 == _stricmp(br.t->Name, "Reflections"))
-				dat.Reflections = *((uint16_t*)br.Block);
+				dat.Reflections = PackReflections(*((uint16_t*)br.Block));
 			else if (0 == _stricmp(br.t->Name, "Level"))
-				dat.Level = *((double*)br.Block);
+				dat.Level = PackLevel(*((double*)br.Block), discrete);
 			else if (0 == _stricmp(br.t->Name, "Pressure"))
 				dat.Pressure = (int16_t)round(*((double*)br.Block) * 10);
 			else if (0 == _stricmp(br.t->Name, "Table"))
