@@ -46,6 +46,29 @@ typedef struct PointXY
 } PointXY_t;
 
 //-----------------------------------------------------------------------------
+static const TypeInfo_t ChartNInf =
+{
+	Struct, "ChartNInf", { 0, NULL },
+	.Childs =
+	{
+		.Count = 4,
+		.Item = (TypeInfo_t[])
+		{
+			{ String, "Name" },
+			{ String, "Unit" },
+			{ String, "API Code" },
+			{ String, "Description" },
+		}
+	}
+};
+typedef struct ChartN
+{
+	char* Name;
+	char* Unit;
+	char* ApiCode;
+	char* Desc;
+} ChartN_t;
+//-----------------------------------------------------------------------------
 #pragma pack(pop)
 //-----------------------------------------------------------------------------
 #endif

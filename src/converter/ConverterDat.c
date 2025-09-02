@@ -66,13 +66,14 @@ int DatToEdf(const char* src, const char* edf, char mode)
 	EdfWriteDataBlock(&dw, &((char*) { "Temp - температура, 0.001 °С" }), sizeof(char*));
 	EdfWriteDataBlock(&dw, &((char*) { "Vbat - напряжение батареи V" }), sizeof(char*));
 	*/
-	EdfWriteInfo(&dw, &ChartXYDescriptionInf, &writed);
-	EdfWriteDataBlock(&dw, &((ChartXYDesct_t[])
+	EdfWriteInfo(&dw, &ChartNInf, &writed);
+	EdfWriteDataBlock(&dw, &((ChartN_t[])
 	{
-		{ "давление, 0.001 атм", "Press", "Time" },
-		{ "температура, 0.001 °С", "Temp", "Time" },
-		{ "напряжение батареи V", "Vbat", "Time" },
-	}), sizeof(ChartXYDesct_t) * 3);
+		{ "Time", "мс", "", "время измерения от начала дня" },
+		{ "Press", "0.001 атм","", "давление" },
+		{ "Temp", "0.001 °С","", "температура" },
+		{ "Vbat", "0.001 V","", "напряжение батареи" },
+	}), sizeof(ChartN_t) * 4);
 
 	if ((err = EdfWriteInfo(&dw, &OmegaDataInf, &writed)))
 		return err;

@@ -31,6 +31,7 @@ static uint16_t PackLevel(double level, double discrete)
 static uint16_t ExtractReflections(uint16_t val)
 {
 	// ахтунг! параметр передаётся в двоично десятичном виде :-(
+	// правильнее:  десятично-шестнадцатиричном :-)
 	const uint16_t mask = 0x000F;
 	uint16_t dec = (uint16_t)((((val >> 4)) & mask) * 10);
 	uint16_t sig = (uint16_t)(val & mask);
@@ -43,13 +44,13 @@ static uint16_t PackReflections(int16_t  chisl)
 {
 	int16_t  pr;
 	uint32_t  sum = 0;
-	for (int i = 0; i != 5; i++)
+	for (int i = 0; i < 5; ++i)
 	{
-		pr = chisl / 10; 
+		pr = chisl / 10;
 		sum += ((uint32_t)(chisl - pr * 10)) << (4 * i);
 		chisl = pr;
 	}
-	return(sum);
+	return (uint16_t)sum;
 }
 //-----------------------------------------------------------------------------
 static double UnPow(double v, double p)
@@ -102,15 +103,6 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfData(&dw, UInt32, "FileType", &dat.FileType);
 	EdfWriteStringBytes(&dw, "FileDescription", &dat.FileDescription, FIELD_SIZEOF(ECHO_FILE_V2_0, FileDescription));
 
-	EdfWriteInfData(&dw, UInt16, "ResearchType", &dat.Id.ResearchType);
-	EdfWriteInfData(&dw, UInt16, "DeviceType", &dat.Id.DeviceType);
-	EdfWriteInfData(&dw, UInt32, "DeviceNum", &dat.Id.DeviceNum);
-	EdfWriteInfData(&dw, UInt16, "Shop", &dat.Id.Shop);
-	EdfWriteInfData(&dw, UInt16, "Oper", &dat.Id.Oper);
-	EdfWriteInfData(&dw, UInt16, "Field", &dat.Id.Field);
-	EdfWriteStringBytes(&dw, "Cluster", &dat.Id.Cluster, FIELD_SIZEOF(RESEARCH_ID_V2_0, Cluster));
-	EdfWriteStringBytes(&dw, "Well", &dat.Id.Well, FIELD_SIZEOF(RESEARCH_ID_V2_0, Well));
-
 	EdfWriteInfo(&dw, &DateTimeInf, &writed);
 	EdfWriteDataBlock(&dw, &(DateTime_t)
 	{
@@ -118,8 +110,17 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 			dat.Id.Time.Hour, dat.Id.Time.Min, dat.Id.Time.Sec,
 	}, sizeof(DateTime_t));
 
+	EdfWriteInfData(&dw, UInt16, "Oper", &dat.Id.Oper);
+	EdfWriteInfData(&dw, UInt16, "Shop", &dat.Id.Shop);
+	EdfWriteInfData(&dw, UInt16, "Field", &dat.Id.Field);
+	EdfWriteStringBytes(&dw, "Cluster", &dat.Id.Cluster, FIELD_SIZEOF(RESEARCH_ID_V2_0, Cluster));
+	EdfWriteStringBytes(&dw, "Well", &dat.Id.Well, FIELD_SIZEOF(RESEARCH_ID_V2_0, Well));
+
+	EdfWriteInfData(&dw, UInt16, "ResearchType", &dat.Id.ResearchType);
 	EdfWriteInfData(&dw, UInt16, "RegType", &dat.Id.RegType);
 	EdfWriteInfData(&dw, UInt32, "RegNum", &dat.Id.RegNum);
+	EdfWriteInfData(&dw, UInt16, "DeviceType", &dat.Id.DeviceType);
+	EdfWriteInfData(&dw, UInt32, "DeviceNum", &dat.Id.DeviceNum);
 
 	EdfWriteInfo(&dw, &CommentsInf, &writed);
 	EdfWriteDataBlock(&dw, &((char*) { "Reflections - число отражений" }), sizeof(char*));
@@ -154,15 +155,16 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfData(&dw, Single, "Acc", &((float) { dat.Acc / 10.0f }));
 	EdfWriteInfData(&dw, Single, "Temp", &((float) { dat.Temp / 10.0f }));
 
-	//EdfWriteInfData(&dw, Double, "EchoChart", &dat.Data);
-	//for (size_t i = 0; i < 3000; i++)
-	//	EdfWriteDataBlock(&dw, &dat.Data[i], sizeof(uint8_t));
-
-	EdfWriteInfo(&dw, &ChartXYDescriptionInf, &writed);
-	EdfWriteDataBlock(&dw, &((struct ChartXYDesct)
+	EdfWriteInfo(&dw, &CommentsInf, &writed);
+	EdfWriteDataBlock(&dw, &((char*) { "эхограмма" }), sizeof(char*));
+	EdfWriteInfo(&dw, &ChartNInf, &writed);
+	EdfWriteDataBlock(&dw, &((ChartN_t[])
 	{
-		"'эхограмма", "x - глубина, м", "y - амплитуда, ацп"
-	}), sizeof(struct ChartXYDesct));
+		{ "Depth", "m", "", "глубина" },
+		{ "Val", "adc", "", "амплитуда" },
+	}), sizeof(ChartN_t) * 2);
+
+
 
 	EdfWriteInfo(&dw, &Point2DInf, &writed);
 

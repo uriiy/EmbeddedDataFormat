@@ -47,15 +47,6 @@ int DynToEdf(const char* src, const char* edf, char mode)
 
 	EdfWriteInfData(&dw, UInt32, "FileType", &dat.FileType);
 	EdfWriteStringBytes(&dw, "FileDescription", &dat.FileDescription, FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription));
-	// RESEARCH_ID_V2_0
-	EdfWriteInfData(&dw, UInt16, "ResearchType", &dat.Id.ResearchType);
-	EdfWriteInfData(&dw, UInt16, "DeviceType", &dat.Id.DeviceType);
-	EdfWriteInfData(&dw, UInt32, "DeviceNum", &dat.Id.DeviceNum);
-	EdfWriteInfData(&dw, UInt16, "Shop", &dat.Id.Shop);
-	EdfWriteInfData(&dw, UInt16, "Oper", &dat.Id.Oper);
-	EdfWriteInfData(&dw, UInt16, "Field", &dat.Id.Field);
-	EdfWriteStringBytes(&dw, "Cluster", &dat.Id.Cluster, FIELD_SIZEOF(RESEARCH_ID_V2_0, Cluster));
-	EdfWriteStringBytes(&dw, "Well", &dat.Id.Well, FIELD_SIZEOF(RESEARCH_ID_V2_0, Well));
 
 	EdfWriteInfo(&dw, &DateTimeInf, &writed);
 	EdfWriteDataBlock(&dw, &(DateTime_t)
@@ -63,8 +54,18 @@ int DynToEdf(const char* src, const char* edf, char mode)
 		dat.Id.Time.Year + 2000, dat.Id.Time.Month, dat.Id.Time.Day,
 			dat.Id.Time.Hour, dat.Id.Time.Min, dat.Id.Time.Sec,
 	}, sizeof(DateTime_t));
+
+	EdfWriteInfData(&dw, UInt16, "Oper", &dat.Id.Oper);
+	EdfWriteInfData(&dw, UInt16, "Shop", &dat.Id.Shop);
+	EdfWriteInfData(&dw, UInt16, "Field", &dat.Id.Field);
+	EdfWriteStringBytes(&dw, "Cluster", &dat.Id.Cluster, FIELD_SIZEOF(RESEARCH_ID_V2_0, Cluster));
+	EdfWriteStringBytes(&dw, "Well", &dat.Id.Well, FIELD_SIZEOF(RESEARCH_ID_V2_0, Well));
+
+	EdfWriteInfData(&dw, UInt16, "ResearchType", &dat.Id.ResearchType);
 	EdfWriteInfData(&dw, UInt16, "RegType", &dat.Id.RegType);
 	EdfWriteInfData(&dw, UInt32, "RegNum", &dat.Id.RegNum);
+	EdfWriteInfData(&dw, UInt16, "DeviceType", &dat.Id.DeviceType);
+	EdfWriteInfData(&dw, UInt32, "DeviceNum", &dat.Id.DeviceNum);
 	// - end RESEARCH_ID_V2_0
 	/*
 	EdfWriteInfo(&dw, &CommentsInf, &writed);
@@ -141,11 +142,14 @@ int DynToEdf(const char* src, const char* edf, char mode)
 		}, sizeof(DoubleValue_t[8]));
 	}
 
-	EdfWriteInfo(&dw, &ChartXYDescriptionInf, &writed);
-	EdfWriteDataBlock(&dw, &((struct ChartXYDesct)
+	EdfWriteInfo(&dw, &CommentsInf, &writed);
+	EdfWriteDataBlock(&dw, &((char*) { "Динамограмма" }), sizeof(char*));
+	EdfWriteInfo(&dw, &ChartNInf, &writed);
+	EdfWriteDataBlock(&dw, &((ChartN_t[])
 	{
-		"динамограмма", "перемещение, м", "вес в тоннах"
-	}), sizeof(struct ChartXYDesct));
+		{ "Position", "m", "", "перемещение" },
+		{ "Weight", "T", "", "вес" },
+	}), sizeof(ChartN_t) * 2);
 
 	EdfWriteInfo(&dw, &Point2DInf, &writed);
 	struct PointXY p = { 0,0 };
