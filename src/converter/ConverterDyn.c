@@ -46,12 +46,7 @@ int DynToEdf(const char* src, const char* edf, char mode)
 		return err;
 
 	EdfWriteInfData(&dw, UInt32, "FileType", &dat.FileType);
-
-	EdfWriteInfo(&dw, &FileDescriptionInf, &writed);
-	EdfWriteDataBlock(&dw, &dat.FileDescription, FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription));
-
-
-	//EdfWriteStringBytes(&dw, "FileDescription", &dat.FileDescription, FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription));
+	EdfWriteStringBytes(&dw, "FileDescription", &dat.FileDescription, FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription));
 	// RESEARCH_ID_V2_0
 	EdfWriteInfData(&dw, UInt16, "ResearchType", &dat.Id.ResearchType);
 	EdfWriteInfData(&dw, UInt16, "DeviceType", &dat.Id.DeviceType);
@@ -208,15 +203,15 @@ static void DoOnUInt32Item(UInt32Value_t* s, void* state)
 {
 	DYN_FILE_V2_0* dat = (DYN_FILE_V2_0*)state;
 	if (0 == strcmp("MaxWeight", s->Name))
-		dat->MaxWeight = (uint16_t)round(s->Value / dat->LoadStep);
+		dat->MaxWeight = (uint16_t)(s->Value / dat->LoadStep);
 	else if (0 == strcmp("MinWeight", s->Name))
-		dat->MinWeight = (uint16_t)round(s->Value / dat->LoadStep);
+		dat->MinWeight = (uint16_t)(s->Value / dat->LoadStep);
 	else if (0 == strcmp("TopWeight", s->Name))
-		dat->TopWeight = (uint16_t)round(s->Value / dat->LoadStep);
+		dat->TopWeight = (uint16_t)(s->Value / dat->LoadStep);
 	else if (0 == strcmp("BotWeight", s->Name))
-		dat->BotWeight = (uint16_t)round(s->Value / dat->LoadStep);
+		dat->BotWeight = (uint16_t)(s->Value / dat->LoadStep);
 	else if (0 == strcmp("Period", s->Name))
-		dat->Period = (uint16_t)round(s->Value / dat->TimeStep);
+		dat->Period = (uint16_t)(s->Value / dat->TimeStep);
 }
 //-----------------------------------------------------------------------------
 
@@ -287,8 +282,16 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 				dat.FileType = *((uint32_t*)br.Block);
 			else if (0 == _stricmp(br.t->Name, "FileDescription"))
 			{
-				err = EdfSreamBinToCBin(&FileDescriptionInf, &src, &msDst,
-					&(void*){dat.FileDescription}, & skip);
+				/*
+				msDst.WPos = 0;
+				char* result = NULL;
+				err = EdfSreamBinToCBin(&CommentsInf, &src, &msDst,
+					&(void*){&result}, &skip);
+				memcpy(dat.FileDescription, result, msDst.WPos);
+				*/
+				uint8_t len = MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription));
+				memset(dat.FileDescription, 0, FIELD_SIZEOF(ECHO_FILE_V2_0, FileDescription));
+				memcpy(dat.FileDescription, &br.Block[1], len);
 			}
 			else if (0 == _stricmp(br.t->Name, "ResearchType"))
 				dat.Id.ResearchType = *((uint16_t*)br.Block);
