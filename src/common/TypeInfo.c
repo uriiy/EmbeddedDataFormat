@@ -100,8 +100,9 @@ int StreamWriteInfoTxt(Stream_t* s, const TypeInfo_t* t, int noffset, size_t* wr
 				return err;
 	}
 	// NAME
-	if ((err = StreamWriteFmt(s, writed, " \'%.255s\'", t->Name)))
-		return err;
+	if (t->Name && 0 < strnlength(t->Name, 255))
+		if ((err = StreamWriteFmt(s, writed, " \'%.255s\'", t->Name)))
+			return err;
 	// CHILDS
 	if (Struct == t->Type && t->Childs.Item && t->Childs.Count)
 	{
@@ -204,7 +205,7 @@ int StreamWriteBinToCBin(uint8_t* src, size_t srcLen, size_t* readed,
 		if ((err = MemAlloc(&msdst, sizeof(TypeRec_t), &tr)))
 			return err;
 
-	if ((err = StreamRead(&mssrc, readed, &tr->Id, FIELD_SIZEOF(TypeRec_t, Id) )))
+	if ((err = StreamRead(&mssrc, readed, &tr->Id, FIELD_SIZEOF(TypeRec_t, Id))))
 		return err;
 	if ((err = StreamBinToCBin(&mssrc, &msdst, &(TypeInfo_t*){&tr->Inf})))
 		return err;

@@ -50,8 +50,17 @@ static int EdfWriteHeaderBin(EdfWriter_t* dw, const EdfHeader_t* h, size_t* writ
 static int EdfWriteInfoTxt(EdfWriter_t* w, const TypeRec_t* t, size_t* writed)
 {
 	int err = 0;
-	if ((err = StreamWriteFmt(&w->Stream, writed, "\n\n?<%lu> ", t->Id)) ||
-		(err = StreamWriteInfoTxt(&w->Stream, &t->Inf, 0, writed)))
+	if (t->Id)
+	{
+		if ((err = StreamWriteFmt(&w->Stream, writed, "\n\n?<%lu> ", t->Id)))
+			return err;
+	}
+	else
+	{
+		if ((err = StreamWrite(&w->Stream, writed, "\n\n? ", 4)))
+			return err;
+	}
+	if ((err = StreamWriteInfoTxt(&w->Stream, &t->Inf, 0, writed)))
 		return err;
 	w->Seq++;
 	w->BlockLen = 0;

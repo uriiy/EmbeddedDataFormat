@@ -11,7 +11,9 @@
 
 typedef enum
 {
-	DATETIMEINF = 1000,
+	FILETYPE = 1000,
+	FILEDESCRIPTION,
+	DATETIMEINF,
 } VarInfoId;
 
 //-----------------------------------------------------------------------------
@@ -43,8 +45,8 @@ int DatToEdf(const char* src, const char* edf, char mode)
 	if ((err = EdfWriteHeader(&dw, &h, &writed)))
 		return err;
 
-	EdfWriteInfData(&dw, UInt32, "FileType", &dat.FileType);
-	EdfWriteStringBytes(&dw, "FileDescription", &dat.FileDescription, FIELD_SIZEOF(SPSK_FILE_V1_1, FileDescription));
+	EdfWriteInfRecData(&dw, FILETYPE, UInt32, "FileType", &dat.FileType);
+	EdfWriteInfRecStringData(&dw, FILEDESCRIPTION, "FileDescription", &dat.FileDescription, FIELD_SIZEOF(SPSK_FILE_V1_1, FileDescription));
 
 	EdfWriteInfo(&dw, &(const TypeRec_t){ DATETIMEINF, DateTimeInf }, & writed);
 	EdfWriteDataBlock(&dw, &(DateTime_t) { dat.Year + 2000, dat.Month, dat.Day, }, sizeof(DateTime_t));
@@ -156,11 +158,16 @@ int EdfToDat(const char* edfFile, const char* datFile)
 		break;
 		case btVarData:
 		{
-			if(br.t->Id)
-			{ 
+			if (br.t->Id)
+			{
 				switch (br.t->Id)
 				{
 				default: break;
+				case FILETYPE: dat.FileType = *((uint32_t*)br.Block); break;//case FILETYPE:
+				case FILEDESCRIPTION:
+					memcpy(dat.FileDescription, &br.Block[1],
+						MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(SPSK_FILE_V1_1, FileDescription)));
+					break;//case FILEDESCRIPTION:
 				case DATETIMEINF:
 				{
 					DateTime_t t = *((DateTime_t*)br.Block);
@@ -170,17 +177,7 @@ int EdfToDat(const char* edfFile, const char* datFile)
 				}
 				break;
 				}//switch
-				
-			}
-			else if (0 == _strnicmp(br.t->Inf.Name, "FileType", 10))
-			{
-				dat.FileType = *((uint32_t*)br.Block);
-			}
-			else if (0 == _strnicmp(br.t->Inf.Name, "FileDescription", 50))
-			{
-				uint8_t len = *((uint8_t*)br.Block);
-				len = MIN(len, FIELD_SIZEOF(SPSK_FILE_V1_1, FileDescription));
-				memcpy(dat.FileDescription, &br.Block[1], len);
+
 			}
 			else if (0 == _strnicmp(br.t->Inf.Name, DateTimeInf.Name, 100))
 			{
