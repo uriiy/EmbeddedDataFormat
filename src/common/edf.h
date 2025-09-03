@@ -22,7 +22,7 @@ int EdfClose(EdfWriter_t* dw);
 
 int EdfWriteHeader(EdfWriter_t* dw, const EdfHeader_t* h, size_t* writed);
 int EdfWriteInfo(EdfWriter_t* dw, const TypeRec_t* t, size_t* writed);
-int EdfWriteDataBlock(EdfWriter_t* dw, void* src, size_t srcLen);
+int EdfWriteDataBlock(EdfWriter_t* dw, const void* src, size_t srcLen);
 int EdfFlushDataBlock(EdfWriter_t* dw, size_t* writed);
 int EdfReadBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, 
 	void** presult, int* skip);

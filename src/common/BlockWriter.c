@@ -3,7 +3,7 @@
 
 //-----------------------------------------------------------------------------
 static int WriteData(const TypeInfo_t* t,
-	uint8_t* src, size_t srcLen,
+	const uint8_t* src, size_t srcLen,
 	uint8_t* dst, size_t dstLen,
 	size_t* skip, size_t* wqty,
 	size_t* readed, size_t* writed,
@@ -93,7 +93,7 @@ static int WriteData(const TypeInfo_t* t,
 }
 //-----------------------------------------------------------------------------
 static int WriteSingleValue(
-	uint8_t* src, size_t srcLen,
+	const uint8_t* src, size_t srcLen,
 	uint8_t* dst, size_t dstLen,
 	size_t* skip,
 	size_t* readed, size_t* writed,
@@ -129,10 +129,10 @@ static int WriteSingleValue(
 	return wr;
 }
 //-----------------------------------------------------------------------------
-int EdfWriteDataBlock(EdfWriter_t* dw, void* vsrc, size_t xsrcLen)
+int EdfWriteDataBlock(EdfWriter_t* dw,const void* vsrc, size_t xsrcLen)
 {
-	uint8_t* xsrc = (uint8_t*)vsrc;
-	uint8_t* src = xsrc;
+	const uint8_t* xsrc = (const uint8_t*)vsrc;
+	const uint8_t* src = xsrc;
 	size_t srcLen = xsrcLen;
 
 	size_t dstLen = sizeof(dw->Block) - dw->BlockLen;

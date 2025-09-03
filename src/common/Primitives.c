@@ -2,10 +2,10 @@
 #include "Primitives.h"
 
 //-----------------------------------------------------------------------------
-typedef int (*WriteStringFn)(uint8_t* src, size_t srcLen, uint8_t* dst, size_t dstLen,
+typedef int (*WriteStringFn)(const uint8_t* src, size_t srcLen, uint8_t* dst, size_t dstLen,
 	size_t* r, size_t* w);
 //-----------------------------------------------------------------------------
-static int WriteStringCBinToStr(uint8_t* src, size_t srcLen, uint8_t* dst, size_t dstLen,
+static int WriteStringCBinToStr(const uint8_t* src, size_t srcLen, uint8_t* dst, size_t dstLen,
 	size_t* r, size_t* w)
 {
 	*r = GetSizeOf(String);
@@ -24,7 +24,7 @@ static int WriteStringCBinToStr(uint8_t* src, size_t srcLen, uint8_t* dst, size_
 	return 0;
 }
 //-----------------------------------------------------------------------------
-static int WriteStringBinToStr(uint8_t* src, size_t srcLen, uint8_t* dst, size_t dstLen,
+static int WriteStringBinToStr(const uint8_t* src, size_t srcLen, uint8_t* dst, size_t dstLen,
 	size_t* r, size_t* w)
 {
 	*r = *w = 0;
@@ -46,7 +46,7 @@ static int WriteStringBinToStr(uint8_t* src, size_t srcLen, uint8_t* dst, size_t
 	return 0;
 }
 //-----------------------------------------------------------------------------
-static int WriteStringBinToBin(uint8_t* src, size_t srcLen, uint8_t* dst, size_t dstLen,
+static int WriteStringBinToBin(const uint8_t* src, size_t srcLen, uint8_t* dst, size_t dstLen,
 	size_t* r, size_t* w)
 {
 	size_t sLen = src[0];
@@ -62,7 +62,7 @@ static int WriteStringBinToBin(uint8_t* src, size_t srcLen, uint8_t* dst, size_t
 	return 0;
 }
 //-----------------------------------------------------------------------------
-static int WriteStringCBinToBin(uint8_t* src, size_t srcLen, uint8_t* dst, size_t dstLen,
+static int WriteStringCBinToBin(const uint8_t* src, size_t srcLen, uint8_t* dst, size_t dstLen,
 	size_t* r, size_t* w)
 {
 	*r = GetSizeOf(String);
@@ -92,7 +92,7 @@ static size_t xprint(const uint8_t* buf, size_t bufLen, char* format, ...)
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 static int AnyBinToBin(PoType t,
-	uint8_t* src, size_t srcLen,
+	const uint8_t* src, size_t srcLen,
 	uint8_t* dst, size_t dstLen,
 	size_t* r, size_t* w,
 	WriteStringFn WriteString)
@@ -134,7 +134,7 @@ static int AnyBinToBin(PoType t,
 }
 //-----------------------------------------------------------------------------
 int CBinToBin(PoType t,
-	uint8_t* src, size_t srcLen,
+	const uint8_t* src, size_t srcLen,
 	uint8_t* dst, size_t dstLen,
 	size_t* r, size_t* w)
 {
@@ -142,7 +142,7 @@ int CBinToBin(PoType t,
 }
 //-----------------------------------------------------------------------------
 int BinToBin(PoType t,
-	uint8_t* src, size_t srcLen,
+	const uint8_t* src, size_t srcLen,
 	uint8_t* dst, size_t dstLen,
 	size_t* r, size_t* w)
 {
@@ -150,7 +150,7 @@ int BinToBin(PoType t,
 }
 //-----------------------------------------------------------------------------
 static int AnyBinToStr(PoType t,
-	uint8_t* src, size_t srcLen,
+	const uint8_t* src, size_t srcLen,
 	uint8_t* dst, size_t dstLen,
 	size_t* r, size_t* w,
 	WriteStringFn WriteString)
@@ -217,7 +217,7 @@ static int AnyBinToStr(PoType t,
 }
 //-----------------------------------------------------------------------------
 int CBinToStr(PoType t,
-	uint8_t* src, size_t srcLen,
+	const uint8_t* src, size_t srcLen,
 	uint8_t* dst, size_t dstLen,
 	size_t* r, size_t* w)
 {
@@ -225,7 +225,7 @@ int CBinToStr(PoType t,
 }
 //-----------------------------------------------------------------------------
 int BinToStr(PoType t,
-	uint8_t* src, size_t srcLen,
+	const uint8_t* src, size_t srcLen,
 	uint8_t* dst, size_t dstLen,
 	size_t* r, size_t* w)
 {
