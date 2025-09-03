@@ -4,7 +4,7 @@
 //-----------------------------------------------------------------------------
 int EdfWriteHeader(EdfWriter_t* dw, const EdfHeader_t* h, size_t* writed)
 {
-	return dw->FlushHeader ? (*dw->FlushHeader)(dw, h, writed) : ERR_FN_NOT_EXIST;
+	return dw->WriteHeader ? (*dw->WriteHeader)(dw, h, writed) : ERR_FN_NOT_EXIST;
 }
 //-----------------------------------------------------------------------------
 int EdfWriteInfo(EdfWriter_t* dw, const TypeInfo_t* t, size_t* writed)
@@ -14,7 +14,7 @@ int EdfWriteInfo(EdfWriter_t* dw, const TypeInfo_t* t, size_t* writed)
 	if ((err = EdfFlushDataBlock(dw, &flushed)))
 		return err;
 	dw->Skip = 0;
-	return (dw->FlushInfo) ? (*dw->FlushInfo)(dw, t, writed) : ERR_FN_NOT_EXIST
+	return (dw->WriteInfo) ? (*dw->WriteInfo)(dw, t, writed) : ERR_FN_NOT_EXIST
 }
 //-----------------------------------------------------------------------------
 int EdfWriteHeaderTxt(EdfWriter_t* dw, const EdfHeader_t* h, size_t* writed)
@@ -127,8 +127,8 @@ int EdfOpenStream(EdfWriter_t* f, Stream_t* stream, const char* mode)
 		f->BlockLen = 0;
 		f->BufLen = 0;
 		f->WritePrimitive = strchr(mode, 'c') ? BinToBin : CBinToBin;
-		f->FlushHeader = EdfWriteHeaderBin;
-		f->FlushInfo = EdfWriteInfoBin;
+		f->WriteHeader = EdfWriteHeaderBin;
+		f->WriteInfo = EdfWriteInfoBin;
 		f->FlushData = StreamWriteBlockDataBin;
 		f->BeginStruct = NULL;
 		f->EndStruct = NULL;
@@ -150,8 +150,8 @@ int EdfOpenStream(EdfWriter_t* f, Stream_t* stream, const char* mode)
 		f->BlockLen = 0;
 		f->BufLen = 0;
 		f->WritePrimitive = strchr(mode, 'c') ? BinToStr : CBinToStr;
-		f->FlushHeader = EdfWriteHeaderTxt;
-		f->FlushInfo = EdfWriteInfoTxt;
+		f->WriteHeader = EdfWriteHeaderTxt;
+		f->WriteInfo = EdfWriteInfoTxt;
 		f->FlushData = StreamWriteBlockDataTxt;
 		f->BeginStruct = SepBeginStruct;
 		f->EndStruct = SepEndStruct;
@@ -174,8 +174,8 @@ int EdfOpenStream(EdfWriter_t* f, Stream_t* stream, const char* mode)
 		f->BlockLen = 0;
 		f->BufLen = 0;
 		f->WritePrimitive = BinToBin;
-		f->FlushHeader = NULL;
-		f->FlushInfo = NULL;
+		f->WriteHeader = NULL;
+		f->WriteInfo = NULL;
 		f->FlushData = NULL;
 		f->BeginStruct = NULL;
 		f->EndStruct = NULL;

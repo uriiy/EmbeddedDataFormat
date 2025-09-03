@@ -35,8 +35,8 @@ typedef struct EdfWriter
 	uint8_t Buf[BLOCK_SIZE];
 
 	WritePrimitivesFn WritePrimitive;
-	WriteHeaderFn FlushHeader;
-	WriteInfoFn FlushInfo;
+	WriteHeaderFn WriteHeader;
+	WriteInfoFn WriteInfo;
 	FlushDataFn FlushData;
 
 	const char* BeginStruct;

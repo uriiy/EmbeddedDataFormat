@@ -133,7 +133,7 @@ static int PackUnpack()
 		return err;
 
 	TestStruct_t* kv = NULL;
-	if ((err = EdfSreamBinToCBin(&TestStructInf, &mssrc, &mem, &kv, &skip)))
+	if ((err = EdfReadBin(&TestStructInf, &mssrc, &mem, &kv, &skip)))
 		return err;
 
 	if (0 != strcmp(val1.Key, kv->Key)
@@ -141,7 +141,7 @@ static int PackUnpack()
 		|| 0 != memcmp(&val1.Arr, &kv->Arr, FIELD_SIZEOF(TestStruct_t, Arr)))
 		return 1;
 
-	if ((err = EdfSreamBinToCBin(&TestStructInf, &mssrc, &mem, &kv, &skip)))
+	if ((err = EdfReadBin(&TestStructInf, &mssrc, &mem, &kv, &skip)))
 		return err;
 
 	if (0 != strcmp(val2.Key, kv->Key)

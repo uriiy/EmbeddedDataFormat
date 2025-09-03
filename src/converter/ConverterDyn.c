@@ -322,7 +322,7 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 			else if (0 == _stricmp(br.t->Name, DateTimeInf.Name))
 			{
 				DateTime_t* t = NULL;
-				if (!(err = EdfSreamBinToCBin(&DateTimeInf, &src, &msDst, &t, &skip)))
+				if (!(err = EdfReadBin(&DateTimeInf, &src, &msDst, &t, &skip)))
 				{
 					dat.Id.Time.Year = (uint8_t)(t->Year - 2000);
 					dat.Id.Time.Month = t->Month;
@@ -353,7 +353,7 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 			else if (0 == _stricmp(br.t->Name, "Chart2D"))
 			{
 				PointXY_t* s = NULL;
-				while (!(err = EdfSreamBinToCBin(&Point2DInf, &src, &msDst, &s, &skip))
+				while (!(err = EdfReadBin(&Point2DInf, &src, &msDst, &s, &skip))
 					&& recN <= FIELD_SIZEOF(DYN_FILE_V2_0, Data))
 				{
 					double posDif = recN ? s->x - record.x : s->x;

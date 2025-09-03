@@ -241,7 +241,7 @@ static int TryReadString(MemStream_t* tsrc, MemStream_t* tmem, void** ti)
 	return 0;
 }
 //-----------------------------------------------------------------------------
-int EdfSreamBinToCBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, void** presult,
+int EdfReadBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, void** presult,
 	int* skip)
 {
 	if (String < t->Type)
@@ -268,7 +268,7 @@ int EdfSreamBinToCBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, v
 			{
 				const TypeInfo_t* s = &t->Childs.Item[j];
 				size_t childCLen = GetTypeCSize(s);
-				if ((err = EdfSreamBinToCBin(s, src, mem, &ti, skip)))
+				if ((err = EdfReadBin(s, src, mem, &ti, skip)))
 					return err;
 				ti += childCLen;
 			}
