@@ -103,7 +103,7 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfData(&dw, UInt32, "FileType", &dat.FileType);
 	EdfWriteStringBytes(&dw, "FileDescription", &dat.FileDescription, FIELD_SIZEOF(ECHO_FILE_V2_0, FileDescription));
 
-	EdfWriteInfo(&dw, &DateTimeInf, &writed);
+	EdfWriteInfo(&dw, &(const TypeRec_t){ 0, DateTimeInf}, & writed);
 	EdfWriteDataBlock(&dw, &(DateTime_t)
 	{
 		dat.Id.Time.Year + 2000, dat.Id.Time.Month, dat.Id.Time.Day,
@@ -122,7 +122,7 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfData(&dw, UInt16, "DeviceType", &dat.Id.DeviceType);
 	EdfWriteInfData(&dw, UInt32, "DeviceNum", &dat.Id.DeviceNum);
 
-	EdfWriteInfo(&dw, &CommentsInf, &writed);
+	EdfWriteInfo(&dw, &(const TypeRec_t){ 0, CommentsInf}, & writed);
 	EdfWriteDataBlock(&dw, &((char*) { "Reflections - число отражений" }), sizeof(char*));
 	EdfWriteDataBlock(&dw, &((char*) { "Level - уровень без поправки на скорость звука (для скорости 341.333 м/с), м" }), sizeof(char*));
 	EdfWriteDataBlock(&dw, &((char*) { "Pressure - затрубное давление (атм)" }), sizeof(char*));
@@ -155,9 +155,9 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfData(&dw, Single, "Acc", &((float) { dat.Acc / 10.0f }));
 	EdfWriteInfData(&dw, Single, "Temp", &((float) { dat.Temp / 10.0f }));
 
-	EdfWriteInfo(&dw, &CommentsInf, &writed);
+	EdfWriteInfo(&dw, &(const TypeRec_t){ 0, CommentsInf}, & writed);
 	EdfWriteDataBlock(&dw, &((char*) { "эхограмма" }), sizeof(char*));
-	EdfWriteInfo(&dw, &ChartNInf, &writed);
+	EdfWriteInfo(&dw, &(const TypeRec_t){ 0, ChartNInf}, & writed);
 	EdfWriteDataBlock(&dw, &((ChartN_t[])
 	{
 		{ "Depth", "m", "", "глубина" },
@@ -166,7 +166,7 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 
 
 
-	EdfWriteInfo(&dw, &Point2DInf, &writed);
+	EdfWriteInfo(&dw, &(const TypeRec_t){ 0, Point2DInf}, & writed);
 
 	struct PointXY p = { 0,0 };
 	for (size_t i = 0; i < 3000; i++)
@@ -248,9 +248,9 @@ int EdfToEcho(const char* edfFile, const char* echoFile)
 		{
 			//EdfWriteDataBlock(&tw, &br.Block, br.BlockLen);
 			//EdfFlushDataBlock(&tw, &writed);
-			if (0 == _stricmp(br.t->Name, "FileType"))
+			if (0 == _stricmp(br.t->Inf.Name, "FileType"))
 				dat.FileType = *((uint32_t*)br.Block);
-			else if (0 == _stricmp(br.t->Name, "FileDescription"))
+			else if (0 == _stricmp(br.t->Inf.Name, "FileDescription"))
 			{
 				//err = EdfSreamBinToCBin(&FileDescriptionInf, &src, &msDst,
 				//	&(void*){dat.FileDescription}, & skip);
@@ -258,29 +258,29 @@ int EdfToEcho(const char* edfFile, const char* echoFile)
 				memset(dat.FileDescription, 0, FIELD_SIZEOF(ECHO_FILE_V2_0, FileDescription));
 				memcpy(dat.FileDescription, &br.Block[1], len);
 			}
-			else if (0 == _stricmp(br.t->Name, "ResearchType"))
+			else if (0 == _stricmp(br.t->Inf.Name, "ResearchType"))
 				dat.Id.ResearchType = *((uint16_t*)br.Block);
-			else if (0 == _stricmp(br.t->Name, "DeviceType"))
+			else if (0 == _stricmp(br.t->Inf.Name, "DeviceType"))
 				dat.Id.DeviceType = *((uint16_t*)br.Block);
-			else if (0 == _stricmp(br.t->Name, "DeviceNum"))
+			else if (0 == _stricmp(br.t->Inf.Name, "DeviceNum"))
 				dat.Id.DeviceNum = *((uint32_t*)br.Block);
-			else if (0 == _stricmp(br.t->Name, "Oper"))
+			else if (0 == _stricmp(br.t->Inf.Name, "Oper"))
 				dat.Id.Oper = *((uint16_t*)br.Block);
-			else if (0 == _stricmp(br.t->Name, "Shop"))
+			else if (0 == _stricmp(br.t->Inf.Name, "Shop"))
 				dat.Id.Shop = *((uint16_t*)br.Block);
-			else if (0 == _stricmp(br.t->Name, "Field"))
+			else if (0 == _stricmp(br.t->Inf.Name, "Field"))
 				dat.Id.Field = *((uint16_t*)br.Block);
-			else if (0 == _stricmp(br.t->Name, "Cluster"))
+			else if (0 == _stricmp(br.t->Inf.Name, "Cluster"))
 			{
 				uint8_t len = MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Cluster));
 				memcpy(dat.Id.Cluster, &br.Block[1], len);
 			}
-			else if (0 == _stricmp(br.t->Name, "Well"))
+			else if (0 == _stricmp(br.t->Inf.Name, "Well"))
 			{
 				uint8_t len = MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Well));
 				memcpy(dat.Id.Well, &br.Block[1], len);
 			}
-			else if (0 == _stricmp(br.t->Name, DateTimeInf.Name))
+			else if (0 == _stricmp(br.t->Inf.Name, DateTimeInf.Name))
 			{
 				DateTime_t* t = NULL;
 				if (!(err = EdfReadBin(&DateTimeInf, &src, &msDst, &t, &skip)))
@@ -293,39 +293,39 @@ int EdfToEcho(const char* edfFile, const char* echoFile)
 					dat.Id.Time.Sec = t->Sec;
 				}
 			}
-			else if (0 == _stricmp(br.t->Name, "RegType"))
+			else if (0 == _stricmp(br.t->Inf.Name, "RegType"))
 				dat.Id.RegType = *((uint16_t*)br.Block);
-			else if (0 == _stricmp(br.t->Name, "RegNum"))
+			else if (0 == _stricmp(br.t->Inf.Name, "RegNum"))
 				dat.Id.RegNum = *((uint32_t*)br.Block);
 
-			else if (0 == _stricmp(br.t->Name, "Discrete"))
+			else if (0 == _stricmp(br.t->Inf.Name, "Discrete"))
 				discrete = *((double*)br.Block);
-			else if (0 == _stricmp(br.t->Name, "Reflections"))
+			else if (0 == _stricmp(br.t->Inf.Name, "Reflections"))
 				dat.Reflections = PackReflections(*((uint16_t*)br.Block));
-			else if (0 == _stricmp(br.t->Name, "Level"))
+			else if (0 == _stricmp(br.t->Inf.Name, "Level"))
 				dat.Level = PackLevel(*((double*)br.Block), discrete);
-			else if (0 == _stricmp(br.t->Name, "Pressure"))
+			else if (0 == _stricmp(br.t->Inf.Name, "Pressure"))
 				dat.Pressure = (int16_t)round(*((double*)br.Block) * 10);
-			else if (0 == _stricmp(br.t->Name, "Table"))
+			else if (0 == _stricmp(br.t->Inf.Name, "Table"))
 				dat.Table = *((uint16_t*)br.Block);
-			else if (0 == _stricmp(br.t->Name, "Speed"))
+			else if (0 == _stricmp(br.t->Inf.Name, "Speed"))
 				dat.Speed = (uint16_t)round(*((float*)br.Block) * 10);
-			else if (0 == _stricmp(br.t->Name, "BufPressure"))
+			else if (0 == _stricmp(br.t->Inf.Name, "BufPressure"))
 				dat.BufPressure = (int16_t)round(*((double*)br.Block) * 10);
-			else if (0 == _stricmp(br.t->Name, "LinePressure"))
+			else if (0 == _stricmp(br.t->Inf.Name, "LinePressure"))
 				dat.LinePressure = (int16_t)round(*((double*)br.Block) * 10);
-			else if (0 == _stricmp(br.t->Name, "Current"))
+			else if (0 == _stricmp(br.t->Inf.Name, "Current"))
 				dat.Current = *((uint16_t*)br.Block);
-			else if (0 == _stricmp(br.t->Name, "IdleHour"))
+			else if (0 == _stricmp(br.t->Inf.Name, "IdleHour"))
 				dat.IdleHour = *((uint8_t*)br.Block);
-			else if (0 == _stricmp(br.t->Name, "IdleMin"))
+			else if (0 == _stricmp(br.t->Inf.Name, "IdleMin"))
 				dat.IdleMin = *((uint8_t*)br.Block);
-			else if (0 == _stricmp(br.t->Name, "Acc"))
+			else if (0 == _stricmp(br.t->Inf.Name, "Acc"))
 				dat.Acc = (int16_t)round(*((float*)br.Block) * 10);
-			else if (0 == _stricmp(br.t->Name, "Temp"))
+			else if (0 == _stricmp(br.t->Inf.Name, "Temp"))
 				dat.Temp = (int16_t)round(*((float*)br.Block) * 10);
 
-			else if (0 == _stricmp(br.t->Name, "Chart2D"))
+			else if (0 == _stricmp(br.t->Inf.Name, "Chart2D"))
 			{
 				PointXY_t* s = NULL;
 				while (!(err = EdfReadBin(&Point2DInf, &src, &msDst, &s, &skip))

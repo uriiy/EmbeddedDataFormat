@@ -124,7 +124,7 @@ int StreamWriteInfoTxt(Stream_t* s, const TypeInfo_t* t, int noffset, size_t* wr
 }
 //-----------------------------------------------------------------------------
 
-int StreamBinToCBin(MemStream_t* src, MemStream_t* mem, TypeInfo_t** t)
+static int StreamBinToCBin(MemStream_t* src, MemStream_t* mem, TypeInfo_t** t)
 {
 	int err = 0;
 	size_t readed = 0;
@@ -187,22 +187,33 @@ int StreamBinToCBin(MemStream_t* src, MemStream_t* mem, TypeInfo_t** t)
 //-----------------------------------------------------------------------------
 int StreamWriteBinToCBin(uint8_t* src, size_t srcLen, size_t* readed,
 	uint8_t* dst, size_t dstLen, size_t* writed,
-	TypeInfo_t** t)
+	TypeRec_t** t)
 {
 	int err = 0;
 	MemStream_t mssrc = { 0 };
 	if ((err = MemStreamInOpen(&mssrc, src, srcLen)))
 		return err;
-
 	MemStream_t msdst = { 0 };
 	if ((err = MemStreamOutOpen(&msdst, dst, dstLen)))
 		return err;
-	if ((err = StreamBinToCBin(&mssrc, &msdst, t)))
+
+	TypeRec_t* tr = NULL;
+	if (*t)
+		tr = *t;
+	else
+		if ((err = MemAlloc(&msdst, sizeof(TypeRec_t), &tr)))
+			return err;
+
+	if ((err = StreamRead(&mssrc, readed, &tr->Id, FIELD_SIZEOF(TypeRec_t, Id) )))
+		return err;
+	if ((err = StreamBinToCBin(&mssrc, &msdst, &(TypeInfo_t*){&tr->Inf})))
 		return err;
 	if (readed)
 		*readed = mssrc.RPos;
 	if (writed)
 		*writed = msdst.WPos;
+
+	*t = tr;
 	return err;
 }
 //-----------------------------------------------------------------------------

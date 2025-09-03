@@ -106,7 +106,7 @@ static int WriteSingleValue(
 		return -1;
 	if ((EdfWriteSep(dw->RecBegin, &dst, &dstLen, skip, &wqty, writed)))
 		return 1;
-	int wr = WriteData(dw->t, src, srcLen, dst, dstLen, skip, &wqty, readed, writed, dw);
+	int wr = WriteData(&dw->t->Inf, src, srcLen, dst, dstLen, skip, &wqty, readed, writed, dw);
 	dst += *writed; dstLen -= *writed;
 	if (0 > wr)
 	{

@@ -11,7 +11,7 @@ typedef struct EdfWriter EdfWriter_t;
 
 typedef int (*FlushDataFn)(EdfWriter_t* w, size_t* writed);
 typedef int (*WriteHeaderFn)(EdfWriter_t* w, const EdfHeader_t* h, size_t* writed);
-typedef int (*WriteInfoFn)(EdfWriter_t* w, const TypeInfo_t* t, size_t* writed);
+typedef int (*WriteInfoFn)(EdfWriter_t* w, const TypeRec_t* t, size_t* writed);
 
 int EdfWriteSep(const char* const src,
 	uint8_t** dst, size_t* dstSize,
@@ -22,7 +22,7 @@ int EdfWriteSep(const char* const src,
 typedef struct EdfWriter
 {
 	EdfHeader_t h;
-	const TypeInfo_t* t;
+	const TypeRec_t* t;
 	Stream_t Stream;
 	size_t Skip;
 
@@ -47,15 +47,6 @@ typedef struct EdfWriter
 	const char* RecBegin;
 	const char* RecEnd;
 } EdfWriter_t;
-
-int StreamWriteBlockDataTxt(EdfWriter_t* dw, size_t* writed);
-int StreamWriteBlockDataBin(EdfWriter_t* dw, size_t* writed);
-
-int EdfWriteHeaderBin(EdfWriter_t* dw, const EdfHeader_t* h, size_t* writed);
-int EdfWriteHeaderTxt(EdfWriter_t* dw, const EdfHeader_t* h, size_t* writed);
-
-int EdfWriteInfoBin(EdfWriter_t* w, const TypeInfo_t* t, size_t* writed);
-int EdfWriteInfoTxt(EdfWriter_t* w, const TypeInfo_t* t, size_t* writed);
 
 
 //-----------------------------------------------------------------------------

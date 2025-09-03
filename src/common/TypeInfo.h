@@ -21,6 +21,12 @@ typedef struct TypeInfo
 	} Childs;
 } TypeInfo_t;
 
+typedef struct
+{
+	uint32_t Id;
+	TypeInfo_t Inf;
+} TypeRec_t;
+
 TypeInfo_t MakeTypeInfo(char* name, PoType type
 	, uint8_t dimCount, uint32_t* dims
 	, uint8_t childCount, TypeInfo_t* childs);
@@ -28,9 +34,8 @@ TypeInfo_t MakeTypeInfo(char* name, PoType type
 uint32_t GetTypeCSize(const TypeInfo_t* t);
 int StreamWriteInfoBin(Stream_t* s, const TypeInfo_t* t, size_t* writed);
 int StreamWriteInfoTxt(Stream_t* buf, const TypeInfo_t* t, int noffset, size_t* writed);
-int StreamBinToCBin(MemStream_t* src, MemStream_t* mem, TypeInfo_t** t);
 int StreamWriteBinToCBin(uint8_t* src, size_t srcLen, size_t* readed,
 	uint8_t* dst, size_t dstLen, size_t* writed,
-	TypeInfo_t** t);
+	TypeRec_t** t);
 
 #endif

@@ -48,7 +48,7 @@ int DynToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfData(&dw, UInt32, "FileType", &dat.FileType);
 	EdfWriteStringBytes(&dw, "FileDescription", &dat.FileDescription, FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription));
 
-	EdfWriteInfo(&dw, &DateTimeInf, &writed);
+	EdfWriteInfo(&dw, &(const TypeRec_t){ 0, DateTimeInf}, & writed);
 	EdfWriteDataBlock(&dw, &(DateTime_t)
 	{
 		dat.Id.Time.Year + 2000, dat.Id.Time.Month, dat.Id.Time.Day,
@@ -107,7 +107,7 @@ int DynToEdf(const char* src, const char* edf, char mode)
 		//EdfWriteInfo(&dw, &CommentsInf, &writed);
 		//EdfWriteDataBlock(&dw, &((char*) { "Key-Value-Unit-Description list sample" }), sizeof(char*));
 
-		EdfWriteInfo(&dw, &UInt16ValueInf, &writed);
+		EdfWriteInfo(&dw, &(const TypeRec_t){ 0, UInt16ValueInf}, & writed);
 		EdfWriteDataBlock(&dw, &(UInt16Value_t[])
 		{
 			{ "Aperture", dat.Aperture, "", "номер отверстия 1" },
@@ -118,7 +118,7 @@ int DynToEdf(const char* src, const char* edf, char mode)
 			{ "TimeStep", dat.TimeStep, "", "величина дискреты времени, мс" },
 		}, sizeof(UInt16Value_t[6]));
 
-		EdfWriteInfo(&dw, &UInt32ValueInf, &writed);
+		EdfWriteInfo(&dw, &(const TypeRec_t){ 0, UInt32ValueInf}, & writed);
 		EdfWriteDataBlock(&dw, &(UInt32Value_t[])
 		{
 			{ "MaxWeight", dat.MaxWeight* dat.LoadStep, "кг", "максимальная нагрузка" },
@@ -128,7 +128,7 @@ int DynToEdf(const char* src, const char* edf, char mode)
 			{ "Period", dat.Period * dat.TimeStep, "мм", "ход штока" },
 		}, sizeof(UInt32Value_t[5]));
 
-		EdfWriteInfo(&dw, &DoubleValueInf, &writed);
+		EdfWriteInfo(&dw, &(const TypeRec_t){ 0, DoubleValueInf}, & writed);
 		EdfWriteDataBlock(&dw, &(DoubleValue_t[])
 		{
 			{ "Rod", dat.Rod / 10.0f, "мм", "диаметр штока" },
@@ -142,16 +142,16 @@ int DynToEdf(const char* src, const char* edf, char mode)
 		}, sizeof(DoubleValue_t[8]));
 	}
 
-	EdfWriteInfo(&dw, &CommentsInf, &writed);
+	EdfWriteInfo(&dw, &(const TypeRec_t){ 0, CommentsInf}, & writed);
 	EdfWriteDataBlock(&dw, &((char*) { "Динамограмма" }), sizeof(char*));
-	EdfWriteInfo(&dw, &ChartNInf, &writed);
+	EdfWriteInfo(&dw, &(const TypeRec_t){ 0, ChartNInf}, & writed);
 	EdfWriteDataBlock(&dw, &((ChartN_t[])
 	{
 		{ "Position", "m", "", "перемещение" },
 		{ "Weight", "T", "", "вес" },
 	}), sizeof(ChartN_t) * 2);
 
-	EdfWriteInfo(&dw, &Point2DInf, &writed);
+	EdfWriteInfo(&dw, &(const TypeRec_t){ 0, Point2DInf}, & writed);
 	struct PointXY p = { 0,0 };
 	for (size_t i = 0; i < 1000; i++)
 	{
@@ -282,9 +282,9 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 		{
 			//EdfWriteDataBlock(&tw, &br.Block, br.BlockLen);
 			//EdfFlushDataBlock(&tw, &writed);
-			if (0 == _stricmp(br.t->Name, "FileType"))
+			if (0 == _stricmp(br.t->Inf.Name, "FileType"))
 				dat.FileType = *((uint32_t*)br.Block);
-			else if (0 == _stricmp(br.t->Name, "FileDescription"))
+			else if (0 == _stricmp(br.t->Inf.Name, "FileDescription"))
 			{
 				/*
 				msDst.WPos = 0;
@@ -297,29 +297,29 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 				memset(dat.FileDescription, 0, FIELD_SIZEOF(ECHO_FILE_V2_0, FileDescription));
 				memcpy(dat.FileDescription, &br.Block[1], len);
 			}
-			else if (0 == _stricmp(br.t->Name, "ResearchType"))
+			else if (0 == _stricmp(br.t->Inf.Name, "ResearchType"))
 				dat.Id.ResearchType = *((uint16_t*)br.Block);
-			else if (0 == _stricmp(br.t->Name, "DeviceType"))
+			else if (0 == _stricmp(br.t->Inf.Name, "DeviceType"))
 				dat.Id.DeviceType = *((uint16_t*)br.Block);
-			else if (0 == _stricmp(br.t->Name, "DeviceNum"))
+			else if (0 == _stricmp(br.t->Inf.Name, "DeviceNum"))
 				dat.Id.DeviceNum = *((uint32_t*)br.Block);
-			else if (0 == _stricmp(br.t->Name, "Oper"))
+			else if (0 == _stricmp(br.t->Inf.Name, "Oper"))
 				dat.Id.Oper = *((uint16_t*)br.Block);
-			else if (0 == _stricmp(br.t->Name, "Shop"))
+			else if (0 == _stricmp(br.t->Inf.Name, "Shop"))
 				dat.Id.Shop = *((uint16_t*)br.Block);
-			else if (0 == _stricmp(br.t->Name, "Field"))
+			else if (0 == _stricmp(br.t->Inf.Name, "Field"))
 				dat.Id.Field = *((uint16_t*)br.Block);
-			else if (0 == _stricmp(br.t->Name, "Cluster"))
+			else if (0 == _stricmp(br.t->Inf.Name, "Cluster"))
 			{
 				uint8_t len = MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Cluster));
 				memcpy(dat.Id.Cluster, &br.Block[1], len);
 			}
-			else if (0 == _stricmp(br.t->Name, "Well"))
+			else if (0 == _stricmp(br.t->Inf.Name, "Well"))
 			{
 				uint8_t len = MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Well));
 				memcpy(dat.Id.Well, &br.Block[1], len);
 			}
-			else if (0 == _stricmp(br.t->Name, DateTimeInf.Name))
+			else if (0 == _stricmp(br.t->Inf.Name, DateTimeInf.Name))
 			{
 				DateTime_t* t = NULL;
 				if (!(err = EdfReadBin(&DateTimeInf, &src, &msDst, &t, &skip)))
@@ -332,25 +332,25 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 					dat.Id.Time.Sec = t->Sec;
 				}
 			}
-			else if (0 == _stricmp(br.t->Name, "RegType"))
+			else if (0 == _stricmp(br.t->Inf.Name, "RegType"))
 				dat.Id.RegType = *((uint16_t*)br.Block);
-			else if (0 == _stricmp(br.t->Name, "RegNum"))
+			else if (0 == _stricmp(br.t->Inf.Name, "RegNum"))
 				dat.Id.RegNum = *((uint32_t*)br.Block);
 
-			else if (0 == _stricmp(br.t->Name, "UInt16Value"))
+			else if (0 == _stricmp(br.t->Inf.Name, "UInt16Value"))
 			{
 				UnpackUInt16KeyVal(&src, &msDst, &skip, DoOnUInt16Item, &dat);
 			}
-			else if (0 == _stricmp(br.t->Name, "UInt32Value"))
+			else if (0 == _stricmp(br.t->Inf.Name, "UInt32Value"))
 			{
 				UnpackUInt32KeyVal(&src, &msDst, &skip, DoOnUInt32Item, &dat);
 			}
-			else if (0 == _stricmp(br.t->Name, "DoubleValue"))
+			else if (0 == _stricmp(br.t->Inf.Name, "DoubleValue"))
 			{
 				UnpackDoubleKeyVal(&src, &msDst, &skip, DoOnDoubleItem, &dat);
 			}
 
-			else if (0 == _stricmp(br.t->Name, "Chart2D"))
+			else if (0 == _stricmp(br.t->Inf.Name, "Chart2D"))
 			{
 				PointXY_t* s = NULL;
 				while (!(err = EdfReadBin(&Point2DInf, &src, &msDst, &s, &skip))

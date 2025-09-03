@@ -21,7 +21,7 @@ int EdfOpen(EdfWriter_t* w, const char* file, const char* mode);
 int EdfClose(EdfWriter_t* dw);
 
 int EdfWriteHeader(EdfWriter_t* dw, const EdfHeader_t* h, size_t* writed);
-int EdfWriteInfo(EdfWriter_t* dw, const TypeInfo_t* t, size_t* writed);
+int EdfWriteInfo(EdfWriter_t* dw, const TypeRec_t* t, size_t* writed);
 int EdfWriteDataBlock(EdfWriter_t* dw, void* src, size_t srcLen);
 int EdfFlushDataBlock(EdfWriter_t* dw, size_t* writed);
 int EdfReadBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, 
@@ -29,6 +29,8 @@ int EdfReadBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem,
 int EdfReadBlock(EdfWriter_t* dr);
 
 //shortcut
+int EdfWriteInfRecData(EdfWriter_t* dw, uint32_t id, PoType, char* name, void* data);
+int EdfWriteInfRecStringData(EdfWriter_t* dw, uint32_t id, char* name, void* data, size_t maxLen);
 int EdfWriteInfData(EdfWriter_t* dw, PoType, char* name, void* data);
 int EdfWriteStringBytes(EdfWriter_t* dw, char* name, void* data, size_t maxLen);
 //-----------------------------------------------------------------------------
