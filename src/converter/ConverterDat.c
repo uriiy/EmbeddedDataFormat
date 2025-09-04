@@ -8,16 +8,6 @@
 #include "math.h"
 //-----------------------------------------------------------------------------
 /// SPSK
-
-typedef enum
-{
-	FILETYPE = 1000,
-	FILEDESCRIPTION,
-	DATETIMEINF,
-
-	OMEGADATAINF
-} VarInfoId;
-
 //-----------------------------------------------------------------------------
 int DatToEdf(const char* src, const char* edf, char mode)
 {
@@ -51,7 +41,7 @@ int DatToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfDataString(&dw, FILEDESCRIPTION, "FileDescription", 
 		&dat.FileDescription, FIELD_SIZEOF(SPSK_FILE_V1_1, FileDescription));
 
-	EdfWriteInfo(&dw, &(const TypeRec_t){ DATETIMEINF, DateTimeInf }, & writed);
+	EdfWriteInfo(&dw, &DateTimeRec, &writed);
 	EdfWriteDataBlock(&dw, &(DateTime_t) { dat.Year + 2000, dat.Month, dat.Day, }, sizeof(DateTime_t));
 
 	EdfWriteInfData(&dw, 0, UInt16, "Shop", &dat.Id.Shop);
@@ -88,7 +78,7 @@ int DatToEdf(const char* src, const char* edf, char mode)
 		{ "Vbat", "0.001 V","", "напряжение батареи" },
 	}), sizeof(ChartN_t) * 4);
 
-	if ((err = EdfWriteInfo(&dw, &(const TypeRec_t){ 0, OmegaDataInf}, & writed)))
+	if ((err = EdfWriteInfo(&dw, &OmegaDataRec, & writed)))
 		return err;
 
 	OMEGA_DATA_V1_1 record;
@@ -173,7 +163,7 @@ int EdfToDat(const char* edfFile, const char* datFile)
 					memcpy(dat.FileDescription, &br.Block[1],
 						MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(SPSK_FILE_V1_1, FileDescription)));
 					break;//case FILEDESCRIPTION:
-				case DATETIMEINF:
+				case DATETIMEREC:
 				{
 					DateTime_t t = *((DateTime_t*)br.Block);
 					dat.Year = (uint8_t)(t.Year - 2000);
@@ -181,15 +171,35 @@ int EdfToDat(const char* edfFile, const char* datFile)
 					dat.Day = t.Day;
 				}
 				break;
+				case OMEGADATAREC:
+				{
+					if (0 == recN++)
+					{
+						dat.crc = MbCrc16(&dat, sizeof(SPSK_FILE_V1_1));
+						if (1 != fwrite(&dat, sizeof(SPSK_FILE_V1_1), 1, f))
+							return -1;
+					}
+					uint8_t* pblock = br.Block;
+
+					while (0 < br.BlockLen)
+					{
+						size_t len = (size_t)MIN(br.BlockLen, (size_t)(recordEnd - precord));
+						memcpy(precord, pblock, len);
+						precord += len;
+						pblock += len;
+						br.BlockLen -= len;
+						if (recordEnd == precord)
+						{
+							precord = recordBegin;
+							if (1 != fwrite(&record, sizeof(OMEGA_DATA_V1_1), 1, f))
+								return -1;
+						}
+					}//while (0 < br.BlockLen)
+				}
+				break;//OMEGADATAREC
+
 				}//switch
 
-			}
-			else if (0 == _strnicmp(br.t->Inf.Name, DateTimeInf.Name, 100))
-			{
-				DateTime_t t = *((DateTime_t*)br.Block);
-				dat.Year = (uint8_t)(t.Year - 2000);
-				dat.Month = t.Month;
-				dat.Day = t.Day;
 			}
 			else if (0 == _strnicmp(br.t->Inf.Name, "Shop", 10))
 			{
@@ -229,31 +239,7 @@ int EdfToDat(const char* edfFile, const char* datFile)
 				dat.SensNum = *((uint32_t*)br.Block);
 			else if (0 == _strnicmp(br.t->Inf.Name, "SensVer", 50))
 				dat.SensVer = *((uint16_t*)br.Block);
-			else if (0 == _strnicmp(br.t->Inf.Name, "OMEGA_DATA_V1_1", 50))
-			{
-				if (0 == recN++)
-				{
-					dat.crc = MbCrc16(&dat, sizeof(SPSK_FILE_V1_1));
-					if (1 != fwrite(&dat, sizeof(SPSK_FILE_V1_1), 1, f))
-						return -1;
-				}
-				uint8_t* pblock = br.Block;
 
-				while (0 < br.BlockLen)
-				{
-					size_t len = (size_t)MIN(br.BlockLen, (size_t)(recordEnd - precord));
-					memcpy(precord, pblock, len);
-					precord += len;
-					pblock += len;
-					br.BlockLen -= len;
-					if (recordEnd == precord)
-					{
-						precord = recordBegin;
-						if (1 != fwrite(&record, sizeof(OMEGA_DATA_V1_1), 1, f))
-							return -1;
-					}
-				}//while (0 < br.BlockLen)
-			}//else
 		}//case btVarData:
 		break;
 		}//switch (br.BlockType)

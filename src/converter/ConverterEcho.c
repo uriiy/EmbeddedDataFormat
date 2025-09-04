@@ -104,7 +104,7 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfDataString(&dw, 0, "FileDescription",
 		&dat.FileDescription, FIELD_SIZEOF(ECHO_FILE_V2_0, FileDescription));
 
-	EdfWriteInfo(&dw, &(const TypeRec_t){ 0, DateTimeInf}, & writed);
+	EdfWriteInfo(&dw, &DateTimeRec, &writed);
 	EdfWriteDataBlock(&dw, &(DateTime_t)
 	{
 		dat.Id.Time.Year + 2000, dat.Id.Time.Month, dat.Id.Time.Day,
@@ -125,7 +125,7 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfData(&dw, 0, UInt16, "DeviceType", &dat.Id.DeviceType);
 	EdfWriteInfData(&dw, 0, UInt32, "DeviceNum", &dat.Id.DeviceNum);
 
-	EdfWriteInfo(&dw, &(const TypeRec_t){ 0, CommentsInf}, & writed);
+	EdfWriteInfo(&dw, &CommentsRec, &writed);
 	EdfWriteDataBlock(&dw, &((char*) { "Reflections - число отражений" }), sizeof(char*));
 	EdfWriteDataBlock(&dw, &((char*) { "Level - уровень без поправки на скорость звука (для скорости 341.333 м/с), м" }), sizeof(char*));
 	EdfWriteDataBlock(&dw, &((char*) { "Pressure - затрубное давление (атм)" }), sizeof(char*));
@@ -158,7 +158,7 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfData(&dw, 0, Single, "Acc", &((float) { dat.Acc / 10.0f }));
 	EdfWriteInfData(&dw, 0, Single, "Temp", &((float) { dat.Temp / 10.0f }));
 
-	EdfWriteInfo(&dw, &(const TypeRec_t){ 0, CommentsInf}, & writed);
+	EdfWriteInfo(&dw, &CommentsRec, &writed);
 	EdfWriteDataBlock(&dw, &((char*) { "эхограмма" }), sizeof(char*));
 	EdfWriteInfo(&dw, &(const TypeRec_t){ 0, ChartNInf}, & writed);
 	EdfWriteDataBlock(&dw, &((ChartN_t[])
@@ -283,10 +283,10 @@ int EdfToEcho(const char* edfFile, const char* echoFile)
 				uint8_t len = MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Well));
 				memcpy(dat.Id.Well, &br.Block[1], len);
 			}
-			else if (0 == _stricmp(br.t->Inf.Name, DateTimeInf.Name))
+			else if (0 == _stricmp(br.t->Inf.Name, DateTimeRec.Inf.Name))
 			{
 				DateTime_t* t = NULL;
-				if (!(err = EdfReadBin(&DateTimeInf, &src, &msDst, &t, &skip)))
+				if (!(err = EdfReadBin(&DateTimeRec.Inf, &src, &msDst, &t, &skip)))
 				{
 					dat.Id.Time.Year = (uint8_t)(t->Year - 2000);
 					dat.Id.Time.Month = t->Month;

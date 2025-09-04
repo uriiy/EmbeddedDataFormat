@@ -117,31 +117,48 @@ typedef struct
 } DYN_FILE_V2_0;
 
 //-----------------------------------------------------------------------------
-// edf infos
-//-----------------------------------------------------------------------------
-static const TypeInfo_t CommentsInf = { .Type = String, .Name = "Comments" };
-//-----------------------------------------------------------------------------
-static const TypeInfo_t FileDescriptionInf =
+// edf inf
+// 
+typedef enum
 {
-	.Type = Char, .Name = "FileDescription",
-	.Dims = { 1, (uint32_t[]) { FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription) } }
+	COMMENTSREC = 1000,
+	FILETYPE,
+	FILEDESCRIPTION,
+	DATETIMEREC,
+
+	OMEGADATAREC
+} VarInfoId;
+
+//-----------------------------------------------------------------------------
+static const TypeRec_t CommentsRec = { COMMENTSREC,{.Type = String, .Name = "Comments" } };
+//-----------------------------------------------------------------------------
+static const TypeRec_t FileDescriptionRec =
+{
+	FILEDESCRIPTION,
+	{
+		.Type = Char, .Name = "FileDescription",
+		.Dims = { 1, (uint32_t[]) { FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription) } }
+	}
 };
 //-----------------------------------------------------------------------------
-static const TypeInfo_t DateTimeInf =
+static const TypeRec_t DateTimeRec =
 {
-	.Type = Struct, .Name = "DateTime", .Dims = { 0, NULL }, .Childs =
+	DATETIMEREC,
 	{
-		.Count = 8,
-		.Item = (TypeInfo_t[])
+		.Type = Struct, .Name = "DateTime", .Dims = { 0, NULL }, .Childs =
 		{
-			{ Int16, "Year" },
-			{ UInt8, "Month" },
-			{ UInt8, "Day" },
-			{ UInt8, "Hour" },
-			{ UInt8, "Min" },
-			{ UInt8, "Sec" },
-			{ UInt16, "mSec" },
-			{ Int8, "Tz" },
+			.Count = 8,
+			.Item = (TypeInfo_t[])
+			{
+				{ Int16, "Year" },
+				{ UInt8, "Month" },
+				{ UInt8, "Day" },
+				{ UInt8, "Hour" },
+				{ UInt8, "Min" },
+				{ UInt8, "Sec" },
+				{ UInt16, "mSec" },
+				{ Int8, "Tz" },
+			}
 		}
 	}
 };
@@ -159,21 +176,23 @@ typedef struct
 } DateTime_t;
 
 //-----------------------------------------------------------------------------
-static const TypeInfo_t OmegaDataInf =
+static const TypeRec_t OmegaDataRec =
 {
-	.Type = Struct, .Name = "OMEGA_DATA_V1_1", .Dims = { 0, NULL }, .Childs =
+	OMEGADATAREC,
 	{
-		.Count = 4,
-		.Item = (TypeInfo_t[])
+		.Type = Struct, .Name = "OMEGA_DATA_V1_1", .Dims = { 0, NULL }, .Childs =
 		{
-			{ UInt32, "Time" },
-			{ Int32, "Press" },
-			{ Int32, "Temp" },
-			{ UInt16, "Vbat" },
+			.Count = 4,
+			.Item = (TypeInfo_t[])
+			{
+				{ UInt32, "Time" },
+				{ Int32, "Press" },
+				{ Int32, "Temp" },
+				{ UInt16, "Vbat" },
+			}
 		}
 	}
 };
-
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 #pragma pack(pop)

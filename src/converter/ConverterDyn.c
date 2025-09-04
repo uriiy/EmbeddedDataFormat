@@ -46,10 +46,10 @@ int DynToEdf(const char* src, const char* edf, char mode)
 		return err;
 
 	EdfWriteInfData(&dw, 0, UInt32, "FileType", &dat.FileType);
-	EdfWriteInfDataString(&dw, 0, "FileDescription", 
+	EdfWriteInfDataString(&dw, 0, "FileDescription",
 		&dat.FileDescription, FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription));
 
-	EdfWriteInfo(&dw, &(const TypeRec_t){ 0, DateTimeInf}, & writed);
+	EdfWriteInfo(&dw, &DateTimeRec, &writed);
 	EdfWriteDataBlock(&dw, &(DateTime_t)
 	{
 		dat.Id.Time.Year + 2000, dat.Id.Time.Month, dat.Id.Time.Day,
@@ -59,9 +59,9 @@ int DynToEdf(const char* src, const char* edf, char mode)
 	EdfWriteInfData(&dw, 0, UInt16, "Oper", &dat.Id.Oper);
 	EdfWriteInfData(&dw, 0, UInt16, "Shop", &dat.Id.Shop);
 	EdfWriteInfData(&dw, 0, UInt16, "Field", &dat.Id.Field);
-	EdfWriteInfDataString(&dw, 0, "Cluster", 
+	EdfWriteInfDataString(&dw, 0, "Cluster",
 		&dat.Id.Cluster, FIELD_SIZEOF(RESEARCH_ID_V2_0, Cluster));
-	EdfWriteInfDataString(&dw, 0, "Well", 
+	EdfWriteInfDataString(&dw, 0, "Well",
 		&dat.Id.Well, FIELD_SIZEOF(RESEARCH_ID_V2_0, Well));
 
 	EdfWriteInfData(&dw, 0, UInt16, "ResearchType", &dat.Id.ResearchType);
@@ -145,7 +145,7 @@ int DynToEdf(const char* src, const char* edf, char mode)
 		}, sizeof(DoubleValue_t[8]));
 	}
 
-	EdfWriteInfo(&dw, &(const TypeRec_t){ 0, CommentsInf}, & writed);
+	EdfWriteInfo(&dw, &CommentsRec, &writed);
 	EdfWriteDataBlock(&dw, &((char*) { "Динамограмма" }), sizeof(char*));
 	EdfWriteInfo(&dw, &(const TypeRec_t){ 0, ChartNInf}, & writed);
 	EdfWriteDataBlock(&dw, &((ChartN_t[])
@@ -322,10 +322,10 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 				uint8_t len = MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Well));
 				memcpy(dat.Id.Well, &br.Block[1], len);
 			}
-			else if (0 == _stricmp(br.t->Inf.Name, DateTimeInf.Name))
+			else if (0 == _stricmp(br.t->Inf.Name, DateTimeRec.Inf.Name))
 			{
 				DateTime_t* t = NULL;
-				if (!(err = EdfReadBin(&DateTimeInf, &src, &msDst, &t, &skip)))
+				if (!(err = EdfReadBin(&DateTimeRec.Inf, &src, &msDst, &t, &skip)))
 				{
 					dat.Id.Time.Year = (uint8_t)(t->Year - 2000);
 					dat.Id.Time.Month = t->Month;
