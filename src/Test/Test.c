@@ -189,7 +189,7 @@ static int WriteSample(EdfWriter_t* dw)
 	EdfWriteDataBlock(dw, &((KeyValue_t) { "Key2", "Value2" }), sizeof(KeyValue_t));
 	EdfWriteDataBlock(dw, &((KeyValue_t) { "Key3", "Value3" }), sizeof(KeyValue_t));
 
-	EdfWriteInfData(dw, String, "тестовый ключ", "String Value");
+	EdfWriteInfData(dw, 0, String, "тестовый ключ", "String Value");
 
 	TypeRec_t t = { 0, {.Type = Int32, .Name = "weight variable" } };
 	err = EdfWriteInfo(dw, &t, &writed);
@@ -306,7 +306,7 @@ static int WriteTest()
 	err = EdfOpen(&w, "t_write.tdf", "at");
 	if (0 != err)
 		return err;
-	EdfWriteInfData(&w, Int32, "Int32 Key", &((int32_t) { 0xb1b2b3b4 }));
+	EdfWriteInfData(&w, 0, Int32, "Int32 Key", &((int32_t) { 0xb1b2b3b4 }));
 	EdfClose(&w);
 
 	// BINary write
@@ -317,7 +317,7 @@ static int WriteTest()
 	memset(&w, 0, sizeof(EdfWriter_t));
 	if ((err = EdfOpen(&w, "t_write.bdf", "ab")))
 		return err;
-	EdfWriteInfData(&w, Int32, "Int32 Key", &((int32_t) { 0xb1b2b3b4 }));
+	EdfWriteInfData(&w, 0, Int32, "Int32 Key", &((int32_t) { 0xb1b2b3b4 }));
 	EdfClose(&w);
 
 	BinToText("t_write.bdf", "t_writeConv.tdf");

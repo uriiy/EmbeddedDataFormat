@@ -14,6 +14,8 @@ typedef enum
 	FILETYPE = 1000,
 	FILEDESCRIPTION,
 	DATETIMEINF,
+
+	OMEGADATAINF
 } VarInfoId;
 
 //-----------------------------------------------------------------------------
@@ -45,25 +47,28 @@ int DatToEdf(const char* src, const char* edf, char mode)
 	if ((err = EdfWriteHeader(&dw, &h, &writed)))
 		return err;
 
-	EdfWriteInfRecData(&dw, FILETYPE, UInt32, "FileType", &dat.FileType);
-	EdfWriteInfRecStringData(&dw, FILEDESCRIPTION, "FileDescription", &dat.FileDescription, FIELD_SIZEOF(SPSK_FILE_V1_1, FileDescription));
+	EdfWriteInfData(&dw, FILETYPE, UInt32, "FileType", &dat.FileType);
+	EdfWriteInfDataString(&dw, FILEDESCRIPTION, "FileDescription", 
+		&dat.FileDescription, FIELD_SIZEOF(SPSK_FILE_V1_1, FileDescription));
 
 	EdfWriteInfo(&dw, &(const TypeRec_t){ DATETIMEINF, DateTimeInf }, & writed);
 	EdfWriteDataBlock(&dw, &(DateTime_t) { dat.Year + 2000, dat.Month, dat.Day, }, sizeof(DateTime_t));
 
-	EdfWriteInfData(&dw, UInt16, "Shop", &dat.Id.Shop);
-	EdfWriteInfData(&dw, UInt16, "Field", &dat.Id.Field);
-	EdfWriteStringBytes(&dw, "Cluster", &dat.Id.Cluster, FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Cluster));
-	EdfWriteStringBytes(&dw, "Well", &dat.Id.Well, FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Well));
-	EdfWriteInfData(&dw, UInt16, "PlaceId", &dat.Id.PlaceId);
-	EdfWriteInfData(&dw, Int32, "Depth", &dat.Id.Depth);
+	EdfWriteInfData(&dw, 0, UInt16, "Shop", &dat.Id.Shop);
+	EdfWriteInfData(&dw, 0, UInt16, "Field", &dat.Id.Field);
+	EdfWriteInfDataString(&dw, 0, "Cluster", 
+		&dat.Id.Cluster, FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Cluster));
+	EdfWriteInfDataString(&dw, 0, "Well", 
+		&dat.Id.Well, FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Well));
+	EdfWriteInfData(&dw, 0, UInt16, "PlaceId", &dat.Id.PlaceId);
+	EdfWriteInfData(&dw, 0, Int32, "Depth", &dat.Id.Depth);
 
-	EdfWriteInfData(&dw, UInt16, "RegType", &dat.RegType);
-	EdfWriteInfData(&dw, UInt16, "RegNum", &dat.RegNum);
-	EdfWriteInfData(&dw, UInt16, "RegVer", &dat.RegVer);
-	EdfWriteInfData(&dw, UInt16, "SensType", &dat.SensType);
-	EdfWriteInfData(&dw, UInt32, "SensNum", &dat.SensNum);
-	EdfWriteInfData(&dw, UInt16, "SensVer", &dat.SensVer);
+	EdfWriteInfData(&dw, 0, UInt16, "RegType", &dat.RegType);
+	EdfWriteInfData(&dw, 0, UInt16, "RegNum", &dat.RegNum);
+	EdfWriteInfData(&dw, 0, UInt16, "RegVer", &dat.RegVer);
+	EdfWriteInfData(&dw, 0, UInt16, "SensType", &dat.SensType);
+	EdfWriteInfData(&dw, 0, UInt32, "SensNum", &dat.SensNum);
+	EdfWriteInfData(&dw, 0, UInt16, "SensVer", &dat.SensVer);
 
 	/*
 	TypeInfo_t commentType = { .Type = String, .Name = "Comments" };

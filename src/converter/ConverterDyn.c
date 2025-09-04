@@ -45,8 +45,9 @@ int DynToEdf(const char* src, const char* edf, char mode)
 	if ((err = EdfWriteHeader(&dw, &h, &writed)))
 		return err;
 
-	EdfWriteInfData(&dw, UInt32, "FileType", &dat.FileType);
-	EdfWriteStringBytes(&dw, "FileDescription", &dat.FileDescription, FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription));
+	EdfWriteInfData(&dw, 0, UInt32, "FileType", &dat.FileType);
+	EdfWriteInfDataString(&dw, 0, "FileDescription", 
+		&dat.FileDescription, FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription));
 
 	EdfWriteInfo(&dw, &(const TypeRec_t){ 0, DateTimeInf}, & writed);
 	EdfWriteDataBlock(&dw, &(DateTime_t)
@@ -55,17 +56,19 @@ int DynToEdf(const char* src, const char* edf, char mode)
 			dat.Id.Time.Hour, dat.Id.Time.Min, dat.Id.Time.Sec,
 	}, sizeof(DateTime_t));
 
-	EdfWriteInfData(&dw, UInt16, "Oper", &dat.Id.Oper);
-	EdfWriteInfData(&dw, UInt16, "Shop", &dat.Id.Shop);
-	EdfWriteInfData(&dw, UInt16, "Field", &dat.Id.Field);
-	EdfWriteStringBytes(&dw, "Cluster", &dat.Id.Cluster, FIELD_SIZEOF(RESEARCH_ID_V2_0, Cluster));
-	EdfWriteStringBytes(&dw, "Well", &dat.Id.Well, FIELD_SIZEOF(RESEARCH_ID_V2_0, Well));
+	EdfWriteInfData(&dw, 0, UInt16, "Oper", &dat.Id.Oper);
+	EdfWriteInfData(&dw, 0, UInt16, "Shop", &dat.Id.Shop);
+	EdfWriteInfData(&dw, 0, UInt16, "Field", &dat.Id.Field);
+	EdfWriteInfDataString(&dw, 0, "Cluster", 
+		&dat.Id.Cluster, FIELD_SIZEOF(RESEARCH_ID_V2_0, Cluster));
+	EdfWriteInfDataString(&dw, 0, "Well", 
+		&dat.Id.Well, FIELD_SIZEOF(RESEARCH_ID_V2_0, Well));
 
-	EdfWriteInfData(&dw, UInt16, "ResearchType", &dat.Id.ResearchType);
-	EdfWriteInfData(&dw, UInt16, "RegType", &dat.Id.RegType);
-	EdfWriteInfData(&dw, UInt32, "RegNum", &dat.Id.RegNum);
-	EdfWriteInfData(&dw, UInt16, "DeviceType", &dat.Id.DeviceType);
-	EdfWriteInfData(&dw, UInt32, "DeviceNum", &dat.Id.DeviceNum);
+	EdfWriteInfData(&dw, 0, UInt16, "ResearchType", &dat.Id.ResearchType);
+	EdfWriteInfData(&dw, 0, UInt16, "RegType", &dat.Id.RegType);
+	EdfWriteInfData(&dw, 0, UInt32, "RegNum", &dat.Id.RegNum);
+	EdfWriteInfData(&dw, 0, UInt16, "DeviceType", &dat.Id.DeviceType);
+	EdfWriteInfData(&dw, 0, UInt32, "DeviceNum", &dat.Id.DeviceNum);
 	// - end RESEARCH_ID_V2_0
 	/*
 	EdfWriteInfo(&dw, &CommentsInf, &writed);
@@ -86,22 +89,22 @@ int DynToEdf(const char* src, const char* edf, char mode)
 	EdfWriteDataBlock(&dw, &((char*) { "Acc - напряжение аккумулятора датчика, (В)" }), sizeof(char*));
 	EdfWriteDataBlock(&dw, &((char*) { "Temp - температура датчика, (°С)" }), sizeof(char*));
 
-	EdfWriteInfData(&dw, Single, "Rod", &((float) { dat.Rod / 10.0f }));
-	EdfWriteInfData(&dw, UInt16, "Aperture", &dat.Aperture);
-	EdfWriteInfData(&dw, UInt32, "MaxWeight", &((uint32_t) { dat.MaxWeight* dat.LoadStep }));
-	EdfWriteInfData(&dw, UInt32, "MinWeight", &((uint32_t) { dat.MinWeight* dat.LoadStep }));
-	EdfWriteInfData(&dw, UInt32, "TopWeight", &((uint32_t) { dat.TopWeight* dat.LoadStep }));
-	EdfWriteInfData(&dw, UInt32, "BotWeight", &((uint32_t) { dat.BotWeight* dat.LoadStep }));
-	EdfWriteInfData(&dw, Double, "Travel", &((double) { dat.Travel* dat.TravelStep / 10.0f }));
-	EdfWriteInfData(&dw, Double, "BeginPos", &((double) { dat.BeginPos* dat.TravelStep / 10.0f }));
-	EdfWriteInfData(&dw, UInt32, "Period", &((uint32_t) { dat.Period* dat.TimeStep }));
-	EdfWriteInfData(&dw, UInt16, "Cycles", &((uint16_t) { dat.Cycles }));
-	EdfWriteInfData(&dw, Double, "Pressure", &((double) { dat.Pressure / 10.0f }));
-	EdfWriteInfData(&dw, Double, "BufPressure", &((double) { dat.BufPressure / 10.0f }));
-	EdfWriteInfData(&dw, Double, "LinePressure", &((double) { dat.LinePressure / 10.0f }));
-	EdfWriteInfData(&dw, UInt16, "PumpType", &dat.PumpType);
-	EdfWriteInfData(&dw, Single, "Acc", &((float) { dat.Acc / 10.0f }));
-	EdfWriteInfData(&dw, Single, "Temp", &((float) { dat.Temp / 10.0f }));
+	EdfWriteInfRecData(&dw, 0, Single, "Rod", &((float) { dat.Rod / 10.0f }));
+	EdfWriteInfRecData(&dw, 0, UInt16, "Aperture", &dat.Aperture);
+	EdfWriteInfRecData(&dw, 0, UInt32, "MaxWeight", &((uint32_t) { dat.MaxWeight* dat.LoadStep }));
+	EdfWriteInfRecData(&dw, 0, UInt32, "MinWeight", &((uint32_t) { dat.MinWeight* dat.LoadStep }));
+	EdfWriteInfRecData(&dw, 0, UInt32, "TopWeight", &((uint32_t) { dat.TopWeight* dat.LoadStep }));
+	EdfWriteInfRecData(&dw, 0, UInt32, "BotWeight", &((uint32_t) { dat.BotWeight* dat.LoadStep }));
+	EdfWriteInfRecData(&dw, 0, Double, "Travel", &((double) { dat.Travel* dat.TravelStep / 10.0f }));
+	EdfWriteInfRecData(&dw, 0, Double, "BeginPos", &((double) { dat.BeginPos* dat.TravelStep / 10.0f }));
+	EdfWriteInfRecData(&dw, 0, UInt32, "Period", &((uint32_t) { dat.Period* dat.TimeStep }));
+	EdfWriteInfRecData(&dw, 0, UInt16, "Cycles", &((uint16_t) { dat.Cycles }));
+	EdfWriteInfRecData(&dw, 0, Double, "Pressure", &((double) { dat.Pressure / 10.0f }));
+	EdfWriteInfRecData(&dw, 0, Double, "BufPressure", &((double) { dat.BufPressure / 10.0f }));
+	EdfWriteInfRecData(&dw, 0, Double, "LinePressure", &((double) { dat.LinePressure / 10.0f }));
+	EdfWriteInfRecData(&dw, 0, UInt16, "PumpType", &dat.PumpType);
+	EdfWriteInfRecData(&dw, 0, Single, "Acc", &((float) { dat.Acc / 10.0f }));
+	EdfWriteInfRecData(&dw, 0, Single, "Temp", &((float) { dat.Temp / 10.0f }));
 	*/
 	{
 		//EdfWriteInfo(&dw, &CommentsInf, &writed);

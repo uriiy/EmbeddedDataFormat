@@ -325,7 +325,7 @@ int EdfWriteSep(const char* const src,
 	return 0;
 }
 //-----------------------------------------------------------------------------
-int EdfWriteInfRecData(EdfWriter_t* dw, uint32_t id, PoType pt, char* name, void* d)
+int EdfWriteInfData(EdfWriter_t* dw, uint32_t id, PoType pt, char* name, void* d)
 {
 	int err;
 	size_t writed = 0;
@@ -339,12 +339,7 @@ int EdfWriteInfRecData(EdfWriter_t* dw, uint32_t id, PoType pt, char* name, void
 	return EdfWriteDataBlock(dw, data, GetSizeOf(pt));
 }
 //-----------------------------------------------------------------------------
-int EdfWriteInfData(EdfWriter_t* dw, PoType pt, char* name, void* d)
-{
-	return EdfWriteInfRecData(dw, 0, pt, name, d);
-}
-//-----------------------------------------------------------------------------
-int EdfWriteInfRecStringData(EdfWriter_t* dw, uint32_t id, char* name, void* str, size_t len)
+int EdfWriteInfDataString(EdfWriter_t* dw, uint32_t id, char* name, void* str, size_t len)
 {
 	int err;
 	size_t writed = 0;
@@ -364,10 +359,5 @@ int EdfWriteInfRecStringData(EdfWriter_t* dw, uint32_t id, char* name, void* str
 	else
 		data = str;
 	return EdfWriteDataBlock(dw, &data, GetSizeOf(String));
-}
-//-----------------------------------------------------------------------------
-int EdfWriteStringBytes(EdfWriter_t* dw, char* name, void* str, size_t len)
-{
-	return EdfWriteInfRecStringData(dw, 0, name, str, len);
 }
 //-----------------------------------------------------------------------------
