@@ -48,6 +48,9 @@ typedef enum PoType
 	Double,
 	// strings
 	String,
+	//VarInt,
+	//VarUInt,
+	//VarFloat,
 } PoType;
 
 uint8_t GetSizeOf(enum PoType p);
