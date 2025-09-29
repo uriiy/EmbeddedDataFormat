@@ -31,11 +31,7 @@ uint8_t GetSizeOf(enum PoType p)
 //-----------------------------------------------------------------------------
 uint8_t IsPoType(PoType p)
 {
-	if (Struct > p)
-		return 0;
-	if (String < p)
-		return 0;
-	return 1;
+	return Struct <= p && String >= p;
 }
 //-----------------------------------------------------------------------------
 uint8_t IsBlockType(BlockType t)

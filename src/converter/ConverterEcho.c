@@ -255,7 +255,7 @@ int EdfToEcho(const char* edfFile, const char* echoFile)
 				dat.FileType = *((uint32_t*)br.Block);
 			else if (0 == _stricmp(br.t->Inf.Name, "FileDescription"))
 			{
-				//err = EdfSreamBinToCBin(&FileDescriptionInf, &src, &msDst,
+				//err = EdfReadBin(&FileDescriptionInf, &src, &msDst,
 				//	&(void*){dat.FileDescription}, & skip);
 				uint8_t len = MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(ECHO_FILE_V2_0, FileDescription));
 				memset(dat.FileDescription, 0, FIELD_SIZEOF(ECHO_FILE_V2_0, FileDescription));

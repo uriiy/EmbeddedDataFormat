@@ -17,7 +17,7 @@ TypeInfo_t MakeTypeInfo(char* name, PoType type
 	return t;
 }
 //-----------------------------------------------------------------------------
-int StreamWriteInfoBin(Stream_t* s, const TypeInfo_t* t, size_t* writed)
+static int StreamWriteInfoBin(Stream_t* s, const TypeInfo_t* t, size_t* writed)
 {
 	int err = 0;
 	// TYPE
@@ -53,6 +53,16 @@ int StreamWriteInfoBin(Stream_t* s, const TypeInfo_t* t, size_t* writed)
 	return err;
 }
 //-----------------------------------------------------------------------------
+int StreamWriteInfBin(Stream_t* st, const TypeRec_t* t, size_t* writed)
+{
+	int err = 0;
+	if ((err = StreamWrite(st, writed, &t->Id, FIELD_SIZEOF(TypeRec_t, Id))))
+		return err;
+	if ((err = StreamWriteInfoBin(st, &t->Inf, writed)))
+		return err;
+	return err;
+}
+//-----------------------------------------------------------------------------
 static int StreamPrintOffset(Stream_t* s, int noffset, size_t* writed)
 {
 	int err = 0;
@@ -85,7 +95,7 @@ static int StreamPrintType(Stream_t* s, PoType po, size_t* writed)
 	return 0;
 }
 //-----------------------------------------------------------------------------
-int StreamWriteInfoTxt(Stream_t* s, const TypeInfo_t* t, int noffset, size_t* writed)
+static int StreamWriteInfoTxt(Stream_t* s, const TypeInfo_t* t, int noffset, size_t* writed)
 {
 	int err = 0;
 	// TYPE
@@ -122,6 +132,24 @@ int StreamWriteInfoTxt(Stream_t* s, const TypeInfo_t* t, int noffset, size_t* wr
 			return err;
 	}
 	return StreamWrite(s, writed, ";", 1);
+}
+//-----------------------------------------------------------------------------
+int StreamWriteInfTxt(Stream_t* st, const TypeRec_t* t, size_t* writed)
+{
+	int err = 0;
+	if (t->Id)
+	{
+		if ((err = StreamWriteFmt(st, writed, "\n\n?<%lu> ", t->Id)))
+			return err;
+	}
+	else
+	{
+		if ((err = StreamWrite(st, writed, "\n\n? ", 4)))
+			return err;
+	}
+	if ((err = StreamWriteInfoTxt(st, &t->Inf, 0, writed)))
+		return err;
+	return err;
 }
 //-----------------------------------------------------------------------------
 

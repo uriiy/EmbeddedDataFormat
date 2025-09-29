@@ -50,17 +50,7 @@ static int EdfWriteHeaderBin(EdfWriter_t* dw, const EdfHeader_t* h, size_t* writ
 static int EdfWriteInfoTxt(EdfWriter_t* w, const TypeRec_t* t, size_t* writed)
 {
 	int err = 0;
-	if (t->Id)
-	{
-		if ((err = StreamWriteFmt(&w->Stream, writed, "\n\n?<%lu> ", t->Id)))
-			return err;
-	}
-	else
-	{
-		if ((err = StreamWrite(&w->Stream, writed, "\n\n? ", 4)))
-			return err;
-	}
-	if ((err = StreamWriteInfoTxt(&w->Stream, &t->Inf, 0, writed)))
+	if ((err = StreamWriteInfTxt(&w->Stream, t, writed)))
 		return err;
 	w->Seq++;
 	w->BlockLen = 0;
@@ -75,8 +65,7 @@ static int EdfWriteInfoBin(EdfWriter_t* dw, const TypeRec_t* t, size_t* writed)
 	dw->Block[1] = (uint8_t)dw->Seq;
 	MemStream_t ms = { 0 };
 	if ((err = MemStreamOutOpen(&ms, &dw->Block[4], sizeof(dw->Block) - 4)) ||
-		(err = StreamWrite(&ms, writed, &t->Id, FIELD_SIZEOF(TypeRec_t, Id))) ||
-		(err = StreamWriteInfoBin((Stream_t*)&ms, &t->Inf, writed)))
+		(err = StreamWriteInfBin((Stream_t*)&ms, t, writed)))
 		return err;
 	*((uint16_t*)&dw->Block[2]) = (uint16_t)ms.WPos;
 	dw->BlockLen = 1 + 1 + 2 + ms.WPos;

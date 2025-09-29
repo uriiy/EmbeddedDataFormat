@@ -292,7 +292,7 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 				/*
 				msDst.WPos = 0;
 				char* result = NULL;
-				err = EdfSreamBinToCBin(&CommentsInf, &src, &msDst,
+				err = EdfReadBin(&CommentsInf, &src, &msDst,
 					&(void*){&result}, &skip);
 				memcpy(dat.FileDescription, result, msDst.WPos);
 				*/

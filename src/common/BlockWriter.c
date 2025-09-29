@@ -244,7 +244,7 @@ static int TryReadString(MemStream_t* tsrc, MemStream_t* tmem, void** ti)
 int EdfReadBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, void** presult,
 	int* skip)
 {
-	if (String < t->Type)
+	if (!IsPoType(t->Type))
 		return -2;
 
 	size_t itemCLen = GetTypeCSize(t);
