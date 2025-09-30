@@ -15,7 +15,8 @@ static int StreamWriteImpl(void* stream, size_t* writed, void const* data, size_
 			return err;
 		}
 	}
-	*writed += ret;
+	if (writed)
+		*writed += ret;
 	fflush(f);
 	return 0;
 }
@@ -36,7 +37,8 @@ static int StreamReadImpl(void* stream, size_t* readed, void* dst, size_t len)
 			return err;
 		}
 	}
-	*readed += ret;
+	if (readed)
+		*readed += ret;
 	return 0;
 }
 //-----------------------------------------------------------------------------
@@ -64,7 +66,8 @@ static int StreamWriteFormatImpl(void* stream, size_t* writed, const char* forma
 			return err;
 		}
 	}
-	*writed += ret;
+	if (writed)
+		*writed += ret;
 	fflush(f);
 	return 0;
 #endif
