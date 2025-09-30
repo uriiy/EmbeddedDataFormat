@@ -19,6 +19,8 @@
 
 #include "edf_cfg.h"
 
+int CallStackSize();
+
 uint16_t MbCrc16acc(const void* d, size_t len, uint16_t crc);
 #define MbCrc16(data,len) MbCrc16acc((data),(len),0xFFFF)
 
