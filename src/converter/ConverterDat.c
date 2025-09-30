@@ -124,14 +124,14 @@ int EdfToDat(const char* edfFile, const char* datFile)
 
 	while (!(err = EdfReadBlock(&br)))
 	{
-		switch (br.BlockType)
+		switch (br.BlkType)
 		{
 		default: break;
 		case btHeader:
-			if (16 == br.BlockLen)
+			if (16 == br.DatLen)
 			{
 				//EdfHeader_t h = { 0 };
-				//err = MakeHeaderFromBytes(br.Block, br.BlockLen, &h);
+				//err = MakeHeaderFromBytes(br.Block, br.DatLen, &h);
 				//if (!err)
 				//	err = EdfWriteHeader(&tw, &h, &writed);
 			}
@@ -139,7 +139,7 @@ int EdfToDat(const char* edfFile, const char* datFile)
 		case btVarInfo:
 		{
 			br.t = NULL;
-			err = StreamWriteBinToCBin(br.Block, br.BlockLen, NULL, br.Buf, sizeof(br.Buf), NULL, &br.t);
+			err = StreamWriteBinToCBin(br.Block, br.DatLen, NULL, br.Buf, sizeof(br.Buf), NULL, &br.t);
 			if (!err)
 			{
 				writed = 0;
@@ -181,20 +181,20 @@ int EdfToDat(const char* edfFile, const char* datFile)
 					}
 					uint8_t* pblock = br.Block;
 
-					while (0 < br.BlockLen)
+					while (0 < br.DatLen)
 					{
-						size_t len = (size_t)MIN(br.BlockLen, (size_t)(recordEnd - precord));
+						size_t len = (size_t)MIN(br.DatLen, (size_t)(recordEnd - precord));
 						memcpy(precord, pblock, len);
 						precord += len;
 						pblock += len;
-						br.BlockLen -= len;
+						br.DatLen -= (uint16_t)len;
 						if (recordEnd == precord)
 						{
 							precord = recordBegin;
 							if (1 != fwrite(&record, sizeof(OMEGA_DATA_V1_1), 1, f))
 								return -1;
 						}
-					}//while (0 < br.BlockLen)
+					}//while (0 < br.DatLen)
 				}
 				break;//OMEGADATAREC
 
@@ -242,7 +242,7 @@ int EdfToDat(const char* edfFile, const char* datFile)
 
 		}//case btVarData:
 		break;
-		}//switch (br.BlockType)
+		}//switch (br.BlkType)
 		if (0 != err)
 		{
 			LOG_ERR();

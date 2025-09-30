@@ -54,6 +54,11 @@ size_t strnlength(const char* s, size_t n);
 
 #define ERR_FN_NOT_EXIST -2;
 
+#define ERR_BLK_WRONG_TYPE -20;
+#define ERR_BLK_WRONG_SEQ -21;
+#define ERR_BLK_WRONG_SIZE -22;
+#define ERR_BLK_WRONG_CRC -23;
+
 
 
 #endif //PCH_H

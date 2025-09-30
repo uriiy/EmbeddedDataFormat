@@ -46,14 +46,14 @@ int BinToText(const char* src, const char* dst)
 
 	while (!(err = EdfReadBlock(&br)))
 	{
-		switch (br.BlockType)
+		switch (br.BlkType)
 		{
 		default: break;
 		case btHeader:
-			if (16 == br.BlockLen)
+			if (16 == br.DatLen)
 			{
 				EdfHeader_t h = { 0 };
-				err = MakeHeaderFromBytes(br.Block, br.BlockLen, &h);
+				err = MakeHeaderFromBytes(br.Block, br.DatLen, &h);
 				if (!err)
 					err = EdfWriteHeader(&tw, &h, &writed);
 			}
@@ -61,7 +61,7 @@ int BinToText(const char* src, const char* dst)
 		case btVarInfo:
 		{
 			tw.t = NULL;
-			err = StreamWriteBinToCBin(br.Block, br.BlockLen, NULL, br.Buf, sizeof(br.Buf), NULL, &tw.t);
+			err = StreamWriteBinToCBin(br.Block, br.DatLen, NULL, br.Buf, sizeof(br.Buf), NULL, &tw.t);
 			if (!err)
 			{
 				writed = 0;
@@ -76,7 +76,7 @@ int BinToText(const char* src, const char* dst)
 		break;
 		case btVarData:
 		{
-			EdfWriteDataBlock(&tw, &br.Block, br.BlockLen);
+			EdfWriteDataBlock(&tw, &br.Block, br.DatLen);
 			//EdfFlushDataBlock(&tw, &writed);
 		}
 		break;

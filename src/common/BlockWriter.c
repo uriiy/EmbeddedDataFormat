@@ -129,14 +129,14 @@ static int WriteSingleValue(
 	return wr;
 }
 //-----------------------------------------------------------------------------
-int EdfWriteDataBlock(EdfWriter_t* dw,const void* vsrc, size_t xsrcLen)
+int EdfWriteDataBlock(EdfWriter_t* dw, const void* vsrc, size_t xsrcLen)
 {
 	const uint8_t* xsrc = (const uint8_t*)vsrc;
 	const uint8_t* src = xsrc;
 	size_t srcLen = xsrcLen;
 
-	size_t dstLen = sizeof(dw->Block) - dw->BlockLen;
-	uint8_t* dst = dw->Block + dw->BlockLen;
+	size_t dstLen = sizeof(dw->Block) - dw->DatLen;
+	uint8_t* dst = dw->Block + dw->DatLen;
 
 	size_t r = 0, w = 0;
 	int wr;
@@ -192,7 +192,7 @@ int EdfWriteDataBlock(EdfWriter_t* dw,const void* vsrc, size_t xsrcLen)
 
 
 		dst += w; dstLen -= w;
-		dw->BlockLen += w;
+		dw->DatLen += (uint16_t)w;
 		if (0 < wr || 0 == dstLen)
 		{
 			w = 0;
@@ -300,33 +300,41 @@ int EdfReadBlock(EdfWriter_t* dw)
 	int err = 0;
 	size_t readed = 0;
 
-	uint8_t blockType;
-	uint8_t blockseq;
-	uint16_t blockLen;
+	dw->BlkType = 0;
+	dw->DatLen = 0;
 
-	do
+	if ((err = StreamRead(&dw->Stream, &readed, &dw->BlkType, 1)))
+		return err;
+	if (!IsBlockType(dw->BlkType))
+		return ERR_BLK_WRONG_TYPE;
+
+	uint8_t blockseq;
+	if ((err = StreamRead(&dw->Stream, &readed, &blockseq, 1)))
+		return err;
+	if (blockseq != dw->BlkSeq)
+		return ERR_BLK_WRONG_SEQ;
+
+	if ((err = StreamRead(&dw->Stream, &readed, &dw->DatLen, 2)))
+		return err;
+	if (4096 < dw->DatLen || BLOCK_SIZE < dw->DatLen)
+		return ERR_BLK_WRONG_SIZE;
+
+	if ((err = StreamRead(&dw->Stream, &readed, &dw->Block, dw->DatLen)))
+		return err;
+
+	if (btHeader == dw->BlkType)
+		memcpy(&dw->h, &dw->Block, sizeof(EdfHeader_t));
+
+	if (dw->h.Flags & UseCrc)
 	{
-		if (!(err = StreamRead(&dw->Stream, &readed, &blockType, 1))
-			&& IsBlockType(blockType))
-		{
-			if (!(StreamRead(&dw->Stream, &readed, &blockseq, 1))
-				&& blockseq == dw->Seq)
-			{
-				if (!(err = StreamRead(&dw->Stream, &readed, &blockLen, 2))
-					&& 4096 > blockLen && BLOCK_SIZE >= blockLen)
-				{
-					if (!(StreamRead(&dw->Stream, &readed, &dw->Block, blockLen)))
-					{
-						dw->BlockType = blockType;
-						dw->Seq++;
-						dw->BlockLen = blockLen;
-						return 0;
-					}
-				}
-			}
-		}
-	} while (!err);
-	dw->BlockType = 0;
-	dw->BlockLen = 0;
-	return err;
+		uint16_t crcData = MbCrc16(&dw->BlkType, 4 + dw->DatLen);
+		uint16_t crcFile = 0;
+		if ((err = StreamRead(&dw->Stream, &readed, &crcFile, sizeof(uint16_t))))
+			return err;
+		if (crcData != crcFile)
+			return ERR_BLK_WRONG_CRC;
+	}
+	dw->BlkSeq++;
+	return 0;
+
 }

@@ -249,17 +249,17 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 	while (!(err = EdfReadBlock(&br)))
 	{
 		MemStream_t src = { 0 };
-		if ((err = MemStreamInOpen(&src, br.Block, br.BlockLen)))
+		if ((err = MemStreamInOpen(&src, br.Block, br.DatLen)))
 			return err;
 
-		switch (br.BlockType)
+		switch (br.BlkType)
 		{
 		default: break;
 		case btHeader:
-			if (16 == br.BlockLen)
+			if (16 == br.DatLen)
 			{
 				//EdfHeader_t h = { 0 };
-				//err = MakeHeaderFromBytes(br.Block, br.BlockLen, &h);
+				//err = MakeHeaderFromBytes(br.Block, br.DatLen, &h);
 				//if (!err)
 				//	err = EdfWriteHeader(&tw, &h, &writed);
 			}
@@ -269,7 +269,7 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 			skip = 0;
 			msDst.WPos = 0;
 			br.t = NULL;
-			err = StreamWriteBinToCBin(br.Block, br.BlockLen, NULL, br.Buf, sizeof(br.Buf), NULL, &br.t);
+			err = StreamWriteBinToCBin(br.Block, br.DatLen, NULL, br.Buf, sizeof(br.Buf), NULL, &br.t);
 			if (!err)
 			{
 				writed = 0;
@@ -283,7 +283,7 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 		break;
 		case btVarData:
 		{
-			//EdfWriteDataBlock(&tw, &br.Block, br.BlockLen);
+			//EdfWriteDataBlock(&tw, &br.Block, br.DatLen);
 			//EdfFlushDataBlock(&tw, &writed);
 			if (0 == _stricmp(br.t->Inf.Name, "FileType"))
 				dat.FileType = *((uint32_t*)br.Block);
@@ -374,7 +374,7 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 			}//else
 		}//case btVarData:
 		break;
-		}//switch (br.BlockType)
+		}//switch (br.BlkType)
 		if (0 != err)
 		{
 			LOG_ERR();

@@ -26,9 +26,9 @@ typedef struct EdfWriter
 	Stream_t Stream;
 	size_t Skip;
 
-	uint8_t BlockType;
-	uint8_t Seq;
-	size_t BlockLen;
+	uint8_t BlkType;
+	uint8_t BlkSeq;
+	uint16_t DatLen;
 	uint8_t Block[BLOCK_SIZE];
 
 	size_t BufLen;
