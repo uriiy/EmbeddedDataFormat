@@ -107,15 +107,17 @@ int MemStreamOutOpen(MemStream_t* s, uint8_t* buf, size_t size)
 {
 	return MemStreamOpen(s, buf, size, 0, "w");
 }
+
+const StreamFnImpl_t rwMemSt = { T_MEM_STREAM, MemStreamWriteImpl ,MemStreamReadImpl ,MemStreamWriteFormatImpl,MemStreamClose };
+const StreamFnImpl_t wMemSt = { T_MEM_STREAM, MemStreamWriteImpl ,NULL ,MemStreamWriteFormatImpl,MemStreamClose };
+const StreamFnImpl_t rMemSt = { T_MEM_STREAM, NULL ,MemStreamReadImpl ,NULL,MemStreamClose };
+
 //-----------------------------------------------------------------------------
 int MemStreamOpen(MemStream_t* s, uint8_t* buf, size_t size, size_t datalen, const char* inMode)
 {
 	if (NULL == inMode || 0 == strcmp("rw", inMode) || 0 == strcmp("wr", inMode))
 	{
-		s->Write = MemStreamWriteImpl;
-		s->Read = MemStreamReadImpl;
-		s->WriteFmt = MemStreamWriteFormatImpl;
-		s->Close = MemStreamClose;
+		s->Impl = &rwMemSt;
 		s->Buffer = buf;
 		s->Size = size;
 		s->RPos = 0;
@@ -124,10 +126,7 @@ int MemStreamOpen(MemStream_t* s, uint8_t* buf, size_t size, size_t datalen, con
 	}
 	else if (0 == strcmp("w", inMode) || 0 == strcmp("wb", inMode))
 	{
-		s->Write = MemStreamWriteImpl;
-		s->Read = NULL;
-		s->WriteFmt = MemStreamWriteFormatImpl;
-		s->Close = MemStreamClose;
+		s->Impl = &wMemSt;
 		s->Buffer = buf;
 		s->Size = size;
 		s->RPos = 0;
@@ -136,10 +135,7 @@ int MemStreamOpen(MemStream_t* s, uint8_t* buf, size_t size, size_t datalen, con
 	}
 	else if (0 == strcmp("r", inMode) || 0 == strcmp("rb", inMode))
 	{
-		s->Write = NULL;
-		s->Read = MemStreamReadImpl;
-		s->Close = MemStreamClose;
-		s->WriteFmt = NULL;
+		s->Impl = &rMemSt;
 		s->Buffer = buf;
 		s->Size = size;
 		s->RPos = 0;

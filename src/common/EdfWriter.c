@@ -294,9 +294,7 @@ int EdfClose(EdfWriter_t* dw)
 	size_t w = 0;
 	if ((err = EdfFlushDataBlock(dw, &w)))
 		return err;
-	if (dw->Stream.Close)
-		err = (*dw->Stream.Close)(&dw->Stream);
-	return err;
+	return StreamClose(&dw->Stream);
 }
 //-----------------------------------------------------------------------------
 int EdfWriteSep(const char* const src,

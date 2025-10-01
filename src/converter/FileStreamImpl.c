@@ -82,6 +82,11 @@ static int FileStreamClose(void* stream)
 		((FileStream_t*)stream)->Instance = NULL;
 	return ret;
 }
+
+const StreamFnImpl_t rwFileSt = { T_FILE_STREAM, StreamWriteImpl ,StreamReadImpl ,StreamWriteFormatImpl,FileStreamClose };
+const StreamFnImpl_t wFileSt = { T_FILE_STREAM, StreamWriteImpl ,NULL ,StreamWriteFormatImpl,FileStreamClose };
+const StreamFnImpl_t rFileSt = { T_FILE_STREAM, NULL ,StreamReadImpl ,NULL,FileStreamClose };
+
 //-----------------------------------------------------------------------------
 int FileStreamOpen(FileStream_t* s, const char* file, const char* inMode)
 {
@@ -89,15 +94,25 @@ int FileStreamOpen(FileStream_t* s, const char* file, const char* inMode)
 	const char w[] = "wb";
 	const char r[] = "rb";
 	const char* mode = NULL;
+	const StreamFnImpl_t* impl = NULL;
 
 	int  err = -1;
 
 	if (0 == strcmp("wb", inMode))
+	{
 		mode = w;
+		impl = &wFileSt;
+	}
 	else if (0 == strcmp("ab", inMode))
+	{
 		mode = a;
+		impl = &rwFileSt;
+	}
 	else if (0 == strcmp("rb", inMode))
+	{
 		mode = r;
+		impl = &rFileSt;
+	}
 
 	if (mode)
 	{
@@ -107,11 +122,8 @@ int FileStreamOpen(FileStream_t* s, const char* file, const char* inMode)
 		{
 			*s = (FileStream_t)
 			{
-				.Instance = (void*)f,
-				.Write = StreamWriteImpl,
-				.Read = StreamReadImpl,
-				.WriteFmt = StreamWriteFormatImpl,
-				.Close = FileStreamClose,
+				.Impl = impl,
+				.Instance = (void*)f
 			};
 			return 0;
 		}
