@@ -23,6 +23,8 @@ typedef struct EdfWriter
 {
 	EdfHeader_t h;
 	const TypeRec_t* t;
+	//uint8_t TypeFlag;
+	//uint16_t TypeLen;
 	Stream_t Stream;
 	size_t Skip;
 

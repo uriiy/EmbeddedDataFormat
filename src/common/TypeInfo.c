@@ -2,21 +2,6 @@
 #include "TypeInfo.h"
 
 //-----------------------------------------------------------------------------
-TypeInfo_t MakeTypeInfo(char* name, PoType type
-	, uint8_t dimCount, uint32_t* dims
-	, uint8_t childCount, TypeInfo_t* childs)
-{
-	TypeInfo_t t;
-	memset(&t, 0, sizeof(TypeInfo_t));
-	t.Type = type;
-	t.Name = name;
-	t.Dims.Count = dimCount;
-	t.Dims.Item = dims;
-	t.Childs.Count = childCount;
-	t.Childs.Item = childs;
-	return t;
-}
-//-----------------------------------------------------------------------------
 static int StreamWriteInfoBin(Stream_t* s, const TypeInfo_t* t, size_t* writed)
 {
 	int err = 0;
@@ -267,4 +252,22 @@ uint32_t GetTypeCSize(const TypeInfo_t* t)
 		for (uint32_t i = 0; i < t->Dims.Count; i++)
 			sz *= t->Dims.Item[i];
 	return sz;
+}
+//-----------------------------------------------------------------------------
+int8_t HasDynamicFields(const TypeInfo_t* t)
+{
+	switch (t->Type)
+	{
+	case Struct:
+		if (t->Childs.Item && t->Childs.Count)
+		{
+			for (uint32_t i = 0; i < t->Childs.Count; i++)
+				if (HasDynamicFields(&t->Childs.Item[i]))
+					return 1;
+		}
+		break;
+	case String: return 1;
+	default: break;
+	}//switch
+	return 0;
 }

@@ -27,11 +27,9 @@ typedef struct
 	TypeInfo_t Inf;
 } TypeRec_t;
 
-TypeInfo_t MakeTypeInfo(char* name, PoType type
-	, uint8_t dimCount, uint32_t* dims
-	, uint8_t childCount, TypeInfo_t* childs);
 
 uint32_t GetTypeCSize(const TypeInfo_t* t);
+int8_t HasDynamicFields(const TypeInfo_t* t);
 int StreamWriteInfBin(Stream_t* st, const TypeRec_t* t, size_t* writed);
 int StreamWriteInfTxt(Stream_t* st, const TypeRec_t* t, size_t* writed);
 int StreamWriteBinToCBin(uint8_t* src, size_t srcLen, size_t* readed,

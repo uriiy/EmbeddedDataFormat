@@ -78,6 +78,8 @@ int EdfWriteInfo(EdfWriter_t* dw, const TypeRec_t* t, size_t* writed)
 		return err;
 	}
 	dw->t = t;
+	//dw->TypeFlag |= HasDynamicFields(&t->Inf);
+	//dw->TypeLen = GetTypeCSize(&t->Inf);
 	dw->BlkSeq++;
 	dw->DatLen = 0;
 	return err;
