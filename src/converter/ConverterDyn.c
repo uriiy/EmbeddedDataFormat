@@ -116,9 +116,9 @@ int DynToEdf(const char* src, const char* edf, char mode)
 			{ "Aperture", dat.Aperture, "", "номер отверстия 1" },
 			{ "Cycles", dat.Cycles, "", "пропущено циклов" },
 			{ "PumpType", dat.PumpType, "", "тип привода станка-качалки {}" },
-			{ "TravelStep", dat.TravelStep, "", "величина дискреты перемещения, 0.1 мм" },
-			{ "LoadStep", dat.LoadStep, "", "величина дискреты нагрузки, кг" },
-			{ "TimeStep", dat.TimeStep, "", "величина дискреты времени, мс" },
+			{ "TravelStep", dat.TravelStep, "0.1мм/1", "величина дискреты перемещения" },
+			{ "LoadStep", dat.LoadStep, "кг/1", "величина дискреты нагрузки" },
+			{ "TimeStep", dat.TimeStep, "мс/1", "величина дискреты времени" },
 		}, sizeof(UInt16Value_t[6]));
 
 		EdfWriteInfo(&dw, &(const TypeRec_t){ 0, UInt32ValueInf}, & writed);
@@ -141,7 +141,7 @@ int DynToEdf(const char* src, const char* edf, char mode)
 			{ "BufPressure", dat.BufPressure / 10.0f, "атм", "буферное давление" },
 			{ "LinePressure", dat.LinePressure / 10.0f, "атм", "линейное давление" },
 			{ "Acc",  dat.Acc / 10.0f, "V", .Description = "напряжение аккумулятора" },
-			{ "Temp", dat.Temp / 10.0f, "℃", "температура датчика" },
+			{ "Temp", dat.Temp / 10.0f, "°С", "температура датчика" },
 		}, sizeof(DoubleValue_t[8]));
 	}
 
