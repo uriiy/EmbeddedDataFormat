@@ -54,8 +54,8 @@ static int EdfWriteHeaderBin(EdfWriter_t* dw, const EdfHeader_t* h, size_t* writ
 //-----------------------------------------------------------------------------
 static int EdfWriteHeaderTxt(EdfWriter_t* dw, const EdfHeader_t* h, size_t* writed)
 {
-	return StreamWriteFmt(&dw->Stream, writed, "~ version=%d.%d.%d bs=%d encoding=%d flags=%d \n"
-		, h->VersMajor, h->VersMinor, h->VersPatch
+	return StreamWriteFmt(&dw->Stream, writed, "~ version=%d.%d bs=%d encoding=%d flags=%d \n"
+		, h->VersMajor, h->VersMinor
 		, h->Blocksize, h->Encoding, h->Flags);
 }
 
