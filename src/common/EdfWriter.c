@@ -329,7 +329,10 @@ int EdfWriteInfData(EdfWriter_t* dw, uint32_t id, PoType pt, char* name, void* d
 {
 	int err;
 	size_t writed = 0;
-	if ((err = EdfWriteInfo(dw, &((const TypeRec_t) { id, { .Type = pt, .Name = name } }), &writed)))
+	if ((err = EdfWriteInfo(dw, &((const TypeRec_t)
+	{
+		.Id = id, .Inf = (TypeInfo_t){ .Type = pt, }, .Name = name
+	}), &writed)))
 		return err;
 	void* data = NULL;
 	if (String == pt)
@@ -343,7 +346,10 @@ int EdfWriteInfDataString(EdfWriter_t* dw, uint32_t id, char* name, void* str, s
 {
 	int err;
 	size_t writed = 0;
-	if ((err = EdfWriteInfo(dw, &((const TypeRec_t) { id, { .Type = String, .Name = name } }), &writed)))
+	if ((err = EdfWriteInfo(dw, &((const TypeRec_t)
+	{
+		.Id = id, .Inf = (TypeInfo_t){ .Type = String, }, .Name = name
+	}), &writed)))
 		return err;
 	if (NULL == str)
 		return 0;

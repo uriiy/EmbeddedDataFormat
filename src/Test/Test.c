@@ -81,29 +81,32 @@ static int PackUnpack()
 		uint8_t Arr[3];
 	} TestStruct_t;
 	TypeRec_t TestStructInf =
-	{ 0,{
-		.Type = Struct, .Name = "KeyValue", .Dims = {1, (uint32_t[]) { 2 } } ,
-		.Childs =
+	{
+		.Inf =
 		{
-			.Count = (uint8_t)3,
-			.Item = (TypeInfo_t[])
+			.Type = Struct, .Name = "KeyValue", .Dims = {1, (uint32_t[]) { 2 } } ,
+			.Childs =
 			{
-				{ String, "Key" },
-				{ String, "Value" },
+				.Count = (uint8_t)3,
+				.Item = (TypeInfo_t[])
 				{
-					.Type = Struct, .Name = "Internal",
-					.Childs =
+					{ String, "Key" },
+					{ String, "Value" },
 					{
-						.Count = 1,
-						.Item = (TypeInfo_t[])
+						.Type = Struct, .Name = "Internal",
+						.Childs =
 						{
-							{ UInt8, "Test", .Dims = {1, (uint32_t[]) { 3 } } },
+							.Count = 1,
+							.Item = (TypeInfo_t[])
+							{
+								{ UInt8, "Test", .Dims = {1, (uint32_t[]) { 3 } } },
+							}
 						}
 					}
 				}
 			}
 		}
-	} };
+	};
 
 #pragma pack(pop)
 	int skip = 0;
@@ -170,18 +173,22 @@ static int WriteSample(EdfWriter_t* dw)
 		char* Value;
 	} KeyValue_t;
 	TypeRec_t keyValueType =
-	{ 0,{
-		.Type = Struct, .Name = "KeyValue", .Dims = {0, NULL},
-		.Childs =
+	{
+		0, .Name = "VariableKV",
+		.Inf =
 		{
-			.Count = 2,
-			.Item = (TypeInfo_t[])
+			.Type = Struct, .Name = "KeyValue", .Dims = {0, NULL},
+			.Childs =
 			{
-				{ String, "Key" },
-				{ String, "Value" },
+				.Count = 2,
+				.Item = (TypeInfo_t[])
+				{
+					{ String, "Key" },
+					{ String, "Value" },
+				}
 			}
 		}
-	} };
+	};
 #pragma pack(pop)
 
 	err = EdfWriteInfo(dw, &keyValueType, &writed);
@@ -191,14 +198,14 @@ static int WriteSample(EdfWriter_t* dw)
 
 	EdfWriteInfData(dw, 0, String, "тестовый ключ", "String Value");
 
-	TypeRec_t t = { 0, {.Type = Int32, .Name = "weight variable" } };
+	TypeRec_t t = { { Int32 }, 0, "weight variable" };
 	err = EdfWriteInfo(dw, &t, &writed);
 	uint8_t test[100] = { 0 };
 	(*(int32_t*)test) = (int32_t)(0xFFFFFFFF);
 	EdfWriteDataBlock(dw, test, 4);
 	EdfFlushDataBlock(dw, &writed);
 
-	TypeRec_t td = { 0, {.Type = Double, .Name = "TestDouble" } };
+	TypeRec_t td = { { Double }, 0, "TestDouble" };
 	err = EdfWriteInfo(dw, &td, &writed);
 	double dd = 1.1;
 	EdfWriteDataBlock(dw, &dd, sizeof(double));
@@ -207,7 +214,7 @@ static int WriteSample(EdfWriter_t* dw)
 	dd = 3.1;
 	EdfWriteDataBlock(dw, &dd, sizeof(double));
 
-	TypeRec_t tchar = { 0, {.Type = Char, .Name = "Char Text", { 1, (uint32_t[]) { 20 } } } };
+	TypeRec_t tchar = { {.Type = Char, .Dims = { 1, (uint32_t[]) { 20 } } }, 0, "Char Text" };
 	err = EdfWriteInfo(dw, &tchar, &writed);
 	size_t len = 0;
 	len += GetCString("Char", 20, test + len, sizeof(test));
@@ -262,7 +269,7 @@ static int WriteSample(EdfWriter_t* dw)
 			}
 		}
 	};
-	err = EdfWriteInfo(dw, &(TypeRec_t){0, comlexVarInf}, & writed);
+	err = EdfWriteInfo(dw, &(TypeRec_t){comlexVarInf}, & writed);
 #pragma pack(push,1)
 	struct ComplexVariable
 	{
@@ -336,7 +343,7 @@ static void WriteBigVar(EdfWriter_t* dw)
 	err = EdfWriteHeader(dw, &h, &writed);
 
 	size_t arrLen = (size_t)(BLOCK_SIZE / sizeof(uint32_t) * 2.5);
-	TypeRec_t t = { 0xF0F1F2F3, {.Type = Int32, .Name = "variable", .Dims = { 1, (uint32_t[]) { arrLen }} } };
+	TypeRec_t t = { {.Type = Int32, .Name = "variable", .Dims = { 1, (uint32_t[]) { arrLen }} }, 0xF0F1F2F3 };
 	err = EdfWriteInfo(dw, &t, &writed);
 
 	uint32_t test[1000] = { 0 };

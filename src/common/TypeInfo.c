@@ -21,8 +21,8 @@ static int StreamWriteInfoBin(Stream_t* s, const TypeInfo_t* t, size_t* writed)
 		if ((err = StreamWrite(s, writed, &err, 1)))//val=0
 			return err;
 	}
-	size_t nameSize = t->Name ? strnlength(t->Name, 255) : 0;
 
+	size_t nameSize = t->Name ? strnlength(t->Name, 255) : 0;
 	if ((err = StreamWrite(s, writed, &nameSize, 1)) ||
 		(err = StreamWrite(s, writed, t->Name, nameSize)))
 		return err;
@@ -45,6 +45,12 @@ int StreamWriteInfBin(Stream_t* st, const TypeRec_t* t, size_t* writed)
 		return err;
 	if ((err = StreamWriteInfoBin(st, &t->Inf, writed)))
 		return err;
+
+	size_t nameSize = t->Name ? strnlength(t->Name, 255) : 0;
+	if ((err = StreamWrite(st, writed, &nameSize, 1)) ||
+		(err = StreamWrite(st, writed, t->Name, nameSize)))
+		return err;
+
 	return err;
 }
 //-----------------------------------------------------------------------------
@@ -108,7 +114,8 @@ static int StreamWriteInfoTxt(Stream_t* s, const TypeInfo_t* t, int noffset, siz
 		for (size_t i = 0; i < t->Childs.Count; i++)
 		{
 			if ((err = StreamWrite(s, writed, "\n", 1)) ||
-				(err = StreamWriteInfoTxt(s, &t->Childs.Item[i], noffset + 1, writed)))
+				(err = StreamWriteInfoTxt(s, &t->Childs.Item[i], noffset + 1, writed)) ||
+				(err = StreamWrite(s, writed, ";", 1)))
 				return err;
 		}
 		if ((err = StreamWrite(s, writed, "\n", 1)) ||
@@ -116,24 +123,27 @@ static int StreamWriteInfoTxt(Stream_t* s, const TypeInfo_t* t, int noffset, siz
 			(err = StreamWrite(s, writed, "}", 1)))
 			return err;
 	}
-	return StreamWrite(s, writed, ";", 1);
+	return 0;
 }
 //-----------------------------------------------------------------------------
 int StreamWriteInfTxt(Stream_t* st, const TypeRec_t* t, size_t* writed)
 {
 	int err = 0;
+	if ((err = StreamWrite(st, writed, "\n\n? ", 4)) ||
+		(err = StreamWriteInfoTxt(st, &t->Inf, 0, writed)))
+		return err;
+
 	if (t->Id)
 	{
-		if ((err = StreamWriteFmt(st, writed, "\n\n?<%lu> ", t->Id)))
+		if ((err = StreamWriteFmt(st, writed, " <%lu>'%.255s';", t->Id, t->Name ? t->Name : "")))
 			return err;
 	}
 	else
 	{
-		if ((err = StreamWrite(st, writed, "\n\n? ", 4)))
+		if ((err = StreamWriteFmt(st, writed, " '%.255s';", t->Name ? t->Name : "")))
 			return err;
 	}
-	if ((err = StreamWriteInfoTxt(st, &t->Inf, 0, writed)))
-		return err;
+
 	return err;
 }
 //-----------------------------------------------------------------------------
@@ -171,11 +181,15 @@ static int StreamBinToCBin(MemStream_t* src, MemStream_t* mem, TypeInfo_t** t)
 	}
 
 	size_t nameSize = 0;
-	if ((err = StreamRead(src, &readed, &nameSize, 1)) ||
-		(err = MemAlloc(mem, nameSize + 1, &ti->Name)) ||
-		(err = StreamRead(src, &readed, ti->Name, nameSize)))
+	if ((err = StreamRead(src, &readed, &nameSize, 1)))
 		return err;
-	ti->Name[nameSize] = 0;
+	if (nameSize)
+	{
+		if ((err = MemAlloc(mem, nameSize + 1, &ti->Name)) ||
+			(err = StreamRead(src, &readed, ti->Name, nameSize)))
+			return err;
+		ti->Name[nameSize] = 0;
+	}
 
 	if (Struct == ti->Type)
 	{
@@ -205,7 +219,7 @@ int StreamWriteBinToCBin(uint8_t* src, size_t srcLen, size_t* readed,
 {
 	int err = 0;
 	MemStream_t mssrc = { 0 };
-	if ((err = MemStreamInOpen(&mssrc, src, srcLen)))
+	if ((err = MemStreamInOpen(&mssrc, src, srcLen)) || !mssrc.Impl)
 		return err;
 	MemStream_t msdst = { 0 };
 	if ((err = MemStreamOutOpen(&msdst, dst, dstLen)))
@@ -222,6 +236,19 @@ int StreamWriteBinToCBin(uint8_t* src, size_t srcLen, size_t* readed,
 		return err;
 	if ((err = StreamBinToCBin(&mssrc, &msdst, &(TypeInfo_t*){&tr->Inf})))
 		return err;
+
+	size_t nameSize = 0;
+	if ((err = StreamRead(&mssrc, readed, &nameSize, 1)))
+		return err;
+	if (nameSize)
+	{
+		if ((err = MemAlloc(&msdst, nameSize + 1, &tr->Name)) ||
+			(err = StreamRead(&mssrc, readed, tr->Name, nameSize)))
+			return err;
+		tr->Name[nameSize] = 0;
+	}
+
+
 	if (readed)
 		*readed = mssrc.RPos;
 	if (writed)
@@ -270,4 +297,22 @@ int8_t HasDynamicFields(const TypeInfo_t* t)
 	default: break;
 	}//switch
 	return 0;
+}
+//-----------------------------------------------------------------------------
+int IsVar(const TypeRec_t* r, int32_t varId, const char* varName)
+{
+	if (varId && r->Id == varId)
+		return 1;
+	if (!r->Name || !varName)
+		return 0;
+	size_t rLen = strnlength(r->Name, 256);
+	size_t nameLen = strnlength(varName, 256);
+	if (rLen != nameLen)
+		return 0;
+	return 0 == memcmp(r->Name, varName, nameLen);
+}
+//-----------------------------------------------------------------------------
+int IsVarName(const TypeRec_t* r, const char* varName)
+{
+	return IsVar(r, 0, varName);
 }

@@ -121,44 +121,43 @@ typedef struct
 // 
 typedef enum
 {
-	COMMENTSREC = 1000,
-	FILETYPE,
+	COMMENTSREC = 0,
 	FILEDESCRIPTION,
-	DATETIMEREC,
+	FILETYPE,
+	BEGINDATETIME,
+	POSITION,
+	DEVICEINFO,
+	REGINFO,
 
-	OMEGADATAREC
+	OMEGADATA
 } VarInfoId;
 
+static const char FileDescDyn[] = "SIAM COMPLEX DYNAMOGRAM V2.0";
+static const char FileDescEcho[] = "SIAM COMPLEX ECHOGRAM V2.0";
+static const char FileDescMt[] = "OMEGA SAMT DATA V1.1";
+
 //-----------------------------------------------------------------------------
-static const TypeRec_t CommentsRec = { COMMENTSREC,{.Type = String, .Name = "Comments" } };
-//-----------------------------------------------------------------------------
-static const TypeRec_t FileDescriptionRec =
+static const TypeInfo_t FileDescriptionType =
 {
-	FILEDESCRIPTION,
-	{
-		.Type = Char, .Name = "FileDescription",
-		.Dims = { 1, (uint32_t[]) { FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription) } }
-	}
+	.Type = Char, .Name = "FileDescription",
+	.Dims = { 1, (uint32_t[]) { FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription) } }
 };
 //-----------------------------------------------------------------------------
-static const TypeRec_t DateTimeRec =
+static const TypeInfo_t DateTimeType =
 {
-	DATETIMEREC,
+	.Type = Struct, .Name = "DateTime", .Dims = { 0, NULL }, .Childs =
 	{
-		.Type = Struct, .Name = "DateTime", .Dims = { 0, NULL }, .Childs =
+		.Count = 8,
+		.Item = (TypeInfo_t[])
 		{
-			.Count = 8,
-			.Item = (TypeInfo_t[])
-			{
-				{ Int16, "Year" },
-				{ UInt8, "Month" },
-				{ UInt8, "Day" },
-				{ UInt8, "Hour" },
-				{ UInt8, "Min" },
-				{ UInt8, "Sec" },
-				{ UInt16, "mSec" },
-				{ Int8, "Tz" },
-			}
+			{ Int16, "Year" },
+			{ UInt8, "Month" },
+			{ UInt8, "Day" },
+			{ UInt8, "Hour" },
+			{ UInt8, "Min" },
+			{ UInt8, "Sec" },
+			{ UInt16, "mSec" },
+			{ Int8, "Tz" },
 		}
 	}
 };
@@ -174,22 +173,73 @@ typedef struct
 	uint16_t mSec;
 	int8_t Tz;
 } DateTime_t;
+//-----------------------------------------------------------------------------
+static const TypeInfo_t DeviceInfoType =
+{
+	.Type = Struct, .Name = "DeviceInfo", .Dims = { 0, NULL }, .Childs =
+	{
+		.Count = 6,
+		.Item = (TypeInfo_t[])
+		{
+			{ UInt16, "HwId" },
+			{ UInt16, "HwModel" },
+			{ UInt16, "SwId" },
+			{ UInt16, "SwModel" },
+			{ UInt64, "SwRevision" },
+			{ UInt64, "HwNumber" },
+		}
+	}
+};
+
+typedef struct
+{
+	uint16_t HwId;
+	uint16_t HwModel;
+	uint16_t SwId;
+	uint16_t SwModel;
+	uint64_t SwRevision;
+	uint64_t HwNumber;
+} DeviceInfo_t;
 
 //-----------------------------------------------------------------------------
-static const TypeRec_t OmegaDataRec =
+static const TypeInfo_t PositionType =
 {
-	OMEGADATAREC,
+	.Type = Struct, .Name = "Position", .Dims = { 0, NULL }, .Childs =
 	{
-		.Type = Struct, .Name = "OMEGA_DATA_V1_1", .Dims = { 0, NULL }, .Childs =
+		.Count = 6,
+		.Item = (TypeInfo_t[])
 		{
-			.Count = 4,
-			.Item = (TypeInfo_t[])
-			{
-				{ UInt32, "Time" },
-				{ Int32, "Press" },
-				{ Int32, "Temp" },
-				{ UInt16, "Vbat" },
-			}
+			{ String, "Field" },
+			{ String, "Cluster" },
+			{ String, "Well" },
+			{ String, "Shop" },
+			{ Double, "Longitude" },
+			{ Double, "Latitude" },
+		}
+	}
+};
+
+typedef struct
+{
+	char* Field;
+	char* Cluster;
+	char* Well;
+	char* Shop;
+	double Longitude;
+	double Latitude;
+} Position_t;
+//-----------------------------------------------------------------------------
+static const TypeInfo_t OmegaDataType =
+{
+	.Type = Struct, .Name = "OMEGA_DATA_V1_1", .Dims = { 0, NULL }, .Childs =
+	{
+		.Count = 4,
+		.Item = (TypeInfo_t[])
+		{
+			{ UInt32, "Time" },
+			{ Int32, "Press" },
+			{ Int32, "Temp" },
+			{ UInt16, "Vbat" },
 		}
 	}
 };

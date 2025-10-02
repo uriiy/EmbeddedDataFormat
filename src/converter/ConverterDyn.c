@@ -45,16 +45,42 @@ int DynToEdf(const char* src, const char* edf, char mode)
 	if ((err = EdfWriteHeader(&dw, &h, &writed)))
 		return err;
 
-	EdfWriteInfData(&dw, 0, UInt32, "FileType", &dat.FileType);
-	EdfWriteInfDataString(&dw, 0, "FileDescription",
-		&dat.FileDescription, FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription));
+	EdfWriteInfData(&dw, 0, String, "Comment", "ResearchTypeId={ECHOGRAM-5, DYNAMOGRAM-6, SAMT-11}");
 
-	EdfWriteInfo(&dw, &DateTimeRec, &writed);
+	EdfWriteInfData(&dw, 1, UInt32, "ResearchTypeId", &((uint32_t) { dat.FileType }));
+	EdfWriteInfData(&dw, 2, UInt32, "LayoutVersion", &((uint32_t) { 1 }));
+
+	EdfWriteInfo(&dw, &(const TypeRec_t){ DateTimeType, BEGINDATETIME, "BeginDateTime" }, & writed);
 	EdfWriteDataBlock(&dw, &(DateTime_t)
 	{
 		dat.Id.Time.Year + 2000, dat.Id.Time.Month, dat.Id.Time.Day,
 			dat.Id.Time.Hour, dat.Id.Time.Min, dat.Id.Time.Sec,
 	}, sizeof(DateTime_t));
+
+	char field[256] = { 0 };
+	char cluster[256] = { 0 };
+	char well[256] = { 0 };
+	char shop[256] = { 0 };
+	snprintf(field, sizeof(field) - 1, "%d", dat.Id.Field);
+	memcpy(cluster, dat.Id.Cluster, strnlength(dat.Id.Cluster, FIELD_SIZEOF(RESEARCH_ID_V2_0, Cluster)));
+	memcpy(well, dat.Id.Well, strnlength(dat.Id.Well, FIELD_SIZEOF(RESEARCH_ID_V2_0, Well)));
+	snprintf(shop, sizeof(shop) - 1, "%d", dat.Id.Shop);
+
+	EdfWriteInfo(&dw, &(const TypeRec_t){ PositionType, POSITION, "Position" } , &writed);
+	EdfWriteDataBlock(&dw, &(Position_t)
+	{.Field = field, .Cluster = cluster, .Well = well, .Shop = shop, },
+		sizeof(Position_t));
+
+
+	EdfWriteInfo(&dw, &(const TypeRec_t){ DeviceInfoType, DEVICEINFO, "DeviceInfo" }, &writed);
+	EdfWriteDataBlock(&dw, &(DeviceInfo_t)
+	{.HwId = 0, .HwModel = 0, .SwId = dat.Id.DeviceType, .SwModel = 0, .SwRevision = 0, .HwNumber = dat.Id.DeviceNum},
+		sizeof(DeviceInfo_t));
+
+	EdfWriteInfo(&dw, &(const TypeRec_t){ DeviceInfoType, REGINFO, "RegInfo" }, & writed);
+	EdfWriteDataBlock(&dw, &(DeviceInfo_t)
+	{.HwId = 0, .HwModel = 0, .SwId = dat.Id.RegType, .SwModel = 0, .SwRevision = 0, .HwNumber = dat.Id.RegNum},
+		sizeof(DeviceInfo_t));
 
 	EdfWriteInfData(&dw, 0, UInt16, "Oper", &dat.Id.Oper);
 	EdfWriteInfData(&dw, 0, UInt16, "Shop", &dat.Id.Shop);
@@ -110,7 +136,7 @@ int DynToEdf(const char* src, const char* edf, char mode)
 		//EdfWriteInfo(&dw, &CommentsInf, &writed);
 		//EdfWriteDataBlock(&dw, &((char*) { "Key-Value-Unit-Description list sample" }), sizeof(char*));
 
-		EdfWriteInfo(&dw, &(const TypeRec_t){ 0, UInt16ValueInf}, & writed);
+		EdfWriteInfo(&dw, &(const TypeRec_t){ UInt16ValueInf, 0, "UInt16Value"}, & writed);
 		EdfWriteDataBlock(&dw, &(UInt16Value_t[])
 		{
 			{ "Aperture", dat.Aperture, "", "номер отверстия 1" },
@@ -121,7 +147,7 @@ int DynToEdf(const char* src, const char* edf, char mode)
 			{ "TimeStep", dat.TimeStep, "мс/1", "величина дискреты времени" },
 		}, sizeof(UInt16Value_t[6]));
 
-		EdfWriteInfo(&dw, &(const TypeRec_t){ 0, UInt32ValueInf}, & writed);
+		EdfWriteInfo(&dw, &(const TypeRec_t){ UInt32ValueInf, 0, "UInt32Value"}, & writed);
 		EdfWriteDataBlock(&dw, &(UInt32Value_t[])
 		{
 			{ "MaxWeight", dat.MaxWeight* dat.LoadStep, "кг", "максимальная нагрузка" },
@@ -131,7 +157,7 @@ int DynToEdf(const char* src, const char* edf, char mode)
 			{ "Period", dat.Period * dat.TimeStep, "мм", "ход штока" },
 		}, sizeof(UInt32Value_t[5]));
 
-		EdfWriteInfo(&dw, &(const TypeRec_t){ 0, DoubleValueInf}, & writed);
+		EdfWriteInfo(&dw, &(const TypeRec_t){ DoubleValueInf, 0, "DoubleValue"}, & writed);
 		EdfWriteDataBlock(&dw, &(DoubleValue_t[])
 		{
 			{ "Rod", dat.Rod / 10.0f, "мм", "диаметр штока" },
@@ -145,16 +171,14 @@ int DynToEdf(const char* src, const char* edf, char mode)
 		}, sizeof(DoubleValue_t[8]));
 	}
 
-	EdfWriteInfo(&dw, &CommentsRec, &writed);
-	EdfWriteDataBlock(&dw, &((char*) { "Динамограмма" }), sizeof(char*));
-	EdfWriteInfo(&dw, &(const TypeRec_t){ 0, ChartNInf}, & writed);
+	EdfWriteInfo(&dw, &(const TypeRec_t){ ChartNInf, 0 }, & writed);
 	EdfWriteDataBlock(&dw, &((ChartN_t[])
 	{
 		{ "Position", "m", "", "перемещение" },
 		{ "Weight", "T", "", "вес" },
 	}), sizeof(ChartN_t) * 2);
 
-	EdfWriteInfo(&dw, &(const TypeRec_t){ 0, Point2DInf}, & writed);
+	EdfWriteInfo(&dw, &(const TypeRec_t){ Point2DInf, 0, "DynChart"}, & writed);
 	struct PointXY p = { 0,0 };
 	for (size_t i = 0; i < 1000; i++)
 	{
@@ -237,6 +261,8 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 		return err;
 
 	DYN_FILE_V2_0 dat = { 0 };
+	dat.FileType = 6;
+	memcpy(dat.FileDescription, FileDescDyn, sizeof(FileDescDyn));
 	size_t recN = 0;
 	PointXY_t record = { 0 };
 
@@ -285,9 +311,9 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 		{
 			//EdfWriteDataBlock(&tw, &br.Block, br.DatLen);
 			//EdfFlushDataBlock(&tw, &writed);
-			if (0 == _stricmp(br.t->Inf.Name, "FileType"))
+			if (IsVarName(br.t, "FileType"))
 				dat.FileType = *((uint32_t*)br.Block);
-			else if (0 == _stricmp(br.t->Inf.Name, "FileDescription"))
+			else if (IsVarName(br.t, "FileDescription"))
 			{
 				/*
 				msDst.WPos = 0;
@@ -300,32 +326,32 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 				memset(dat.FileDescription, 0, FIELD_SIZEOF(ECHO_FILE_V2_0, FileDescription));
 				memcpy(dat.FileDescription, &br.Block[1], len);
 			}
-			else if (0 == _stricmp(br.t->Inf.Name, "ResearchType"))
+			else if (IsVarName(br.t, "ResearchType"))
 				dat.Id.ResearchType = *((uint16_t*)br.Block);
-			else if (0 == _stricmp(br.t->Inf.Name, "DeviceType"))
+			else if (IsVarName(br.t, "DeviceType"))
 				dat.Id.DeviceType = *((uint16_t*)br.Block);
-			else if (0 == _stricmp(br.t->Inf.Name, "DeviceNum"))
+			else if (IsVarName(br.t, "DeviceNum"))
 				dat.Id.DeviceNum = *((uint32_t*)br.Block);
-			else if (0 == _stricmp(br.t->Inf.Name, "Oper"))
+			else if (IsVarName(br.t, "Oper"))
 				dat.Id.Oper = *((uint16_t*)br.Block);
-			else if (0 == _stricmp(br.t->Inf.Name, "Shop"))
+			else if (IsVarName(br.t, "Shop"))
 				dat.Id.Shop = *((uint16_t*)br.Block);
-			else if (0 == _stricmp(br.t->Inf.Name, "Field"))
+			else if (IsVarName(br.t, "Field"))
 				dat.Id.Field = *((uint16_t*)br.Block);
-			else if (0 == _stricmp(br.t->Inf.Name, "Cluster"))
+			else if (IsVarName(br.t, "Cluster"))
 			{
 				uint8_t len = MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Cluster));
 				memcpy(dat.Id.Cluster, &br.Block[1], len);
 			}
-			else if (0 == _stricmp(br.t->Inf.Name, "Well"))
+			else if (IsVarName(br.t, "Well"))
 			{
 				uint8_t len = MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Well));
 				memcpy(dat.Id.Well, &br.Block[1], len);
 			}
-			else if (0 == _stricmp(br.t->Inf.Name, DateTimeRec.Inf.Name))
+			else if (IsVar(br.t, BEGINDATETIME, "BeginDateTime"))
 			{
 				DateTime_t* t = NULL;
-				if (!(err = EdfReadBin(&DateTimeRec.Inf, &src, &msDst, &t, &skip)))
+				if (!(err = EdfReadBin(&DateTimeType, &src, &msDst, &t, &skip)))
 				{
 					dat.Id.Time.Year = (uint8_t)(t->Year - 2000);
 					dat.Id.Time.Month = t->Month;
@@ -335,25 +361,25 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 					dat.Id.Time.Sec = t->Sec;
 				}
 			}
-			else if (0 == _stricmp(br.t->Inf.Name, "RegType"))
+			else if (IsVarName(br.t, "RegType"))
 				dat.Id.RegType = *((uint16_t*)br.Block);
-			else if (0 == _stricmp(br.t->Inf.Name, "RegNum"))
+			else if (IsVarName(br.t, "RegNum"))
 				dat.Id.RegNum = *((uint32_t*)br.Block);
 
-			else if (0 == _stricmp(br.t->Inf.Name, "UInt16Value"))
+			else if (IsVarName(br.t, "UInt16Value"))
 			{
 				UnpackUInt16KeyVal(&src, &msDst, &skip, DoOnUInt16Item, &dat);
 			}
-			else if (0 == _stricmp(br.t->Inf.Name, "UInt32Value"))
+			else if (IsVarName(br.t, "UInt32Value"))
 			{
 				UnpackUInt32KeyVal(&src, &msDst, &skip, DoOnUInt32Item, &dat);
 			}
-			else if (0 == _stricmp(br.t->Inf.Name, "DoubleValue"))
+			else if (IsVarName(br.t, "DoubleValue"))
 			{
 				UnpackDoubleKeyVal(&src, &msDst, &skip, DoOnDoubleItem, &dat);
 			}
 
-			else if (0 == _stricmp(br.t->Inf.Name, "Chart2D"))
+			else if (IsVarName(br.t, "DynChart"))
 			{
 				PointXY_t* s = NULL;
 				while (!(err = EdfReadBin(&Point2DInf, &src, &msDst, &s, &skip))

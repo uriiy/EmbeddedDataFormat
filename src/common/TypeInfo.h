@@ -19,14 +19,18 @@ typedef struct TypeInfo
 		uint8_t Count;
 		struct TypeInfo* Item;
 	} Childs;
+	//uint16_t TypeId; // UserTypeId
 } TypeInfo_t;
 
 typedef struct
 {
-	uint32_t Id;
-	TypeInfo_t Inf;
+	TypeInfo_t Inf; // var type
+	int32_t Id; // var id
+	char* Name; // var name
 } TypeRec_t;
 
+int IsVar(const TypeRec_t* r, int32_t varId, const char* varName);
+int IsVarName(const TypeRec_t* r, const char* varName);
 
 uint32_t GetTypeCSize(const TypeInfo_t* t);
 int8_t HasDynamicFields(const TypeInfo_t* t);
