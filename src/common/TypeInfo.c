@@ -157,7 +157,7 @@ static int StreamBinToCBin(MemStream_t* src, MemStream_t* mem, TypeInfo_t** t)
 	if (*t)
 		ti = *t;
 	else
-		if ((err = MemAlloc(mem, sizeof(TypeInfo_t), &ti)))
+		if ((err = MemAlloc(mem, sizeof(TypeInfo_t), (void **)&ti)))
 			return err;
 
 	if ((err = StreamRead(src, &readed, &ti->Type, 1)))
@@ -171,7 +171,7 @@ static int StreamBinToCBin(MemStream_t* src, MemStream_t* mem, TypeInfo_t** t)
 	{
 		// allocate array
 		const size_t dimsSize = sizeof(uint32_t) * ti->Dims.Count;
-		if ((err = MemAlloc(mem, dimsSize, &ti->Dims.Item)))
+		if ((err = MemAlloc(mem, dimsSize, (void **)&ti->Dims.Item)))
 			return err;
 		for (uint8_t i = 0; i < ti->Dims.Count; i++)
 		{
@@ -185,7 +185,7 @@ static int StreamBinToCBin(MemStream_t* src, MemStream_t* mem, TypeInfo_t** t)
 		return err;
 	if (nameSize)
 	{
-		if ((err = MemAlloc(mem, nameSize + 1, &ti->Name)) ||
+		if ((err = MemAlloc(mem, nameSize + 1, (void **)&ti->Name)) ||
 			(err = StreamRead(src, &readed, ti->Name, nameSize)))
 			return err;
 		ti->Name[nameSize] = 0;
@@ -199,7 +199,7 @@ static int StreamBinToCBin(MemStream_t* src, MemStream_t* mem, TypeInfo_t** t)
 		{
 			// allocate array
 			const size_t childsSize = sizeof(TypeInfo_t) * ti->Childs.Count;
-			if ((err = MemAlloc(mem, childsSize, &ti->Childs.Item)))
+			if ((err = MemAlloc(mem, childsSize, (void **)&ti->Childs.Item)))
 				return err;
 			for (uint8_t i = 0; i < ti->Childs.Count; i++)
 			{
@@ -229,7 +229,7 @@ int StreamWriteBinToCBin(uint8_t* src, size_t srcLen, size_t* readed,
 	if (*t)
 		tr = *t;
 	else
-		if ((err = MemAlloc(&msdst, sizeof(TypeRec_t), &tr)))
+		if ((err = MemAlloc(&msdst, sizeof(TypeRec_t), (void **)&tr)))
 			return err;
 
 	if ((err = StreamRead(&mssrc, readed, &tr->Id, FIELD_SIZEOF(TypeRec_t, Id))))
@@ -242,7 +242,7 @@ int StreamWriteBinToCBin(uint8_t* src, size_t srcLen, size_t* readed,
 		return err;
 	if (nameSize)
 	{
-		if ((err = MemAlloc(&msdst, nameSize + 1, &tr->Name)) ||
+		if ((err = MemAlloc(&msdst, nameSize + 1, (void **)&tr->Name)) ||
 			(err = StreamRead(&mssrc, readed, tr->Name, nameSize)))
 			return err;
 		tr->Name[nameSize] = 0;
