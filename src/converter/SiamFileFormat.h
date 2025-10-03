@@ -185,7 +185,7 @@ static const TypeInfo_t DeviceInfoType =
 			{ UInt16, "HwModel" },
 			{ UInt16, "SwId" },
 			{ UInt16, "SwModel" },
-			{ UInt64, "SwRevision" },
+			{ UInt16, "SwRevision" },
 			{ UInt64, "HwNumber" },
 		}
 	}
@@ -197,7 +197,7 @@ typedef struct
 	uint16_t HwModel;
 	uint16_t SwId;
 	uint16_t SwModel;
-	uint64_t SwRevision;
+	uint16_t SwRevision;
 	uint64_t HwNumber;
 } DeviceInfo_t;
 
