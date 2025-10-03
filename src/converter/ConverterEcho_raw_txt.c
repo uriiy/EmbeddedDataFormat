@@ -1,5 +1,6 @@
 #include "_pch.h"
 #include "converter.h"
+#include "Charts.h"
 #include "SiamFileFormat.h"
 #include "assert.h"
 #include "edf_cfg.h"
@@ -12,6 +13,7 @@
 //-----------------------------------------------------------------------------
 /// Define
 //-----------------------------------------------------------------------------
+#define FILEDESCRIPTION_ECHO "ECHO_FILE"
 #define SAMPLE_FREQ (170 * 6) // частота дискретизации АЦП;2000Гц - для локатора муфт, 1020Гц - для 3000м, 510Гц - для 6000м
 #define WRITE_TIME 20		 // максимальное время записи в секундах
 #define FIR_ORDER_MAX 1023 // максимальный порядок фильтра, резервируем для массива
@@ -87,7 +89,11 @@ int EchoRawToEdf(const char* src, const char* edf, char mode)
 	if (err = EdfWriteHeader(&dw, &h, &writed))
 		return err;
 	//-----------------------------------------------------------------------------
-	EdfWriteInfo(&dw, &DateTimeInf, &writed);
+	EdfWriteInfDataString(&dw, 0, "FileDescription",
+		FILEDESCRIPTION_ECHO, sizeof(FILEDESCRIPTION_ECHO));
+
+	//-----------------------------------------------------------------------------
+	EdfWriteInfo(&dw, &(const TypeRec_t){ DateTimeType, BEGINDATETIME, "BeginDateTime" }, & writed);
 	struct tm local_time;
 	_getsystime(&local_time);
 	DateTime_t date_time = {
@@ -102,10 +108,17 @@ int EchoRawToEdf(const char* src, const char* edf, char mode)
 	};
 	EdfWriteDataBlock(&dw, &date_time, sizeof(date_time));
 	//-----------------------------------------------------------------------------
-
+	EdfWriteInfo(&dw, &(const TypeRec_t){ PositionType, POSITION, "Position" }, & writed);
+	Position_t position = {
+		.Field = "12",
+		.Cluster = "34",
+		.Well = "56",
+		.Shop = "78",
+	};
+	EdfWriteDataBlock(&dw, &position, sizeof(Position_t));
 	//-----------------------------------------------------------------------------
-	EdfWriteInfo(&dw, &Point2DInf, &writed);
-	struct Point2D p = { 0,0 };
+	EdfWriteInfo(&dw, &(const TypeRec_t){ Point2DInf, 0, "EchoChart"}, & writed);
+	struct PointXY p = { 0,0 };
 	float xDiscrete = (1 / (float)SAMPLE_FREQ);
 	int maxDepthMult = 1;
 	float speed = 341.0;
@@ -115,23 +128,23 @@ int EchoRawToEdf(const char* src, const char* edf, char mode)
 		adc_tmp = (uint16_t)sig.raw[i];
 		p.x = xDiscrete * i * maxDepthMult * speed / 2.0;
 		p.y = (float)(adc_tmp >> 4);
-		EdfWriteDataBlock(&dw, &p, sizeof(struct Point2D));
+		EdfWriteDataBlock(&dw, &p, sizeof(struct PointXY));
 	}
 	//-----------------------------------------------------------------------------
-	EdfWriteInfData(&dw, UInt8, "KU", &((uint8_t) { 4 }));
-	EdfWriteInfData(&dw, UInt8, "SHUNT", &((uint8_t) { 1 }));
-	EdfWriteInfData(&dw, UInt8, "AWT", &((uint8_t) { 0 }));
-	EdfWriteInfData(&dw, UInt32, "DLIT(ms)", &((uint32_t) { 0 }));
-	EdfWriteInfData(&dw, Single, "Urov(m)", &((float) { 309.45 }));
-	EdfWriteInfData(&dw, Single, "Speed(m/s)", &((float) { speed }));
-	EdfWriteInfData(&dw, Single, "Time(s)", &((float) { 0 }));
-	EdfWriteInfData(&dw, UInt32, "Reflection", &((uint32_t) { 3 }));
-	EdfWriteInfData(&dw, UInt16, "Sample", &((uint16_t) { 1020 }));
-	EdfWriteInfData(&dw, Single, "Pressure(atm)", &((float) { -0.1 }));
-	EdfWriteInfData(&dw, Int16, "Temperature(C)", &((int16_t) { 24 }));
-	EdfWriteInfData(&dw, Single, "Vbat(V)", &((float) { 4.137 }));
-	EdfWriteInfData(&dw, UInt16, "Errors", &((uint16_t) { 0 }));
-	EdfWriteInfData(&dw, UInt8, "Avarkl", &((bool) { false }));
+	EdfWriteInfData(&dw, 0, UInt8, "KU", &((uint8_t) { 4 }));
+	EdfWriteInfData(&dw, 0, UInt8, "SHUNT", &((uint8_t) { 1 }));
+	EdfWriteInfData(&dw, 0, UInt8, "AWT", &((uint8_t) { 0 }));
+	EdfWriteInfData(&dw, 0, UInt32, "DLIT(ms)", &((uint32_t) { 0 }));
+	EdfWriteInfData(&dw, 0, Single, "Urov(m)", &((float) { 309.45 }));
+	EdfWriteInfData(&dw, 0, Single, "Speed(m/s)", &((float) { speed }));
+	EdfWriteInfData(&dw, 0, Single, "Time(s)", &((float) { 0 }));
+	EdfWriteInfData(&dw, 0, UInt32, "Reflection", &((uint32_t) { 3 }));
+	EdfWriteInfData(&dw, 0, UInt16, "Sample", &((uint16_t) { 1020 }));
+	EdfWriteInfData(&dw, 0, Single, "Pressure(atm)", &((float) { -0.1 }));
+	EdfWriteInfData(&dw, 0, Int16, "Temperature(C)", &((int16_t) { 24 }));
+	EdfWriteInfData(&dw, 0, Single, "Vbat(V)", &((float) { 4.137 }));
+	EdfWriteInfData(&dw, 0, UInt16, "Errors", &((uint16_t) { 0 }));
+	EdfWriteInfData(&dw, 0, UInt8, "Avarkl", &((bool) { false }));
 
 	EdfClose(&dw);
 	return 0;

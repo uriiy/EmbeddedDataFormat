@@ -1,17 +1,24 @@
 {
-    "files.associations": {
-        "converter.h": "c",
-        "edfheader.h": "c",
-        "_pch.h": "c",
-        "edf_cfg.h": "c"
-    },
-    "cSpell.enabled": false,
-    "editor.formatOnSave": true,
-    "C_Cpp.formatting": "vcFormat",
-    "cmake.debugConfig": {
-        "args": [
-            "src/Test/norm_8_raw.txt",
-            "raw.txt"
-        ]
-    }
+	"files.associations": {
+		"converter.h": "c",
+		"edfheader.h": "c",
+		"_pch.h": "c",
+		"edf_cfg.h": "c"
+	},
+	"cSpell.enabled": false,
+	"editor.insertSpaces": false,
+	"editor.tabSize": 3,
+	"editor.detectIndentation": false,
+	"editor.formatOnSave": true,
+	"editor.renderWhitespace": "all",
+	"editor.lineHeight": 1.2,
+	"editor.fontSize": 15,
+	"editor.stickyScroll.enabled": false,
+	"C_Cpp.formatting": "vcFormat",
+	"cmake.debugConfig": {
+		"args": [
+			"src/Test/norm_8_raw.txt",
+			"raw.txt"
+		]
+	}
 }
