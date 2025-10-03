@@ -48,8 +48,8 @@ int DynToEdf(const char* src, const char* edf, char mode)
 
 	EdfWriteInfData(&dw, 0, String, "Comment", "ResearchTypeId={ECHOGRAM-5, DYNAMOGRAM-6, SAMT-11}");
 
-	EdfWriteInfData(&dw, 0, UInt32, "ResearchTypeId", &((uint32_t) { dat.FileType }));
-	EdfWriteInfData(&dw, 0, UInt32, "LayoutVersion", &((uint32_t) { 1 }));
+	EdfWriteInfData(&dw, FILETYPEID, UInt32, "FileTypeId", &((uint32_t) { dat.FileType }));
+	EdfWriteInfData(&dw, LAYOUTVERSION, UInt32, "LayoutVersion", &((uint32_t) { 1 }));
 
 	EdfWriteInfo(&dw, &(const TypeRec_t){ DateTimeType, BEGINDATETIME, "BeginDateTime" }, & writed);
 	EdfWriteDataBlock(&dw, &(DateTime_t)
@@ -160,7 +160,7 @@ int DynToEdf(const char* src, const char* edf, char mode)
 		}, sizeof(DoubleValue_t[8]));
 	}
 
-	EdfWriteInfo(&dw, &(const TypeRec_t){ ChartNInf, 0 }, & writed);
+	EdfWriteInfo(&dw, &(const TypeRec_t){ ChartNInf, 0, "DynamogrammInfo" }, & writed);
 	EdfWriteDataBlock(&dw, &((ChartN_t[])
 	{
 		{ "Position", "m", "", "перемещение" },
@@ -304,7 +304,7 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 				switch (br.t->Id)
 				{
 				default: break;
-				case FILETYPE: dat.FileType = *((uint32_t*)br.Block); break;//case FILETYPE:
+				case FILETYPEID: dat.FileType = *((uint32_t*)br.Block); break;//case FILETYPE:
 				case FILEDESCRIPTION:
 					memcpy(dat.FileDescription, &br.Block[1],
 						MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(SPSK_FILE_V1_1, FileDescription)));

@@ -102,7 +102,7 @@ static int StreamWriteInfoTxt(Stream_t* s, const TypeInfo_t* t, int noffset, siz
 	}
 	// NAME
 	if (t->Name && 0 < strnlength(t->Name, 255))
-		if ((err = StreamWriteFmt(s, writed, " \'%.255s\'", t->Name)))
+		if ((err = StreamWriteFmt(s, writed, " \"%.255s\"", t->Name)))
 			return err;
 	// CHILDS
 	if (Struct == t->Type && t->Childs.Item && t->Childs.Count)
@@ -129,20 +129,23 @@ static int StreamWriteInfoTxt(Stream_t* s, const TypeInfo_t* t, int noffset, siz
 int StreamWriteInfTxt(Stream_t* st, const TypeRec_t* t, size_t* writed)
 {
 	int err = 0;
-	if ((err = StreamWrite(st, writed, "\n\n? ", 4)) ||
+	if ((err = StreamWrite(st, writed, "\n<? ", 4)) ||
 		(err = StreamWriteInfoTxt(st, &t->Inf, 0, writed)))
 		return err;
 
 	if (t->Id)
 	{
-		if ((err = StreamWriteFmt(st, writed, " <%lu>'%.255s';", t->Id, t->Name ? t->Name : "")))
+		if ((err = StreamWriteFmt(st, writed, " <%lu>\"%.255s\";", t->Id, t->Name ? t->Name : "")))
 			return err;
 	}
 	else
 	{
-		if ((err = StreamWriteFmt(st, writed, " '%.255s';", t->Name ? t->Name : "")))
+		if ((err = StreamWriteFmt(st, writed, " \"%.255s\";", t->Name ? t->Name : "")))
 			return err;
 	}
+
+	if ((err = StreamWrite(st, writed, ">\n", 2)))
+		return err;
 
 	return err;
 }
