@@ -2,51 +2,11 @@
 #include "TypeInfo.h"
 
 //-----------------------------------------------------------------------------
-TypeInfo_t MakeTypeInfo(char* name, PoType type
-	, uint8_t dimCount, uint32_t* dims
-	, uint8_t childCount, TypeInfo_t* childs)
-{
-	TypeInfo_t t;
-	memset(&t, 0, sizeof(TypeInfo_t));
-	t.Type = type;
-	t.Name = name;
-	t.Dims.Count = dimCount;
-	t.Dims.Item = dims;
-	t.Childs.Count = childCount;
-	t.Childs.Item = childs;
-	return t;
-}
-//-----------------------------------------------------------------------------
-uint32_t GetValueSize(const TypeInfo_t* t)
-{
-	uint32_t sz;
-	if (Struct == t->Type && t->Childs.Item && t->Childs.Count)
-	{
-		sz = 0;
-		for (uint32_t i = 0; i < t->Childs.Count; i++)
-		{
-			sz += GetValueSize(&t->Childs.Item[i]);
-		}
-	}
-	else
-	{
-		sz = GetSizeOf(t->Type);
-	}
-
-	if (t->Dims.Item && t->Dims.Count)
-	{
-		for (uint32_t i = 0; i < t->Dims.Count; i++)
-			sz *= t->Dims.Item[i];
-	}
-
-	return sz;
-}
-//-----------------------------------------------------------------------------
-int StreamWriteInfoBin(Stream_t* s, const TypeInfo_t* t, size_t* writed)
+static int StreamWriteInfoBin(Stream_t* s, const TypeInfo_t* t, size_t* writed)
 {
 	int err = 0;
 	// TYPE
-	if ((err = StreamWrite(s, writed, &(uint8_t){ CString == t->Type ? String : t->Type }, 1)))
+	if ((err = StreamWrite(s, writed, &(uint8_t){ t->Type }, 1)))
 		return err;
 	if (t->Dims.Item && t->Dims.Count)
 	{
@@ -61,8 +21,8 @@ int StreamWriteInfoBin(Stream_t* s, const TypeInfo_t* t, size_t* writed)
 		if ((err = StreamWrite(s, writed, &err, 1)))//val=0
 			return err;
 	}
-	size_t nameSize = t->Name ? strnlength(t->Name, 255) : 0;
 
+	size_t nameSize = t->Name ? strnlength(t->Name, 255) : 0;
 	if ((err = StreamWrite(s, writed, &nameSize, 1)) ||
 		(err = StreamWrite(s, writed, t->Name, nameSize)))
 		return err;
@@ -75,6 +35,22 @@ int StreamWriteInfoBin(Stream_t* s, const TypeInfo_t* t, size_t* writed)
 			if ((err = StreamWriteInfoBin(s, &t->Childs.Item[i], writed)))
 				return err;
 	}
+	return err;
+}
+//-----------------------------------------------------------------------------
+int StreamWriteInfBin(Stream_t* st, const TypeRec_t* t, size_t* writed)
+{
+	int err = 0;
+	if ((err = StreamWrite(st, writed, &t->Id, FIELD_SIZEOF(TypeRec_t, Id))))
+		return err;
+	if ((err = StreamWriteInfoBin(st, &t->Inf, writed)))
+		return err;
+
+	size_t nameSize = t->Name ? strnlength(t->Name, 255) : 0;
+	if ((err = StreamWrite(st, writed, &nameSize, 1)) ||
+		(err = StreamWrite(st, writed, t->Name, nameSize)))
+		return err;
+
 	return err;
 }
 //-----------------------------------------------------------------------------
@@ -97,7 +73,6 @@ static int StreamPrintType(Stream_t* s, PoType po, size_t* writed)
 	case UInt8: POT_PRINT_S(s, PoTypeUInt8);
 	case Char: POT_PRINT_S(s, PoTypeChar);
 	case String: POT_PRINT_S(s, PoTypeString);
-	case CString: POT_PRINT_S(s, PoTypeString);
 	case UInt16: POT_PRINT_S(s, PoTypeUInt16);
 	case Int16: POT_PRINT_S(s, PoTypeInt16);
 	case Half: POT_PRINT_S(s, PoTypeHalf);
@@ -111,7 +86,7 @@ static int StreamPrintType(Stream_t* s, PoType po, size_t* writed)
 	return 0;
 }
 //-----------------------------------------------------------------------------
-int StreamWriteInfoTxt(Stream_t* s, const TypeInfo_t* t, int noffset, size_t* writed)
+static int StreamWriteInfoTxt(Stream_t* s, const TypeInfo_t* t, int noffset, size_t* writed)
 {
 	int err = 0;
 	// TYPE
@@ -126,8 +101,9 @@ int StreamWriteInfoTxt(Stream_t* s, const TypeInfo_t* t, int noffset, size_t* wr
 				return err;
 	}
 	// NAME
-	if ((err = StreamWriteFmt(s, writed, " \'%.255s\'", t->Name)))
-		return err;
+	if (t->Name && 0 < strnlength(t->Name, 255))
+		if ((err = StreamWriteFmt(s, writed, " \'%.255s\'", t->Name)))
+			return err;
 	// CHILDS
 	if (Struct == t->Type && t->Childs.Item && t->Childs.Count)
 	{
@@ -138,7 +114,8 @@ int StreamWriteInfoTxt(Stream_t* s, const TypeInfo_t* t, int noffset, size_t* wr
 		for (size_t i = 0; i < t->Childs.Count; i++)
 		{
 			if ((err = StreamWrite(s, writed, "\n", 1)) ||
-				(err = StreamWriteInfoTxt(s, &t->Childs.Item[i], noffset + 1, writed)))
+				(err = StreamWriteInfoTxt(s, &t->Childs.Item[i], noffset + 1, writed)) ||
+				(err = StreamWrite(s, writed, ";", 1)))
 				return err;
 		}
 		if ((err = StreamWrite(s, writed, "\n", 1)) ||
@@ -146,81 +123,196 @@ int StreamWriteInfoTxt(Stream_t* s, const TypeInfo_t* t, int noffset, size_t* wr
 			(err = StreamWrite(s, writed, "}", 1)))
 			return err;
 	}
-	return StreamWrite(s, writed, ";", 1);
-}
-//-----------------------------------------------------------------------------
-static int FromBytes(uint8_t** src, TypeInfo_t* t, uint8_t** mem, size_t memLen)
-{
-	uint8_t* psrc = *src;
-	uint8_t* pdst = *mem;
-	if (!IsPoType(psrc[0]))
-		return (size_t)-1;
-	memset(t, 0, sizeof(TypeInfo_t));
-	t->Type = *psrc++;
-	t->Dims.Count = *psrc++;
-
-	if (t->Dims.Count)
-	{
-		// allocate array
-		const size_t dimsSize = sizeof(uint32_t) * t->Dims.Count;
-		if (dimsSize > memLen)
-			return (size_t)-1;
-		memLen -= dimsSize;
-
-		t->Dims.Item = (uint32_t*)pdst;
-		pdst += dimsSize;
-		for (uint8_t i = 0; i < t->Dims.Count; i++)
-		{
-			t->Dims.Item[i] = *(uint32_t*)psrc;
-			psrc += sizeof(uint32_t);
-		}
-	}
-	const size_t nameSize = *psrc++;
-	if (nameSize)
-	{
-		if (nameSize > memLen)
-			return (size_t)-1;
-		memLen -= nameSize;
-
-		t->Name = (char*)pdst;
-		memcpy(t->Name, psrc, nameSize);
-		pdst += nameSize;
-		*pdst++ = '\0'; memLen--;
-		psrc += nameSize;
-	}
-
-	if (Struct == t->Type)
-	{
-		t->Childs.Count = *psrc++;
-		if (t->Childs.Count)
-		{
-			// allocate array
-			const size_t childsSize = sizeof(TypeInfo_t) * t->Childs.Count;
-			if (childsSize > memLen)
-				return (size_t)-1;
-			memLen -= childsSize;
-
-			t->Childs.Item = (TypeInfo_t*)pdst;
-			pdst += childsSize;
-			int err = 0;
-			uint8_t* w = NULL;
-			for (uint8_t i = 0; i < t->Childs.Count; i++)
-			{
-				w = pdst;
-				if ((err = FromBytes(&psrc, &t->Childs.Item[i], &pdst, memLen)))
-					return err;
-				memLen -= pdst - w;
-			}
-		}
-	}
-	*src = (uint8_t*)(psrc);
-	*mem = (uint8_t*)(pdst);
 	return 0;
 }
 //-----------------------------------------------------------------------------
-int InfoFromBytes(uint8_t** src, TypeInfo_t* t, uint8_t** mem, size_t memLen)
+int StreamWriteInfTxt(Stream_t* st, const TypeRec_t* t, size_t* writed)
 {
-	(*mem) += sizeof(TypeInfo_t);
-	memLen -= sizeof(TypeInfo_t);
-	return FromBytes(src, t, mem, memLen);
+	int err = 0;
+	if ((err = StreamWrite(st, writed, "\n\n? ", 4)) ||
+		(err = StreamWriteInfoTxt(st, &t->Inf, 0, writed)))
+		return err;
+
+	if (t->Id)
+	{
+		if ((err = StreamWriteFmt(st, writed, " <%lu>'%.255s';", t->Id, t->Name ? t->Name : "")))
+			return err;
+	}
+	else
+	{
+		if ((err = StreamWriteFmt(st, writed, " '%.255s';", t->Name ? t->Name : "")))
+			return err;
+	}
+
+	return err;
+}
+//-----------------------------------------------------------------------------
+
+static int StreamBinToCBin(MemStream_t* src, MemStream_t* mem, TypeInfo_t** t)
+{
+	int err = 0;
+	size_t readed = 0;
+
+	TypeInfo_t* ti = NULL;
+	if (*t)
+		ti = *t;
+	else
+		if ((err = MemAlloc(mem, sizeof(TypeInfo_t), &ti)))
+			return err;
+
+	if ((err = StreamRead(src, &readed, &ti->Type, 1)))
+		return err;
+	if (!IsPoType(ti->Type))
+		return (size_t)-1;
+	if ((err = StreamRead(src, &readed, &ti->Dims.Count, 1)))
+		return err;
+
+	if (ti->Dims.Count)
+	{
+		// allocate array
+		const size_t dimsSize = sizeof(uint32_t) * ti->Dims.Count;
+		if ((err = MemAlloc(mem, dimsSize, &ti->Dims.Item)))
+			return err;
+		for (uint8_t i = 0; i < ti->Dims.Count; i++)
+		{
+			if ((err = StreamRead(src, &readed, &ti->Dims.Item[i], sizeof(uint32_t))))
+				return err;
+		}
+	}
+
+	size_t nameSize = 0;
+	if ((err = StreamRead(src, &readed, &nameSize, 1)))
+		return err;
+	if (nameSize)
+	{
+		if ((err = MemAlloc(mem, nameSize + 1, &ti->Name)) ||
+			(err = StreamRead(src, &readed, ti->Name, nameSize)))
+			return err;
+		ti->Name[nameSize] = 0;
+	}
+
+	if (Struct == ti->Type)
+	{
+		if ((err = StreamRead(src, &readed, &ti->Childs.Count, 1)))
+			return err;
+		if (ti->Childs.Count)
+		{
+			// allocate array
+			const size_t childsSize = sizeof(TypeInfo_t) * ti->Childs.Count;
+			if ((err = MemAlloc(mem, childsSize, &ti->Childs.Item)))
+				return err;
+			for (uint8_t i = 0; i < ti->Childs.Count; i++)
+			{
+				TypeInfo_t* ch = &ti->Childs.Item[i];
+				if ((err = StreamBinToCBin(src, mem, &ch)))
+					return err;
+			}
+		}
+	}
+	*t = ti;
+	return 0;
+}
+//-----------------------------------------------------------------------------
+int StreamWriteBinToCBin(uint8_t* src, size_t srcLen, size_t* readed,
+	uint8_t* dst, size_t dstLen, size_t* writed,
+	TypeRec_t** t)
+{
+	int err = 0;
+	MemStream_t mssrc = { 0 };
+	if ((err = MemStreamInOpen(&mssrc, src, srcLen)) || !mssrc.Impl)
+		return err;
+	MemStream_t msdst = { 0 };
+	if ((err = MemStreamOutOpen(&msdst, dst, dstLen)))
+		return err;
+
+	TypeRec_t* tr = NULL;
+	if (*t)
+		tr = *t;
+	else
+		if ((err = MemAlloc(&msdst, sizeof(TypeRec_t), &tr)))
+			return err;
+
+	if ((err = StreamRead(&mssrc, readed, &tr->Id, FIELD_SIZEOF(TypeRec_t, Id))))
+		return err;
+	if ((err = StreamBinToCBin(&mssrc, &msdst, &(TypeInfo_t*){&tr->Inf})))
+		return err;
+
+	size_t nameSize = 0;
+	if ((err = StreamRead(&mssrc, readed, &nameSize, 1)))
+		return err;
+	if (nameSize)
+	{
+		if ((err = MemAlloc(&msdst, nameSize + 1, &tr->Name)) ||
+			(err = StreamRead(&mssrc, readed, tr->Name, nameSize)))
+			return err;
+		tr->Name[nameSize] = 0;
+	}
+
+
+	if (readed)
+		*readed = mssrc.RPos;
+	if (writed)
+		*writed = msdst.WPos;
+
+	*t = tr;
+	return err;
+}
+//-----------------------------------------------------------------------------
+uint32_t GetTypeCSize(const TypeInfo_t* t)
+{
+	uint32_t sz = 0;
+
+	switch (t->Type)
+	{
+	case Struct:
+		if (t->Childs.Item && t->Childs.Count)
+		{
+			for (uint32_t i = 0; i < t->Childs.Count; i++)
+				sz += GetTypeCSize(&t->Childs.Item[i]);
+		}
+		break;
+	default:
+		sz = GetSizeOf(t->Type);
+		break;
+	}//switch
+	if (t->Dims.Item && t->Dims.Count)
+		for (uint32_t i = 0; i < t->Dims.Count; i++)
+			sz *= t->Dims.Item[i];
+	return sz;
+}
+//-----------------------------------------------------------------------------
+int8_t HasDynamicFields(const TypeInfo_t* t)
+{
+	switch (t->Type)
+	{
+	case Struct:
+		if (t->Childs.Item && t->Childs.Count)
+		{
+			for (uint32_t i = 0; i < t->Childs.Count; i++)
+				if (HasDynamicFields(&t->Childs.Item[i]))
+					return 1;
+		}
+		break;
+	case String: return 1;
+	default: break;
+	}//switch
+	return 0;
+}
+//-----------------------------------------------------------------------------
+int IsVar(const TypeRec_t* r, int32_t varId, const char* varName)
+{
+	if (varId && r->Id == varId)
+		return 1;
+	if (!r->Name || !varName)
+		return 0;
+	size_t rLen = strnlength(r->Name, 256);
+	size_t nameLen = strnlength(varName, 256);
+	if (rLen != nameLen)
+		return 0;
+	return 0 == memcmp(r->Name, varName, nameLen);
+}
+//-----------------------------------------------------------------------------
+int IsVarName(const TypeRec_t* r, const char* varName)
+{
+	return IsVar(r, 0, varName);
 }

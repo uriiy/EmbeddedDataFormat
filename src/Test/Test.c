@@ -2,6 +2,20 @@
 #include "edf_cfg.h"
 #include "assert.h"
 
+
+//-----------------------------------------------------------------------------
+static size_t GetCString(const char* str, uint32_t arr_len, uint8_t* dst, size_t dst_len)
+{
+	if (NULL == str)
+		return 0;
+	size_t len = strnlength(str, 0xFE) + 1;
+	if (0 == len || len > dst_len)
+		return 0;
+	memcpy(dst, str, len);
+	memset(dst + len, 0, arr_len - len);
+	return arr_len;
+}
+//-----------------------------------------------------------------------------
 static int CompareFiles(const char* src, const char* dst)
 {
 	int ret = 0;
@@ -35,19 +49,114 @@ static int CompareFiles(const char* src, const char* dst)
 	fclose(f2);
 	return ret;
 }
-
 //-----------------------------------------------------------------------------
 static void TestMemStream(void)
 {
 	size_t writed = 0;
 	MemStream_t ms = { 0 };
 	uint8_t buf[256];
-	int err = MemStreamOpen(&ms, buf, sizeof(buf), "wb");
-	const char test[] = "qwe test 123";
+	assert(!MemStreamOpen(&ms, buf, sizeof(buf), 0, "rw"));
+	const char test[] = "test 123";
 	Stream_t* stream = (Stream_t*)&ms;
-	err = StreamWrite(stream, &writed, test, sizeof(test) - 1);
-	err = StreamWriteFmt(stream, &writed, " format %d", 1);
+	assert(!StreamWrite(stream, &writed, test, sizeof(test) - 1));
+	assert(!StreamWriteFmt(stream, &writed, " format %d", 1));
+
+	size_t readed = 0;
+	char outBuf[256] = { 0 };
+	assert(!StreamRead(stream, &readed, outBuf, writed));
+
+	assert(writed == readed);
+	assert(0 == memcmp("test 123 format 1", outBuf, readed));
 }
+//-----------------------------------------------------------------------------
+static int PackUnpack()
+{
+	size_t writed = 0;
+	int err = 0;
+#pragma pack(push,1)
+	typedef struct TestStruct
+	{
+		char* Key;
+		char* Value;
+		uint8_t Arr[3];
+	} TestStruct_t;
+	TypeRec_t TestStructInf =
+	{
+		.Inf =
+		{
+			.Type = Struct, .Name = "KeyValue", .Dims = {1, (uint32_t[]) { 2 } } ,
+			.Childs =
+			{
+				.Count = (uint8_t)3,
+				.Item = (TypeInfo_t[])
+				{
+					{ String, "Key" },
+					{ String, "Value" },
+					{
+						.Type = Struct, .Name = "Internal",
+						.Childs =
+						{
+							.Count = 1,
+							.Item = (TypeInfo_t[])
+							{
+								{ UInt8, "Test", .Dims = {1, (uint32_t[]) { 3 } } },
+							}
+						}
+					}
+				}
+			}
+		}
+	};
+
+#pragma pack(pop)
+	int skip = 0;
+	EdfWriter_t w = { 0 };
+	EdfWriter_t* dw = &w;
+
+	uint8_t binBuf[1024] = { 0 };
+	MemStream_t fstream = { 0 };
+	if ((err = MemStreamOutOpen(&fstream, binBuf, sizeof(binBuf))))
+		return err;
+	err = EdfOpenStream(dw, (Stream_t*)&fstream, "wb");
+	err = EdfWriteInfo(dw, &TestStructInf, &writed);
+	dw->Stream.Inst.Mem.WPos = 0;
+
+	TestStruct_t val1 = { "Key1", "Value1", { 11,22,33 } };
+	TestStruct_t val2 = { "Key2", "Value2", { 11,22,33 } };
+	EdfWriteDataBlock(dw, &val1, sizeof(TestStruct_t));
+	EdfWriteDataBlock(dw, &val2, sizeof(TestStruct_t));
+	EdfClose(dw);
+
+	MemStream_t mssrc = { 0 };
+	if ((err = MemStreamInOpen(&mssrc, &binBuf[4], 100)))
+		return err;
+	uint8_t buf[1024] = { 0 };
+	MemStream_t mem = { 0 };
+	if ((err = MemStreamOutOpen(&mem, buf, sizeof(buf))))
+		return err;
+
+	TestStruct_t* kv = NULL;
+	if ((err = EdfReadBin(&TestStructInf.Inf, &mssrc, &mem, &kv, &skip)))
+		return err;
+
+	if (0 != strcmp(val1.Key, kv->Key)
+		|| 0 != strcmp(val1.Value, kv->Value)
+		|| 0 != memcmp(&val1.Arr, &kv->Arr, FIELD_SIZEOF(TestStruct_t, Arr)))
+		return 1;
+
+	if ((err = EdfReadBin(&TestStructInf.Inf, &mssrc, &mem, &kv, &skip)))
+		return err;
+
+	if (0 != strcmp(val2.Key, kv->Key)
+		|| 0 != strcmp(val2.Value, kv->Value)
+		|| 0 != memcmp(&val2.Arr, &kv->Arr, FIELD_SIZEOF(TestStruct_t, Arr)))
+		return 1;
+
+	return 0;
+}
+
+
+
 //-----------------------------------------------------------------------------
 static int WriteSample(EdfWriter_t* dw)
 {
@@ -63,16 +172,20 @@ static int WriteSample(EdfWriter_t* dw)
 		char* Key;
 		char* Value;
 	} KeyValue_t;
-	TypeInfo_t keyValueType =
+	TypeRec_t keyValueType =
 	{
-		.Type = Struct, .Name = "KeyValue", .Dims = {0, NULL},
-		.Childs =
+		0, .Name = "VariableKV",
+		.Inf =
 		{
-			.Count = 2,
-			.Item = (TypeInfo_t[])
+			.Type = Struct, .Name = "KeyValue", .Dims = {0, NULL},
+			.Childs =
 			{
-				{ CString, "Key" },
-				{ CString, "Value" },
+				.Count = 2,
+				.Item = (TypeInfo_t[])
+				{
+					{ String, "Key" },
+					{ String, "Value" },
+				}
 			}
 		}
 	};
@@ -83,16 +196,16 @@ static int WriteSample(EdfWriter_t* dw)
 	EdfWriteDataBlock(dw, &((KeyValue_t) { "Key2", "Value2" }), sizeof(KeyValue_t));
 	EdfWriteDataBlock(dw, &((KeyValue_t) { "Key3", "Value3" }), sizeof(KeyValue_t));
 
-	EdfWriteInfData(dw, String, "тестовый ключ", "String Value");
+	EdfWriteInfData(dw, 0, String, "тестовый ключ", "String Value");
 
-	TypeInfo_t t = { .Type = Int32, .Name = "weight variable" };
+	TypeRec_t t = { { Int32 }, 0, "weight variable" };
 	err = EdfWriteInfo(dw, &t, &writed);
 	uint8_t test[100] = { 0 };
 	(*(int32_t*)test) = (int32_t)(0xFFFFFFFF);
 	EdfWriteDataBlock(dw, test, 4);
 	EdfFlushDataBlock(dw, &writed);
 
-	TypeInfo_t td = { .Type = Double, .Name = "TestDouble" };
+	TypeRec_t td = { { Double }, 0, "TestDouble" };
 	err = EdfWriteInfo(dw, &td, &writed);
 	double dd = 1.1;
 	EdfWriteDataBlock(dw, &dd, sizeof(double));
@@ -101,22 +214,15 @@ static int WriteSample(EdfWriter_t* dw)
 	dd = 3.1;
 	EdfWriteDataBlock(dw, &dd, sizeof(double));
 
-	err = EdfWriteInfo(dw, &((TypeInfo_t) { .Type = String, .Name = "BString Text" }), &writed);
+	TypeRec_t tchar = { {.Type = Char, .Dims = { 1, (uint32_t[]) { 20 } } }, 0, "Char Text" };
+	err = EdfWriteInfo(dw, &tchar, &writed);
 	size_t len = 0;
-	len += GetBString("Char", test + len, sizeof(test));
-	len += GetBString("Value", test + len, sizeof(test) - len);
-	len += GetBString("Array     Value", test + len, sizeof(test) - len);
-	EdfWriteDataBlock(dw, test, len);
-	EdfFlushDataBlock(dw, &writed);
-
-	err = EdfWriteInfo(dw, &((TypeInfo_t) { .Type = Char, .Name = "Char Text", { 1, (uint32_t[]) { 20 } } }), &writed);
-	len = 0;
 	len += GetCString("Char", 20, test + len, sizeof(test));
 	len += GetCString("Value", 20, test + len, sizeof(test) - len);
 	len += GetCString("Array     Value", 20, test + len, sizeof(test) - len);
 	EdfWriteDataBlock(dw, test, len);
 
-	TypeInfo_t comlexVar =
+	TypeInfo_t comlexVarInf =
 	{
 		.Type = Struct, .Name = "ComplexVariable", .Dims = {0, NULL},
 		.Childs =
@@ -163,7 +269,7 @@ static int WriteSample(EdfWriter_t* dw)
 			}
 		}
 	};
-	err = EdfWriteInfo(dw, &comlexVar, &writed);
+	err = EdfWriteInfo(dw, &(TypeRec_t){comlexVarInf}, & writed);
 #pragma pack(push,1)
 	struct ComplexVariable
 	{
@@ -207,7 +313,7 @@ static int WriteTest()
 	err = EdfOpen(&w, "t_write.tdf", "at");
 	if (0 != err)
 		return err;
-	EdfWriteInfData(&w, Int32, "Int32 Key", &((int32_t) { 0xb1b2b3b4 }));
+	EdfWriteInfData(&w, 0, Int32, "Int32 Key", &((int32_t) { 0xb1b2b3b4 }));
 	EdfClose(&w);
 
 	// BINary write
@@ -218,7 +324,7 @@ static int WriteTest()
 	memset(&w, 0, sizeof(EdfWriter_t));
 	if ((err = EdfOpen(&w, "t_write.bdf", "ab")))
 		return err;
-	EdfWriteInfData(&w, Int32, "Int32 Key", &((int32_t) { 0xb1b2b3b4 }));
+	EdfWriteInfData(&w, 0, Int32, "Int32 Key", &((int32_t) { 0xb1b2b3b4 }));
 	EdfClose(&w);
 
 	BinToText("t_write.bdf", "t_writeConv.tdf");
@@ -237,7 +343,7 @@ static void WriteBigVar(EdfWriter_t* dw)
 	err = EdfWriteHeader(dw, &h, &writed);
 
 	size_t arrLen = (size_t)(BLOCK_SIZE / sizeof(uint32_t) * 2.5);
-	TypeInfo_t t = { .Type = Int32, .Name = "variable", .Dims = { 1, (uint32_t[]) { arrLen }} };
+	TypeRec_t t = { {.Type = Int32, .Name = "variable", .Dims = { 1, (uint32_t[]) { arrLen }} }, 0xF0F1F2F3 };
 	err = EdfWriteInfo(dw, &t, &writed);
 
 	uint32_t test[1000] = { 0 };
@@ -287,15 +393,15 @@ static void DatFormatTest()
 	assert(0 == EchoToEdf("1E.E", "1E.bdf", 'b'));
 	assert(0 == BinToText("1E.bdf", "1EConv.tdf"));
 	assert(0 == CompareFiles("1E.tdf", "1EConv.tdf"));
-	//assert(0 == EdfToEch("1E.bdf", "1EConv.E"));
-	//assert(0 == CompareFiles("1E.E", "1EConv.E"));
+	assert(0 == EdfToEcho("1E.bdf", "1EConv.E"));
+	assert(0 == CompareFiles("1E.E", "1EConv.E"));
 
 	assert(0 == DynToEdf("1D.D", "1D.tdf", 't'));
 	assert(0 == DynToEdf("1D.D", "1D.bdf", 'b'));
 	assert(0 == BinToText("1D.bdf", "1DConv.tdf"));
 	assert(0 == CompareFiles("1D.tdf", "1DConv.tdf"));
-	//assert(0 == EdfToDyn("1D.bdf", "1DConv.D"));
-	//assert(0 == CompareFiles("1D.D", "1DConv.D"));
+	assert(0 == EdfToDyn("1D.bdf", "1DConv.D"));
+	assert(0 == CompareFiles("1D.D", "1DConv.D"));
 }
 //-----------------------------------------------------------------------------
 static void MbCrc16accTest()
@@ -318,6 +424,7 @@ static void MbCrc16accTest()
 int main()
 {
 	LOG_ERR();
+	assert(0 == PackUnpack());
 	MbCrc16accTest();
 	WriteTestBigVar();
 	DatFormatTest();

@@ -19,6 +19,8 @@
 
 #include "edf_cfg.h"
 
+int CallStackSize();
+
 uint16_t MbCrc16acc(const void* d, size_t len, uint16_t crc);
 #define MbCrc16(data,len) MbCrc16acc((data),(len),0xFFFF)
 
@@ -53,6 +55,11 @@ size_t strnlength(const char* s, size_t n);
 #define ERR_DST_SHORT 1;
 
 #define ERR_FN_NOT_EXIST -2;
+
+#define ERR_BLK_WRONG_TYPE -20;
+#define ERR_BLK_WRONG_SEQ -21;
+#define ERR_BLK_WRONG_SIZE -22;
+#define ERR_BLK_WRONG_CRC -23;
 
 
 

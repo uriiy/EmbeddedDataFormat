@@ -2,34 +2,100 @@
 #include "Primitives.h"
 
 //-----------------------------------------------------------------------------
-size_t GetBString(const char* str, uint8_t* dst, size_t dst_len)
-{
-	if (NULL == str)
-		return 0;
-	size_t len = strnlength(str, 0xFE);
-	if (len > dst_len)
-		return 0;
-	dst[0] = (uint8_t)len;
-	memcpy(dst + 1, str, len);
-	return len + 1;
-}
+typedef int (*WriteStringFn)(const uint8_t* src, size_t srcLen, uint8_t* dst, size_t dstLen,
+	size_t* r, size_t* w);
 //-----------------------------------------------------------------------------
-size_t GetCString(const char* str, uint32_t arr_len, uint8_t* dst, size_t dst_len)
-{
-	if (NULL == str)
-		return 0;
-	size_t len = strnlength(str, 0xFE - 1) + 1;
-	if (0 == len || len > dst_len)
-		return 0;
-	memcpy(dst, str, len);
-	memset(dst + len, 0, arr_len - len);
-	return arr_len;
-}
-//-----------------------------------------------------------------------------
-int BinToBin(PoType t,
-	uint8_t* src, size_t srcLen,
-	uint8_t* dst, size_t dstLen,
+static int WriteStringCBinToStr(const uint8_t* src, size_t srcLen, uint8_t* dst, size_t dstLen,
 	size_t* r, size_t* w)
+{
+	*r = GetSizeOf(String);
+	if (srcLen < *r)
+		return -1;
+	// print text without buf
+	const char* str = *(char**)src;
+	size_t len = (NULL == str) ? 0 : strnlength(str, 0xFE);
+	if (dstLen < len + 2)
+		return 1;
+	*w = 2 + len;
+	*dst++ = '"';
+	memcpy(dst, str, len);
+	dst += len;
+	*dst++ = '"';
+	return 0;
+}
+//-----------------------------------------------------------------------------
+static int WriteStringBinToStr(const uint8_t* src, size_t srcLen, uint8_t* dst, size_t dstLen,
+	size_t* r, size_t* w)
+{
+	*r = *w = 0;
+	size_t sLen = src[0];
+	if (srcLen < 1 + sLen)
+		return -1;
+	*r = 1 + sLen;
+	const char* found = memchr(&src[1], '\0', sLen);
+	size_t pos = found - (char*)(&src[1]);
+	if (pos < sLen)
+		sLen = pos;
+	if (dstLen < sLen + 2)
+		return 1;
+	*dst++ = '"';
+	memcpy(dst, src + 1, sLen);
+	dst += sLen;
+	*dst++ = '"';
+	*w = 2 + sLen;
+	return 0;
+}
+//-----------------------------------------------------------------------------
+static int WriteStringBinToBin(const uint8_t* src, size_t srcLen, uint8_t* dst, size_t dstLen,
+	size_t* r, size_t* w)
+{
+	size_t sLen = src[0];
+	size_t blength = 1;
+	*r = *w = 0;
+	blength += sLen;
+	if (srcLen < blength)
+		return -1;
+	if (dstLen < blength)
+		return 1;
+	memcpy(dst, src, blength);
+	*r = *w = blength;
+	return 0;
+}
+//-----------------------------------------------------------------------------
+static int WriteStringCBinToBin(const uint8_t* src, size_t srcLen, uint8_t* dst, size_t dstLen,
+	size_t* r, size_t* w)
+{
+	*r = GetSizeOf(String);
+	if (srcLen < *r)
+		return -1;
+	const char* str = *(char**)src;
+	size_t len = (NULL == str) ? 0 : strnlength(str, 0xFE) + 1;
+	if (dstLen < len + 1)
+		return 1;
+	(*dst) = (uint8_t)len;
+	dst++;
+	memcpy(dst, str, len);
+	*w = len + 1;
+	return 0;
+}
+//-----------------------------------------------------------------------------
+static size_t xprint(const uint8_t* buf, size_t bufLen, char* format, ...)
+{
+	va_list arglist;
+	va_start(arglist, format);
+	int writed = vsnprintf((char*)buf, bufLen, format, arglist);
+	va_end(arglist);
+	if (writed == (int)bufLen)
+		return writed + 1;
+	return writed;
+}
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+static int AnyBinToBin(PoType t,
+	const uint8_t* src, size_t srcLen,
+	uint8_t* dst, size_t dstLen,
+	size_t* r, size_t* w,
+	WriteStringFn WriteString)
 {
 	*r = *w = GetSizeOf(t);
 	if (srcLen < *r)
@@ -62,51 +128,32 @@ int BinToBin(PoType t,
 		*r = *w = srcLen;
 		memcpy(dst, src, srcLen);
 		return 0;
-	case String:
-	{
-		size_t sLen = src[0];
-		size_t blength = 1;
-		*r = *w = 0;
-		blength += sLen;
-		if (srcLen < blength)
-			return -1;
-		if (dstLen < blength)
-			return 1;
-		memcpy(dst, src, blength);
-		*r = *w = blength;
-	}
-	return 0;
-	case CString:
-	{
-		char* str = *(char**)src;
-		size_t len = ((NULL == str) ? 0 : strnlength(str, 0xFE));
-		if (dstLen < len + 1)
-			return 1;
-		(*dst) = (uint8_t)len;
-		dst++;
-		memcpy(dst, str, len);
-		*w = len + 1;
-	}
-	return 0;
+	case String: return (*WriteString)(src, srcLen, dst, dstLen, r, w);
 	}//switch
 	return 0;
 }
 //-----------------------------------------------------------------------------
-static size_t xprint(const uint8_t* buf, size_t bufLen, char* format, ...)
-{
-	va_list arglist;
-	va_start(arglist, format);
-	int writed = vsnprintf((char*)buf, bufLen, format, arglist);
-	va_end(arglist);
-	if (writed == (int)bufLen)
-		return writed + 1;
-	return writed;
-}
-//-----------------------------------------------------------------------------
-int BinToStr(PoType t,
-	uint8_t* src, size_t srcLen,
+int CBinToBin(PoType t,
+	const uint8_t* src, size_t srcLen,
 	uint8_t* dst, size_t dstLen,
 	size_t* r, size_t* w)
+{
+	return AnyBinToBin(t, src, srcLen, dst, dstLen, r, w, WriteStringCBinToBin);
+}
+//-----------------------------------------------------------------------------
+int BinToBin(PoType t,
+	const uint8_t* src, size_t srcLen,
+	uint8_t* dst, size_t dstLen,
+	size_t* r, size_t* w)
+{
+	return AnyBinToBin(t, src, srcLen, dst, dstLen, r, w, WriteStringBinToBin);
+}
+//-----------------------------------------------------------------------------
+static int AnyBinToStr(PoType t,
+	const uint8_t* src, size_t srcLen,
+	uint8_t* dst, size_t dstLen,
+	size_t* r, size_t* w,
+	WriteStringFn WriteString)
 {
 	*r = GetSizeOf(t);
 	if (srcLen < *r)
@@ -165,30 +212,22 @@ int BinToStr(PoType t,
 		memcpy(dst + 1, src, srcLen);
 		dst[srcLen + 2 - 1] = '"';
 		return 0;
-	case String:
-		if ((size_t)2 + src[0] > dstLen)
-			return 1;
-		*r = 1 + src[0];
-		*w = 2 + src[0];
-		*dst++ = '"';
-		memcpy(dst, src + 1, src[0]);
-		dst += src[0];
-		*dst++ = '"';
-		return 0;
-	case CString:
-	{
-		// print text without buf
-		char* str = *(char**)src;
-		size_t len = ((NULL == str) ? 0 : strnlength(str, 0xFE));
-		if (dstLen < len + 2)
-			return 1;
-		*w = 2 + len;
-		*dst++ = '"';
-		memcpy(dst, str, len);
-		dst += len;
-		*dst++ = '"';
-		return 0;
-	}
-	break;//case CString:
+	case String: return (*WriteString)(src, srcLen, dst, dstLen, r, w);
 	}//switch (t)
+}
+//-----------------------------------------------------------------------------
+int CBinToStr(PoType t,
+	const uint8_t* src, size_t srcLen,
+	uint8_t* dst, size_t dstLen,
+	size_t* r, size_t* w)
+{
+	return AnyBinToStr(t, src, srcLen, dst, dstLen, r, w, WriteStringCBinToStr);
+}
+//-----------------------------------------------------------------------------
+int BinToStr(PoType t,
+	const uint8_t* src, size_t srcLen,
+	uint8_t* dst, size_t dstLen,
+	size_t* r, size_t* w)
+{
+	return AnyBinToStr(t, src, srcLen, dst, dstLen, r, w, WriteStringBinToStr);
 }

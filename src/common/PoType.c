@@ -11,7 +11,6 @@ uint8_t GetSizeOf(enum PoType p)
 	case UInt8:
 	case Int8:
 	case Char:
-	case String:
 		return 1;
 	case UInt16:
 	case Int16:
@@ -25,18 +24,14 @@ uint8_t GetSizeOf(enum PoType p)
 	case Int64:
 	case Double:
 		return 8;
-	case CString:
+	case String:
 		return sizeof(char*);
 	}
 }
 //-----------------------------------------------------------------------------
 uint8_t IsPoType(PoType p)
 {
-	if (Struct > p)
-		return 0;
-	if (String < p)
-		return 0;
-	return 1;
+	return Struct <= p && String >= p;
 }
 //-----------------------------------------------------------------------------
 uint8_t IsBlockType(BlockType t)

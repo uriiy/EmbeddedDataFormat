@@ -13,7 +13,6 @@ typedef struct EdfHeader
 {
 	uint8_t VersMajor;
 	uint8_t VersMinor;
-	uint8_t VersPatch;
 	uint16_t Encoding;
 	uint16_t Blocksize;
 	Options_t Flags;

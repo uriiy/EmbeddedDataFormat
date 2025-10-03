@@ -38,7 +38,7 @@ int BinToText(const char* src, const char* dst)
 	EdfWriter_t tw = { 0 };
 	if (EdfOpen(&br, src, "rb"))
 		LOG_ERR();
-	if (EdfOpen(&tw, dst, "wt"))
+	if (EdfOpen(&tw, dst, "wtc"))
 		LOG_ERR();
 
 	size_t writed = 0;
@@ -46,14 +46,14 @@ int BinToText(const char* src, const char* dst)
 
 	while (!(err = EdfReadBlock(&br)))
 	{
-		switch (br.BlockType)
+		switch (br.BlkType)
 		{
 		default: break;
 		case btHeader:
-			if (16 == br.BlockLen)
+			if (16 == br.DatLen)
 			{
 				EdfHeader_t h = { 0 };
-				err = MakeHeaderFromBytes(br.Block, br.BlockLen, &h);
+				err = MakeHeaderFromBytes(br.Block, br.DatLen, &h);
 				if (!err)
 					err = EdfWriteHeader(&tw, &h, &writed);
 			}
@@ -61,14 +61,9 @@ int BinToText(const char* src, const char* dst)
 		case btVarInfo:
 		{
 			tw.t = NULL;
-			uint8_t* srcData = br.Block;
-			uint8_t* mem = (uint8_t*)&br.Buf;
-			size_t memLen = sizeof(br.Buf);
-			err = InfoFromBytes(&srcData, (TypeInfo_t*)&br.Buf, &mem, memLen);
-			writed = mem - br.Buf;
+			err = StreamWriteBinToCBin(br.Block, br.DatLen, NULL, br.Buf, sizeof(br.Buf), NULL, &tw.t);
 			if (!err)
 			{
-				tw.t = (TypeInfo_t*)&br.Buf;
 				writed = 0;
 				err = EdfWriteInfo(&tw, tw.t, &writed);
 			}
@@ -81,7 +76,7 @@ int BinToText(const char* src, const char* dst)
 		break;
 		case btVarData:
 		{
-			EdfWriteDataBlock(&tw, &br.Block, br.BlockLen);
+			EdfWriteDataBlock(&tw, &br.Block, br.DatLen);
 			//EdfFlushDataBlock(&tw, &writed);
 		}
 		break;
@@ -99,5 +94,7 @@ int BinToText(const char* src, const char* dst)
 //-----------------------------------------------------------------------------
 int TextToBin(const char* src, const char* dst)
 {
+	UNUSED(src);
+	UNUSED(dst);
 	return 0;
 }

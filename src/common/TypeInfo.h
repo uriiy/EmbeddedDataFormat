@@ -19,15 +19,25 @@ typedef struct TypeInfo
 		uint8_t Count;
 		struct TypeInfo* Item;
 	} Childs;
+	//uint16_t TypeId; // UserTypeId
 } TypeInfo_t;
 
-TypeInfo_t MakeTypeInfo(char* name, PoType type
-	, uint8_t dimCount, uint32_t* dims
-	, uint8_t childCount, TypeInfo_t* childs);
+typedef struct
+{
+	TypeInfo_t Inf; // var type
+	int32_t Id; // var id
+	char* Name; // var name
+} TypeRec_t;
 
-uint32_t GetValueSize(const TypeInfo_t* t);
-int StreamWriteInfoBin(Stream_t* s, const TypeInfo_t* t, size_t* writed);
-int StreamWriteInfoTxt(Stream_t* buf, const TypeInfo_t* t, int noffset, size_t* writed);
-int InfoFromBytes(uint8_t** src, TypeInfo_t* t, uint8_t** mem, size_t memLen);
+int IsVar(const TypeRec_t* r, int32_t varId, const char* varName);
+int IsVarName(const TypeRec_t* r, const char* varName);
+
+uint32_t GetTypeCSize(const TypeInfo_t* t);
+int8_t HasDynamicFields(const TypeInfo_t* t);
+int StreamWriteInfBin(Stream_t* st, const TypeRec_t* t, size_t* writed);
+int StreamWriteInfTxt(Stream_t* st, const TypeRec_t* t, size_t* writed);
+int StreamWriteBinToCBin(uint8_t* src, size_t srcLen, size_t* readed,
+	uint8_t* dst, size_t dstLen, size_t* writed,
+	TypeRec_t** t);
 
 #endif

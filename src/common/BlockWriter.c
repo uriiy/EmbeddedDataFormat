@@ -3,7 +3,7 @@
 
 //-----------------------------------------------------------------------------
 static int WriteData(const TypeInfo_t* t,
-	uint8_t* src, size_t srcLen,
+	const uint8_t* src, size_t srcLen,
 	uint8_t* dst, size_t dstLen,
 	size_t* skip, size_t* wqty,
 	size_t* readed, size_t* writed,
@@ -93,7 +93,7 @@ static int WriteData(const TypeInfo_t* t,
 }
 //-----------------------------------------------------------------------------
 static int WriteSingleValue(
-	uint8_t* src, size_t srcLen,
+	const uint8_t* src, size_t srcLen,
 	uint8_t* dst, size_t dstLen,
 	size_t* skip,
 	size_t* readed, size_t* writed,
@@ -106,7 +106,7 @@ static int WriteSingleValue(
 		return -1;
 	if ((EdfWriteSep(dw->RecBegin, &dst, &dstLen, skip, &wqty, writed)))
 		return 1;
-	int wr = WriteData(dw->t, src, srcLen, dst, dstLen, skip, &wqty, readed, writed, dw);
+	int wr = WriteData(&dw->t->Inf, src, srcLen, dst, dstLen, skip, &wqty, readed, writed, dw);
 	dst += *writed; dstLen -= *writed;
 	if (0 > wr)
 	{
@@ -129,14 +129,14 @@ static int WriteSingleValue(
 	return wr;
 }
 //-----------------------------------------------------------------------------
-int EdfWriteDataBlock(EdfWriter_t* dw, void* vsrc, size_t xsrcLen)
+int EdfWriteDataBlock(EdfWriter_t* dw, const void* vsrc, size_t xsrcLen)
 {
-	uint8_t* xsrc = (uint8_t*)vsrc;
-	uint8_t* src = xsrc;
+	const uint8_t* xsrc = (const uint8_t*)vsrc;
+	const uint8_t* src = xsrc;
 	size_t srcLen = xsrcLen;
 
-	size_t dstLen = sizeof(dw->Block) - dw->BlockLen;
-	uint8_t* dst = dw->Block + dw->BlockLen;
+	size_t dstLen = sizeof(dw->Block) - dw->DatLen;
+	uint8_t* dst = dw->Block + dw->DatLen;
 
 	size_t r = 0, w = 0;
 	int wr;
@@ -192,7 +192,7 @@ int EdfWriteDataBlock(EdfWriter_t* dw, void* vsrc, size_t xsrcLen)
 
 
 		dst += w; dstLen -= w;
-		dw->BlockLen += w;
+		dw->DatLen += (uint16_t)w;
 		if (0 < wr || 0 == dstLen)
 		{
 			w = 0;
@@ -215,6 +215,84 @@ int EdfWriteDataBlock(EdfWriter_t* dw, void* vsrc, size_t xsrcLen)
 	return wr;
 }
 //-----------------------------------------------------------------------------
+static int TryReadString(MemStream_t* tsrc, MemStream_t* tmem, void** ti)
+{
+	MemStream_t src = *tsrc;
+	MemStream_t mem = *tmem;
+	int err = 0;
+	uint8_t sLen;
+	uint8_t* pstr = NULL;
+	if ((err = StreamRead(&src, NULL, &sLen, 1)))
+		return -1;
+	if ((err = MemAlloc(&mem, sLen, &pstr)))
+		return 1;
+	if ((err = StreamRead(&src, NULL, pstr, sLen)))
+		return -1;
+	if (sLen && 0 != pstr[sLen - 1])
+	{
+		uint8_t* pStrEnd = NULL;
+		if ((err = MemAlloc(&mem, 1, &pStrEnd)))
+			return 1;
+		//pStrEnd[0] = 0;
+	}
+	*(void**)(*ti) = pstr;
+	*tsrc = src;
+	*tmem = mem;
+	return 0;
+}
+//-----------------------------------------------------------------------------
+int EdfReadBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, void** presult,
+	int* skip)
+{
+	if (!IsPoType(t->Type))
+		return -2;
+
+	size_t itemCLen = GetTypeCSize(t);
+	int err = 0;
+	uint8_t* ti = NULL;
+	if (*presult)
+		ti = *presult;
+	else
+	{
+		if ((err = MemAlloc(mem, itemCLen, &ti)))
+			return 1;
+		*presult = ti;
+	}
+
+	switch (t->Type)
+	{
+	case Struct:
+		if (t->Childs.Count)
+		{
+			for (size_t j = 0; j < t->Childs.Count; j++)
+			{
+				const TypeInfo_t* s = &t->Childs.Item[j];
+				size_t childCLen = GetTypeCSize(s);
+				if ((err = EdfReadBin(s, src, mem, &ti, skip)))
+					return err;
+				ti += childCLen;
+			}
+		}
+		break;
+	case String:
+	{
+		if (0 <= ++(*skip))
+			if ((err = TryReadString(src, mem, &ti)))
+				return err;
+		ti += itemCLen;
+	}
+	break;
+	default:
+		if (0 <= ++(*skip))
+			if ((err = StreamRead(src, NULL, ti, itemCLen)))
+				return -1;
+		ti += itemCLen;
+		break;
+	}//switch
+	return 0;
+}
+
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 int EdfReadBlock(EdfWriter_t* dw)
@@ -222,33 +300,41 @@ int EdfReadBlock(EdfWriter_t* dw)
 	int err = 0;
 	size_t readed = 0;
 
-	uint8_t blockType;
-	uint8_t blockseq;
-	uint16_t blockLen;
+	dw->BlkType = 0;
+	dw->DatLen = 0;
 
-	do
+	if ((err = StreamRead(&dw->Stream, &readed, &dw->BlkType, 1)))
+		return err;
+	if (!IsBlockType(dw->BlkType))
+		return ERR_BLK_WRONG_TYPE;
+
+	uint8_t blockseq;
+	if ((err = StreamRead(&dw->Stream, &readed, &blockseq, 1)))
+		return err;
+	if (blockseq != dw->BlkSeq)
+		return ERR_BLK_WRONG_SEQ;
+
+	if ((err = StreamRead(&dw->Stream, &readed, &dw->DatLen, 2)))
+		return err;
+	if (4096 < dw->DatLen || BLOCK_SIZE < dw->DatLen)
+		return ERR_BLK_WRONG_SIZE;
+
+	if ((err = StreamRead(&dw->Stream, &readed, &dw->Block, dw->DatLen)))
+		return err;
+
+	if (btHeader == dw->BlkType)
+		memcpy(&dw->h, &dw->Block, sizeof(EdfHeader_t));
+
+	if (dw->h.Flags & UseCrc)
 	{
-		if (!(err = StreamRead(&dw->Stream, &readed, &blockType, 1))
-			&& IsBlockType(blockType))
-		{
-			if (!(StreamRead(&dw->Stream, &readed, &blockseq, 1))
-				&& blockseq == dw->Seq)
-			{
-				if (!(err = StreamRead(&dw->Stream, &readed, &blockLen, 2))
-					&& 4096 > blockLen && BLOCK_SIZE >= blockLen)
-				{
-					if (!(StreamRead(&dw->Stream, &readed, &dw->Block, blockLen)))
-					{
-						dw->BlockType = blockType;
-						dw->Seq++;
-						dw->BlockLen = blockLen;
-						return 0;
-					}
-				}
-			}
-		}
-	} while (!err);
-	dw->BlockType = 0;
-	dw->BlockLen = 0;
-	return err;
+		uint16_t crcData = MbCrc16(&dw->BlkType, 4 + dw->DatLen);
+		uint16_t crcFile = 0;
+		if ((err = StreamRead(&dw->Stream, &readed, &crcFile, sizeof(uint16_t))))
+			return err;
+		if (crcData != crcFile)
+			return ERR_BLK_WRONG_CRC;
+	}
+	dw->BlkSeq++;
+	return 0;
+
 }

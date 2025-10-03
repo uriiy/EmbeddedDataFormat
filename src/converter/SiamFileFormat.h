@@ -1,7 +1,7 @@
 #ifndef SIAMFILEFORMAT_H
 #define SIAMFILEFORMAT_H
 
-#include "stdint.h"
+#include "edf.h"
 //-----------------------------------------------------------------------------
 #pragma pack(push,1)
 typedef struct
@@ -117,11 +117,33 @@ typedef struct
 } DYN_FILE_V2_0;
 
 //-----------------------------------------------------------------------------
-// edf infos
+// edf inf
+// 
+typedef enum
+{
+	COMMENTSREC = 0,
+	FILEDESCRIPTION,
+	FILETYPE,
+	BEGINDATETIME,
+	POSITION,
+	DEVICEINFO,
+	REGINFO,
+
+	OMEGADATA
+} VarInfoId;
+
+static const char FileDescDyn[] = "SIAM COMPLEX DYNAMOGRAM V2.0";
+static const char FileDescEcho[] = "SIAM COMPLEX ECHOGRAM V2.0";
+static const char FileDescMt[] = "OMEGA SAMT DATA V1.1";
+
 //-----------------------------------------------------------------------------
-static const TypeInfo_t CommentsInf = { .Type = CString, .Name = "Comments" };
+static const TypeInfo_t FileDescriptionType =
+{
+	.Type = Char, .Name = "FileDescription",
+	.Dims = { 1, (uint32_t[]) { FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription) } }
+};
 //-----------------------------------------------------------------------------
-static const TypeInfo_t DateTimeInf =
+static const TypeInfo_t DateTimeType =
 {
 	.Type = Struct, .Name = "DateTime", .Dims = { 0, NULL }, .Childs =
 	{
@@ -151,9 +173,63 @@ typedef struct
 	uint16_t mSec;
 	int8_t Tz;
 } DateTime_t;
+//-----------------------------------------------------------------------------
+static const TypeInfo_t DeviceInfoType =
+{
+	.Type = Struct, .Name = "DeviceInfo", .Dims = { 0, NULL }, .Childs =
+	{
+		.Count = 6,
+		.Item = (TypeInfo_t[])
+		{
+			{ UInt16, "HwId" },
+			{ UInt16, "HwModel" },
+			{ UInt16, "SwId" },
+			{ UInt16, "SwModel" },
+			{ UInt64, "SwRevision" },
+			{ UInt64, "HwNumber" },
+		}
+	}
+};
+
+typedef struct
+{
+	uint16_t HwId;
+	uint16_t HwModel;
+	uint16_t SwId;
+	uint16_t SwModel;
+	uint64_t SwRevision;
+	uint64_t HwNumber;
+} DeviceInfo_t;
 
 //-----------------------------------------------------------------------------
-static const TypeInfo_t OmegaDataInf =
+static const TypeInfo_t PositionType =
+{
+	.Type = Struct, .Name = "Position", .Dims = { 0, NULL }, .Childs =
+	{
+		.Count = 6,
+		.Item = (TypeInfo_t[])
+		{
+			{ String, "Field" },
+			{ String, "Cluster" },
+			{ String, "Well" },
+			{ String, "Shop" },
+			{ Double, "Longitude" },
+			{ Double, "Latitude" },
+		}
+	}
+};
+
+typedef struct
+{
+	char* Field;
+	char* Cluster;
+	char* Well;
+	char* Shop;
+	double Longitude;
+	double Latitude;
+} Position_t;
+//-----------------------------------------------------------------------------
+static const TypeInfo_t OmegaDataType =
 {
 	.Type = Struct, .Name = "OMEGA_DATA_V1_1", .Dims = { 0, NULL }, .Childs =
 	{
@@ -168,48 +244,6 @@ static const TypeInfo_t OmegaDataInf =
 	}
 };
 //-----------------------------------------------------------------------------
-static const TypeInfo_t DoubleValueInf =
-{
-	Struct, "DoubleValue", { 0, NULL },
-	.Childs =
-	{
-		.Count = 4,
-		.Item = (TypeInfo_t[])
-		{
-			{ CString, "Name" },
-			{ Double, "Value" },
-			{ CString, "Unit" },
-			{ CString, "Description" },
-		}
-	}
-};
-typedef struct DoubleValue
-{
-	char* Name;
-	double Value;
-	char* Unit;
-	char* Description;
-} DoubleValue_t;
-//-----------------------------------------------------------------------------
-static const TypeInfo_t Point2DInf =
-{
-	Struct, "Chart2D", { 0, NULL },
-	.Childs =
-	{
-		.Count = 2,
-		.Item = (TypeInfo_t[])
-		{
-			{ Single, "x" },
-			{ Single, "y" },
-		}
-	}
-};
-struct Point2D
-{
-	float x;
-	float y;
-};
-
 //-----------------------------------------------------------------------------
 #pragma pack(pop)
 //-----------------------------------------------------------------------------
