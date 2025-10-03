@@ -54,13 +54,13 @@
     <ClCompile Include="ConverterEcho.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="MbCrc.c">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
     <ClCompile Include="..\common\EdfUtils.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="..\common\KeyValue.c">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MbCrc.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>

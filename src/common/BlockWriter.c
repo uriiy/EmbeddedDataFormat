@@ -224,14 +224,14 @@ static int TryReadString(MemStream_t* tsrc, MemStream_t* tmem, void** ti)
 	uint8_t* pstr = NULL;
 	if ((err = StreamRead(&src, NULL, &sLen, 1)))
 		return -1;
-	if ((err = MemAlloc(&mem, sLen, &pstr)))
+	if ((err = MemAlloc(&mem, sLen, (void **)&pstr)))
 		return 1;
 	if ((err = StreamRead(&src, NULL, pstr, sLen)))
 		return -1;
 	if (sLen && 0 != pstr[sLen - 1])
 	{
 		uint8_t* pStrEnd = NULL;
-		if ((err = MemAlloc(&mem, 1, &pStrEnd)))
+		if ((err = MemAlloc(&mem, 1, (void **)&pStrEnd)))
 			return 1;
 		//pStrEnd[0] = 0;
 	}
@@ -254,7 +254,7 @@ int EdfReadBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, void** p
 		ti = *presult;
 	else
 	{
-		if ((err = MemAlloc(mem, itemCLen, &ti)))
+		if ((err = MemAlloc(mem, itemCLen, (void **)&ti)))
 			return 1;
 		*presult = ti;
 	}
@@ -268,7 +268,7 @@ int EdfReadBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, void** p
 			{
 				const TypeInfo_t* s = &t->Childs.Item[j];
 				size_t childCLen = GetTypeCSize(s);
-				if ((err = EdfReadBin(s, src, mem, &ti, skip)))
+				if ((err = EdfReadBin(s, src, mem, (void **)&ti, skip)))
 					return err;
 				ti += childCLen;
 			}
@@ -277,7 +277,7 @@ int EdfReadBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, void** p
 	case String:
 	{
 		if (0 <= ++(*skip))
-			if ((err = TryReadString(src, mem, &ti)))
+			if ((err = TryReadString(src, mem, (void **)&ti)))
 				return err;
 		ti += itemCLen;
 	}
