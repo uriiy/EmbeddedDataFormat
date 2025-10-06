@@ -1,9 +1,7 @@
 {
 	"files.associations": {
-		"converter.h": "c",
-		"edfheader.h": "c",
-		"_pch.h": "c",
-		"edf_cfg.h": "c"
+		"*.h": "c",
+		"*.c": "c",
 	},
 	"cSpell.enabled": false,
 	"editor.insertSpaces": false,
@@ -14,7 +12,7 @@
 	"editor.lineHeight": 1.2,
 	"editor.fontSize": 15,
 	"editor.stickyScroll.enabled": false,
-	"C_Cpp.formatting": "vcFormat",
+	// "C_Cpp.formatting": "vcFormat",
 	"cmake.debugConfig": {
 		"args": [
 			"src/Test/norm_8_raw.txt",
