@@ -31,4 +31,7 @@ int BinToStr(PoType t,
 
 // BinToCBin // required dynamic mem allocator
 
+int StreamWriteString(Stream_t* s, const char* str, size_t* writed);
+int StreamReadString(MemStream_t* tsrc, MemStream_t* tmem, char** ti);
+
 #endif

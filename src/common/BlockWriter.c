@@ -106,8 +106,9 @@ static int WriteSingleValue(
 		return -1;
 	if ((EdfWriteSep(dw->RecBegin, &dst, &dstLen, skip, &wqty, writed)))
 		return 1;
-	int wr = WriteData(&dw->t->Inf, src, srcLen, dst, dstLen, skip, &wqty, readed, writed, dw);
-	dst += *writed; dstLen -= *writed;
+	size_t w = 0;
+	int wr = WriteData(&dw->t->Inf, src, srcLen, dst, dstLen, skip, &wqty, readed, &w, dw);
+	dst += w; dstLen -= w; *writed += w;
 	if (0 > wr)
 	{
 		*skip = prevskip + wqty;
@@ -215,32 +216,6 @@ int EdfWriteDataBlock(EdfWriter_t* dw, const void* vsrc, size_t xsrcLen)
 	return wr;
 }
 //-----------------------------------------------------------------------------
-static int TryReadString(MemStream_t* tsrc, MemStream_t* tmem, void** ti)
-{
-	MemStream_t src = *tsrc;
-	MemStream_t mem = *tmem;
-	int err = 0;
-	uint8_t sLen;
-	uint8_t* pstr = NULL;
-	if ((err = StreamRead(&src, NULL, &sLen, 1)))
-		return -1;
-	if ((err = MemAlloc(&mem, sLen, (void **)&pstr)))
-		return 1;
-	if ((err = StreamRead(&src, NULL, pstr, sLen)))
-		return -1;
-	if (sLen && 0 != pstr[sLen - 1])
-	{
-		uint8_t* pStrEnd = NULL;
-		if ((err = MemAlloc(&mem, 1, (void **)&pStrEnd)))
-			return 1;
-		//pStrEnd[0] = 0;
-	}
-	*(void**)(*ti) = pstr;
-	*tsrc = src;
-	*tmem = mem;
-	return 0;
-}
-//-----------------------------------------------------------------------------
 int EdfReadBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, void** presult,
 	int* skip)
 {
@@ -254,7 +229,7 @@ int EdfReadBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, void** p
 		ti = *presult;
 	else
 	{
-		if ((err = MemAlloc(mem, itemCLen, (void **)&ti)))
+		if ((err = MemAlloc(mem, itemCLen, (void**)&ti)))
 			return 1;
 		*presult = ti;
 	}
@@ -268,7 +243,7 @@ int EdfReadBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, void** p
 			{
 				const TypeInfo_t* s = &t->Childs.Item[j];
 				size_t childCLen = GetTypeCSize(s);
-				if ((err = EdfReadBin(s, src, mem, (void **)&ti, skip)))
+				if ((err = EdfReadBin(s, src, mem, (void**)&ti, skip)))
 					return err;
 				ti += childCLen;
 			}
@@ -277,7 +252,7 @@ int EdfReadBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, void** p
 	case String:
 	{
 		if (0 <= ++(*skip))
-			if ((err = TryReadString(src, mem, (void **)&ti)))
+			if ((err = StreamReadString(src, mem, *(char**)&ti)))
 				return err;
 		ti += itemCLen;
 	}

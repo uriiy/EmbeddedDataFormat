@@ -37,7 +37,7 @@ int DatToEdf(const char* src, const char* edf, char mode)
 	if ((err = EdfWriteHeader(&dw, &h, &writed)))
 		return err;
 
-	EdfWriteInfData(&dw, FILETYPE, UInt32, "FileType", &dat.FileType);
+	EdfWriteInfData(&dw, FILETYPEID, UInt32, "FileType", &dat.FileType);
 	EdfWriteInfDataString(&dw, FILEDESCRIPTION, "FileDescription",
 		&dat.FileDescription, FIELD_SIZEOF(SPSK_FILE_V1_1, FileDescription));
 
@@ -158,7 +158,7 @@ int EdfToDat(const char* edfFile, const char* datFile)
 				switch (br.t->Id)
 				{
 				default: break;
-				case FILETYPE: dat.FileType = *((uint32_t*)br.Block); break;//case FILETYPE:
+				case FILETYPEID: dat.FileType = *((uint32_t*)br.Block); break;//case FILETYPE:
 				case FILEDESCRIPTION:
 					memcpy(dat.FileDescription, &br.Block[1],
 						MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(SPSK_FILE_V1_1, FileDescription)));
