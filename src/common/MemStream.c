@@ -67,6 +67,11 @@ static int MemStreamClose(void* stream)
 //-----------------------------------------------------------------------------
 int MemAlloc(MemStream_t* s, size_t len, void** pptr)
 {
+	if (0 == len)
+	{
+		*pptr = NULL;
+		return 0;
+	}
 	if (len > s->Size - s->WPos)
 		return (size_t)-1;
 	*pptr = &s->Buffer[s->WPos];

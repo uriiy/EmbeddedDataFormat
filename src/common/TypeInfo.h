@@ -27,6 +27,7 @@ typedef struct
 	TypeInfo_t Inf; // var type
 	int32_t Id; // var id
 	char* Name; // var name
+	char* Desc; // var description
 } TypeRec_t;
 
 int IsVar(const TypeRec_t* r, int32_t varId, const char* varName);

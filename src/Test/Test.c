@@ -174,7 +174,7 @@ static int WriteSample(EdfWriter_t* dw)
 	} KeyValue_t;
 	TypeRec_t keyValueType =
 	{
-		0, .Name = "VariableKV",
+		0, .Name = "VariableKV", .Desc = "comment",
 		.Inf =
 		{
 			.Type = Struct, .Name = "KeyValue", .Dims = {0, NULL},
@@ -424,11 +424,11 @@ static void MbCrc16accTest()
 int main()
 {
 	LOG_ERR();
+	WriteTest();
 	assert(0 == PackUnpack());
 	MbCrc16accTest();
 	WriteTestBigVar();
 	DatFormatTest();
-	WriteTest();
 	TestMemStream();
 	return 0;
 }

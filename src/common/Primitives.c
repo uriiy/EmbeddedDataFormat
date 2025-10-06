@@ -231,3 +231,43 @@ int BinToStr(PoType t,
 {
 	return AnyBinToStr(t, src, srcLen, dst, dstLen, r, w, WriteStringBinToStr);
 }
+//-----------------------------------------------------------------------------
+int StreamWriteString(Stream_t* s, const char* str, size_t* writed)
+{
+	int err = 0;
+	size_t len = str ? strnlength(str, 255) : 0;
+	if ((err = StreamWrite(s, writed, &len, 1)) ||
+		(err = StreamWrite(s, writed, str, len)))
+		return err;
+	return 0;
+}
+//-----------------------------------------------------------------------------
+int StreamReadString(MemStream_t* tsrc, MemStream_t* tmem, char** ti)
+{
+	MemStream_t src = *tsrc;
+	MemStream_t mem = *tmem;
+	int err = 0;
+	uint8_t sLen;
+	char* pstr = NULL;
+	if ((err = StreamRead(&src, NULL, &sLen, 1)))
+		return ERR_SRC_SHORT;
+	if (sLen)
+	{
+		if ((err = MemAlloc(&mem, sLen, (void**)&pstr)))
+			return ERR_DST_SHORT;
+		if ((err = StreamRead(&src, NULL, pstr, sLen)))
+			return ERR_SRC_SHORT;
+		if ('\0' != pstr[sLen - 1])
+		{
+			uint8_t* pStrEnd = NULL;
+			if ((err = MemAlloc(&mem, 1, (void**)&pStrEnd)))
+				return ERR_DST_SHORT;
+			//pStrEnd[0] = '\0';
+		}
+	}
+	*ti = pstr;
+	*tsrc = src;
+	*tmem = mem;
+	return 0;
+}
+//-----------------------------------------------------------------------------

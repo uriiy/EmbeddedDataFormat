@@ -22,9 +22,7 @@ static int StreamWriteInfoBin(Stream_t* s, const TypeInfo_t* t, size_t* writed)
 			return err;
 	}
 
-	size_t nameSize = t->Name ? strnlength(t->Name, 255) : 0;
-	if ((err = StreamWrite(s, writed, &nameSize, 1)) ||
-		(err = StreamWrite(s, writed, t->Name, nameSize)))
+	if ((err = StreamWriteString(s, t->Name, writed)))
 		return err;
 
 	if (Struct == t->Type && t->Childs.Item && t->Childs.Count)
@@ -45,12 +43,10 @@ int StreamWriteInfBin(Stream_t* st, const TypeRec_t* t, size_t* writed)
 		return err;
 	if ((err = StreamWriteInfoBin(st, &t->Inf, writed)))
 		return err;
-
-	size_t nameSize = t->Name ? strnlength(t->Name, 255) : 0;
-	if ((err = StreamWrite(st, writed, &nameSize, 1)) ||
-		(err = StreamWrite(st, writed, t->Name, nameSize)))
+	if ((err = StreamWriteString(st, t->Name, writed)))
 		return err;
-
+	if ((err = StreamWriteString(st, t->Desc, writed)))
+		return err;
 	return err;
 }
 //-----------------------------------------------------------------------------
@@ -136,7 +132,9 @@ int StreamWriteInfTxt(Stream_t* st, const TypeRec_t* t, size_t* writed)
 	if ((err = StreamWrite(st, writed, "\n\n<? ", 5)))
 		return err;
 
-	if ((err = StreamWriteFmt(st, writed, "{%lu;\"%.255s\"} ", t->Id, t->Name ? t->Name : "")))
+	if ((err = StreamWriteFmt(st, writed, "{%lu;\"%.255s\"", t->Id, t->Name ? t->Name : "")) ||
+		(t->Desc && (err = StreamWriteFmt(st, writed, ", \"%.255s\"", t->Desc))) ||
+		(err = StreamWrite(st, writed, "} ", 2)))
 		return err;
 
 	if ((err = StreamWriteInfoTxt(st, &t->Inf, 0, writed)))
@@ -148,7 +146,6 @@ int StreamWriteInfTxt(Stream_t* st, const TypeRec_t* t, size_t* writed)
 	return err;
 }
 //-----------------------------------------------------------------------------
-
 static int StreamBinToCBin(MemStream_t* src, MemStream_t* mem, TypeInfo_t** t)
 {
 	int err = 0;
@@ -181,16 +178,8 @@ static int StreamBinToCBin(MemStream_t* src, MemStream_t* mem, TypeInfo_t** t)
 		}
 	}
 
-	size_t nameSize = 0;
-	if ((err = StreamRead(src, &readed, &nameSize, 1)))
+	if ((err = StreamReadString(src, mem, &ti->Name)))
 		return err;
-	if (nameSize)
-	{
-		if ((err = MemAlloc(mem, nameSize + 1, (void**)&ti->Name)) ||
-			(err = StreamRead(src, &readed, ti->Name, nameSize)))
-			return err;
-		ti->Name[nameSize] = 0;
-	}
 
 	if (Struct == ti->Type)
 	{
@@ -237,18 +226,10 @@ int StreamWriteBinToCBin(uint8_t* src, size_t srcLen, size_t* readed,
 		return err;
 	if ((err = StreamBinToCBin(&mssrc, &msdst, &(TypeInfo_t*){&tr->Inf})))
 		return err;
-
-	size_t nameSize = 0;
-	if ((err = StreamRead(&mssrc, readed, &nameSize, 1)))
+	if ((err = StreamReadString(&mssrc, &msdst, &tr->Name)))
 		return err;
-	if (nameSize)
-	{
-		if ((err = MemAlloc(&msdst, nameSize + 1, (void**)&tr->Name)) ||
-			(err = StreamRead(&mssrc, readed, tr->Name, nameSize)))
-			return err;
-		tr->Name[nameSize] = 0;
-	}
-
+	if ((err = StreamReadString(&mssrc, &msdst, &tr->Desc)))
+		return err;
 
 	if (readed)
 		*readed = mssrc.RPos;
