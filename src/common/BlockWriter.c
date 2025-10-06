@@ -252,7 +252,7 @@ int EdfReadBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, void** p
 	case String:
 	{
 		if (0 <= ++(*skip))
-			if ((err = StreamReadString(src, mem, *(char**)&ti)))
+			if ((err = StreamReadString(src, mem, (char**)ti)))
 				return err;
 		ti += itemCLen;
 	}

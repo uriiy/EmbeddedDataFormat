@@ -85,80 +85,29 @@ int DynToEdf(const char* src, const char* edf, char mode)
 
 	EdfWriteInfData(&dw, 0, UInt16, "Oper", &dat.Id.Oper);
 
-	/*
-	EdfWriteInfo(&dw, &CommentsInf, &writed);
-	EdfWriteDataBlock(&dw, &((char*) { "Rod - диаметр штока" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "Aperture - номер отверстия" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "MaxWeight - максимальная нагрузка (кг)" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "MinWeight - минимальная нагрузка (кг)" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "TopWeight - вес штанг вверху (кг)" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "BotWeight - вес штанг внизу (кг)" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "Travel - ход штока (мм)" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "BeginPos - положение штока перед первым измерением (мм)" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "Period - период качаний (мс)" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "Cycles - пропущено циклов" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "Pressure - затрубное давление (атм)" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "BufPressure - буферное давление (атм)" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "LinePressure - линейное давление (атм)" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "PumpType - тип привода станка-качалки {}" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "Acc - напряжение аккумулятора датчика, (В)" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "Temp - температура датчика, (°С)" }), sizeof(char*));
+	EdfWriteInfData0(&dw, UInt16, 0, "TravelStep", "величина дискреты перемещения 0.1мм/1", &dat.TravelStep);
+	EdfWriteInfData0(&dw, UInt16, 0, "LoadStep", "величина дискреты нагрузки кг/1", &dat.LoadStep);
+	EdfWriteInfData0(&dw, UInt16, 0, "TimeStep", "величина дискреты времени мс/1", &dat.TimeStep);
 
-	EdfWriteInfRecData(&dw, 0, Single, "Rod", &((float) { dat.Rod / 10.0f }));
-	EdfWriteInfRecData(&dw, 0, UInt16, "Aperture", &dat.Aperture);
-	EdfWriteInfRecData(&dw, 0, UInt32, "MaxWeight", &((uint32_t) { dat.MaxWeight* dat.LoadStep }));
-	EdfWriteInfRecData(&dw, 0, UInt32, "MinWeight", &((uint32_t) { dat.MinWeight* dat.LoadStep }));
-	EdfWriteInfRecData(&dw, 0, UInt32, "TopWeight", &((uint32_t) { dat.TopWeight* dat.LoadStep }));
-	EdfWriteInfRecData(&dw, 0, UInt32, "BotWeight", &((uint32_t) { dat.BotWeight* dat.LoadStep }));
-	EdfWriteInfRecData(&dw, 0, Double, "Travel", &((double) { dat.Travel* dat.TravelStep / 10.0f }));
-	EdfWriteInfRecData(&dw, 0, Double, "BeginPos", &((double) { dat.BeginPos* dat.TravelStep / 10.0f }));
-	EdfWriteInfRecData(&dw, 0, UInt32, "Period", &((uint32_t) { dat.Period* dat.TimeStep }));
-	EdfWriteInfRecData(&dw, 0, UInt16, "Cycles", &((uint16_t) { dat.Cycles }));
-	EdfWriteInfRecData(&dw, 0, Double, "Pressure", &((double) { dat.Pressure / 10.0f }));
-	EdfWriteInfRecData(&dw, 0, Double, "BufPressure", &((double) { dat.BufPressure / 10.0f }));
-	EdfWriteInfRecData(&dw, 0, Double, "LinePressure", &((double) { dat.LinePressure / 10.0f }));
-	EdfWriteInfRecData(&dw, 0, UInt16, "PumpType", &dat.PumpType);
-	EdfWriteInfRecData(&dw, 0, Single, "Acc", &((float) { dat.Acc / 10.0f }));
-	EdfWriteInfRecData(&dw, 0, Single, "Temp", &((float) { dat.Temp / 10.0f }));
-	*/
-	{
-		//EdfWriteInfo(&dw, &CommentsInf, &writed);
-		//EdfWriteDataBlock(&dw, &((char*) { "Key-Value-Unit-Description list sample" }), sizeof(char*));
-
-		EdfWriteInfo(&dw, &(const TypeRec_t){ UInt16ValueInf, 0, "UInt16Value"}, & writed);
-		EdfWriteDataBlock(&dw, &(UInt16Value_t[])
-		{
-			{ "Aperture", dat.Aperture, "", "номер отверстия 1" },
-			{ "Cycles", dat.Cycles, "", "пропущено циклов" },
-			{ "PumpType", dat.PumpType, "", "тип привода станка-качалки {}" },
-			{ "TravelStep", dat.TravelStep, "0.1мм/1", "величина дискреты перемещения" },
-			{ "LoadStep", dat.LoadStep, "кг/1", "величина дискреты нагрузки" },
-			{ "TimeStep", dat.TimeStep, "мс/1", "величина дискреты времени" },
-		}, sizeof(UInt16Value_t[6]));
-
-		EdfWriteInfo(&dw, &(const TypeRec_t){ UInt32ValueInf, 0, "UInt32Value"}, & writed);
-		EdfWriteDataBlock(&dw, &(UInt32Value_t[])
-		{
-			{ "MaxWeight", dat.MaxWeight* dat.LoadStep, "кг", "максимальная нагрузка" },
-			{ "MinWeight", dat.MinWeight * dat.LoadStep, "кг", "инимальная нагрузка" },
-			{ "TopWeight", dat.TopWeight * dat.LoadStep, "кг", "вес штанг вверху" },
-			{ "BotWeight", dat.BotWeight * dat.LoadStep, "кг", "вес штанг внизу" },
-			{ "Period", dat.Period * dat.TimeStep, "мм", "ход штока" },
-		}, sizeof(UInt32Value_t[5]));
-
-		EdfWriteInfo(&dw, &(const TypeRec_t){ DoubleValueInf, 0, "DoubleValue"}, & writed);
-		EdfWriteDataBlock(&dw, &(DoubleValue_t[])
-		{
-			{ "Rod", dat.Rod / 10.0f, "мм", "диаметр штока" },
-			{ "Travel", dat.Travel * dat.TravelStep / 10.0f, "мм", "ход штока123456789" },
-			{ "BeginPos", dat.BeginPos * dat.TravelStep / 10.0f, "мм", "положение штока перед первым измерением" },
-			{ "Pressure", dat.Pressure / 10.0f, "атм", "затрубное давление" },
-			{ "BufPressure", dat.BufPressure / 10.0f, "атм", "буферное давление" },
-			{ "LinePressure", dat.LinePressure / 10.0f, "атм", "линейное давление" },
-			{ "Acc",  dat.Acc / 10.0f, "V", .Description = "напряжение аккумулятора" },
-			{ "Temp", dat.Temp / 10.0f, "°С", "температура датчика" },
-		}, sizeof(DoubleValue_t[8]));
-	}
+	EdfWriteInfRecData(&dw,
+		&(TypeRec_t){ { Single }, 0, "Rod", "диаметр штока" },
+		& ((float) { dat.Rod / 10.0f }), sizeof(float));
+	EdfWriteInfData0(&dw, UInt16, 0, "Aperture", "номер отверстия", &dat.Aperture);
+	EdfWriteInfData0(&dw, UInt32, 0, "MaxWeight", "максимальная нагрузка (кг)", &((uint32_t) { dat.MaxWeight* dat.LoadStep }));
+	EdfWriteInfData0(&dw, UInt32, 0, "MinWeight", "минимальная нагрузка (кг)", &((uint32_t) { dat.MinWeight* dat.LoadStep }));
+	EdfWriteInfData0(&dw, UInt32, 0, "TopWeight", "вес штанг вверху (кг)", &((uint32_t) { dat.TopWeight* dat.LoadStep }));
+	EdfWriteInfData0(&dw, UInt32, 0, "BotWeight", "вес штанг внизу (кг)", &((uint32_t) { dat.BotWeight* dat.LoadStep }));
+	EdfWriteInfData0(&dw, Double, 0, "Travel", "ход штока (мм)", &((double) { dat.Travel* dat.TravelStep / 10.0f }));
+	EdfWriteInfData0(&dw, Double, 0, "BeginPos", "положение штока перед первым измерением (мм)",
+		&((double) { dat.BeginPos* dat.TravelStep / 10.0f }));
+	EdfWriteInfData0(&dw, UInt32, 0, "Period", "период качаний (мс)", &((uint32_t) { dat.Period* dat.TimeStep }));
+	EdfWriteInfData0(&dw, UInt16, 0, "Cycles", "пропущено циклов", &dat.Cycles);
+	EdfWriteInfData0(&dw, Double, 0, "Pressure", "затрубное давление (атм)", &((double) { dat.Pressure / 10.0f }));
+	EdfWriteInfData0(&dw, Double, 0, "BufPressure", "буферное давление (атм)", &((double) { dat.BufPressure / 10.0f }));
+	EdfWriteInfData0(&dw, Double, 0, "LinePressure", "линейное давление (атм)", &((double) { dat.LinePressure / 10.0f }));
+	EdfWriteInfData0(&dw, UInt16, 0, "PumpType", "тип привода станка-качалки {}", &dat.PumpType);
+	EdfWriteInfData0(&dw, Single, 0, "Acc", "напряжение аккумулятора датчика, (В)", &((float) { dat.Acc / 10.0f }));
+	EdfWriteInfData0(&dw, Single, 0, "Temp", "температура датчика, (°С)", &((float) { dat.Temp / 10.0f }));
 
 	EdfWriteInfo(&dw, &(const TypeRec_t){ ChartNInf, 0, "DynamogrammInfo" }, & writed);
 	EdfWriteDataBlock(&dw, &((ChartN_t[])
@@ -373,18 +322,44 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 			}
 			else if (IsVarName(br.t, "Oper"))
 				dat.Id.Oper = *((uint16_t*)br.Block);
-			else if (IsVarName(br.t, "UInt16Value"))
-			{
-				UnpackUInt16KeyVal(&src, &msDst, &skip, DoOnUInt16Item, &dat);
-			}
-			else if (IsVarName(br.t, "UInt32Value"))
-			{
-				UnpackUInt32KeyVal(&src, &msDst, &skip, DoOnUInt32Item, &dat);
-			}
-			else if (IsVarName(br.t, "DoubleValue"))
-			{
-				UnpackDoubleKeyVal(&src, &msDst, &skip, DoOnDoubleItem, &dat);
-			}
+			else if (IsVarName(br.t, "TravelStep"))
+				dat.TravelStep = *(uint16_t*)br.Block;
+			else if (IsVarName(br.t, "LoadStep"))
+				dat.LoadStep = *(uint16_t*)br.Block;
+			else if (IsVarName(br.t, "TimeStep"))
+				dat.TimeStep = *(uint16_t*)br.Block;
+			else if (IsVarName(br.t, "Rod"))
+				dat.Rod = (uint16_t)(*(float*)br.Block * 10);
+			else if (IsVarName(br.t, "Aperture"))
+				dat.Aperture = (*(uint16_t*)br.Block);
+			else if (IsVarName(br.t, "MaxWeight"))
+				dat.MaxWeight = (uint16_t)(*(uint32_t*)br.Block / dat.LoadStep);
+			else if (IsVarName(br.t, "MinWeight"))
+				dat.MinWeight = (uint16_t)(*(uint32_t*)br.Block / dat.LoadStep);
+			else if (IsVarName(br.t, "TopWeight"))
+				dat.TopWeight = (uint16_t)(*(uint32_t*)br.Block / dat.LoadStep);
+			else if (IsVarName(br.t, "BotWeight"))
+				dat.BotWeight = (uint16_t)(*(uint32_t*)br.Block / dat.LoadStep);
+			else if (IsVarName(br.t, "Travel"))
+				dat.Travel = (uint16_t)(*(double*)br.Block * 10.0 / dat.TravelStep);
+			else if (IsVarName(br.t, "BeginPos"))
+				dat.BeginPos = (uint16_t)(*(double*)br.Block * 10.0 / dat.TravelStep);
+			else if (IsVarName(br.t, "Period"))
+				dat.Period = (uint16_t)(*(uint32_t*)br.Block / dat.TimeStep);
+			else if (IsVarName(br.t, "Cycles"))
+				dat.Cycles = *(uint16_t*)br.Block;
+			else if (IsVarName(br.t, "BeginPos"))
+				dat.Pressure = (uint16_t)(*(double*)br.Block * 10.0);
+			else if (IsVarName(br.t, "BeginPos"))
+				dat.BufPressure = (uint16_t)(*(double*)br.Block * 10.0);
+			else if (IsVarName(br.t, "BeginPos"))
+				dat.LinePressure = (uint16_t)(*(double*)br.Block * 10.0);
+			else if (IsVarName(br.t, "PumpType"))
+				dat.PumpType = *(uint16_t*)br.Block;
+			else if (IsVarName(br.t, "Acc"))
+				dat.Acc = (uint16_t)(*(float*)br.Block * 10);
+			else if (IsVarName(br.t, "Temp"))
+				dat.Temp = (uint16_t)(*(float*)br.Block * 10);
 
 			else if (IsVarName(br.t, "DynChart"))
 			{
