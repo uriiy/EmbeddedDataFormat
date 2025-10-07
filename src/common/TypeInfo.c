@@ -161,7 +161,7 @@ static int StreamBinToCBin(MemStream_t* src, MemStream_t* mem, TypeInfo_t** t)
 	if ((err = StreamRead(src, &readed, &ti->Type, 1)))
 		return err;
 	if (!IsPoType(ti->Type))
-		return (size_t)-1;
+        return ERR_BLK_WRONG_TYPE;
 	if ((err = StreamRead(src, &readed, &ti->Dims.Count, 1)))
 		return err;
 
