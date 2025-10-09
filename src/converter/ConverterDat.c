@@ -6,6 +6,7 @@
 #include "assert.h"
 #include "edf_cfg.h"
 #include "math.h"
+#include "stdlib.h"
 //-----------------------------------------------------------------------------
 /// SPSK
 //-----------------------------------------------------------------------------
@@ -37,46 +38,54 @@ int DatToEdf(const char* src, const char* edf, char mode)
 	if ((err = EdfWriteHeader(&dw, &h, &writed)))
 		return err;
 
-	EdfWriteInfData(&dw, FILETYPEID, UInt32, "FileType", &dat.FileType);
-	EdfWriteInfDataString(&dw, FILEDESCRIPTION, "FileDescription",
-		&dat.FileDescription, FIELD_SIZEOF(SPSK_FILE_V1_1, FileDescription));
+	//EdfWriteInfData(&dw, 0, String, "Comment", "ResearchTypeId={ECHOGRAM-5, DYNAMOGRAM-6, SAMT-11}");
+	EdfWriteInfData(&dw, FILETYPEID, UInt32, "FileTypeId", &((uint32_t) { dat.FileType }));
+	EdfWriteInfData(&dw, LAYOUTVERSION, UInt32, "LayoutVersion", &((uint32_t) { 1 }));
 
-	EdfWriteInfo(&dw, &(const TypeRec_t){ DateTimeType, BEGINDATETIME, "BeginDateTime" }, & writed);
-	EdfWriteDataBlock(&dw, &(DateTime_t) { dat.Year + 2000, dat.Month, dat.Day, }, sizeof(DateTime_t));
+	const TypeRec_t beginDtInf = { DateTimeType, BEGINDATETIME, "BeginDateTime" };
+	const DateTime_t beginDtDat = { dat.Year + 2000, dat.Month, dat.Day, };
+	EdfWriteInfRecData(&dw, &beginDtInf, &beginDtDat, sizeof(DateTime_t));
 
-	EdfWriteInfData(&dw, 0, UInt16, "Shop", &dat.Id.Shop);
-	EdfWriteInfData(&dw, 0, UInt16, "Field", &dat.Id.Field);
-	EdfWriteInfDataString(&dw, 0, "Cluster",
-		&dat.Id.Cluster, FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Cluster));
-	EdfWriteInfDataString(&dw, 0, "Well",
-		&dat.Id.Well, FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Well));
-	EdfWriteInfData(&dw, 0, UInt16, "PlaceId", &dat.Id.PlaceId);
-	EdfWriteInfData(&dw, 0, Int32, "Depth", &dat.Id.Depth);
+	char field[256] = { 0 };
+	char cluster[256] = { 0 };
+	char well[256] = { 0 };
+	char shop[256] = { 0 };
+	snprintf(field, sizeof(field) - 1, "%d", dat.Id.Field);
+	memcpy(cluster, dat.Id.Cluster, strnlength(dat.Id.Cluster, FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Cluster)));
+	memcpy(well, dat.Id.Well, strnlength(dat.Id.Well, FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Well)));
+	snprintf(shop, sizeof(shop) - 1, "%d", dat.Id.Shop);
+	const TypeRec_t posInf = { PositionType, POSITION, "Position" };
+	const Position_t posDat = { .Field = field, .Cluster = cluster, .Well = well, .Shop = shop, };
+	EdfWriteInfRecData(&dw, &posInf, &posDat, sizeof(Position_t));
 
-	EdfWriteInfData(&dw, 0, UInt16, "RegType", &dat.RegType);
-	EdfWriteInfData(&dw, 0, UInt16, "RegNum", &dat.RegNum);
-	EdfWriteInfData(&dw, 0, UInt16, "RegVer", &dat.RegVer);
-	EdfWriteInfData(&dw, 0, UInt16, "SensType", &dat.SensType);
-	EdfWriteInfData(&dw, 0, UInt32, "SensNum", &dat.SensNum);
-	EdfWriteInfData(&dw, 0, UInt16, "SensVer", &dat.SensVer);
+	EdfWriteInfData0(&dw, UInt16, 0, "PlaceId", "место установки", &dat.Id.PlaceId);
+	EdfWriteInfData0(&dw, Int32, 0, "Depth", "глубина установки", &dat.Id.Depth);
 
-	/*
-	TypeInfo_t commentType = { .Type = String, .Name = "Comments" };
-	EdfWriteInfo(&dw, &commentType, &writed);
-	EdfWriteDataBlock(&dw, &((char*) { "описание структуры OMEGA_DATA_V1_1" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "Time - время измерения от начала дня, мс" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "Press - давление, 0.001 атм" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "Temp - температура, 0.001 °С" }), sizeof(char*));
-	EdfWriteDataBlock(&dw, &((char*) { "Vbat - напряжение батареи V" }), sizeof(char*));
-	*/
-	EdfWriteInfo(&dw, &(const TypeRec_t){ ChartNInf, 0 }, & writed);
-	EdfWriteDataBlock(&dw, &((ChartN_t[])
+	const TypeRec_t devInf = { DeviceInfoType, DEVICEINFO, "DevInfo", "скважный прибор" };
+	const DeviceInfo_t devDat =
+	{
+		.SwId = dat.SensType, .SwModel = dat.SensVer, .SwRevision = 0,
+		.HwId = 0, .HwModel = 0, .HwNumber = dat.SensNum
+	};
+	EdfWriteInfRecData(&dw, &devInf, &devDat, sizeof(DeviceInfo_t));
+
+	const TypeRec_t regInf = { DeviceInfoType, REGINFO, "RegInfo", "наземный регистратор" };
+	const DeviceInfo_t regDat =
+	{
+		.SwId = dat.RegType, .SwModel = dat.RegVer, .SwRevision = 0,
+		.HwId = 0, .HwModel = 0, .HwNumber = dat.RegNum
+	};
+	EdfWriteInfRecData(&dw, &regInf, &regDat, sizeof(DeviceInfo_t));
+
+	const TypeRec_t chartsInf = { ChartNInf, 0, "ChartInfo" };
+	const ChartN_t chartsDat[] =
 	{
 		{ "Time", "мс", "", "время измерения от начала дня" },
 		{ "Press", "0.001 атм","", "давление" },
 		{ "Temp", "0.001 °С","", "температура" },
 		{ "Vbat", "0.001 V","", "напряжение батареи" },
-	}), sizeof(ChartN_t) * 4);
+	};
+	EdfWriteInfRecData(&dw, &chartsInf, &chartsDat, sizeof(chartsDat));
 
 	if ((err = EdfWriteInfo(&dw, &(TypeRec_t){OmegaDataType, OMEGADATA}, & writed)))
 		return err;
@@ -115,6 +124,9 @@ int EdfToDat(const char* edfFile, const char* datFile)
 	//int* const ptr;  // ptr is a constant pointer to int
 
 	SPSK_FILE_V1_1 dat = { 0 };
+	dat.FileType = 6;
+	memcpy(dat.FileDescription, FileDescMt, sizeof(FileDescMt));
+
 	OMEGA_DATA_V1_1 record = { 0 };
 	size_t recN = 0;
 	const size_t data_len = sizeof(OMEGA_DATA_V1_1) - 2;// skip crc, not used yet
@@ -122,8 +134,18 @@ int EdfToDat(const char* edfFile, const char* datFile)
 	uint8_t* const recordBegin = precord;
 	uint8_t* const recordEnd = recordBegin + data_len;
 
+	int skip = 0;
+	uint8_t bDst[3 * 256 + 8] = { 0 };
+	MemStream_t msDst = { 0 };
+	if ((err = MemStreamOpen(&msDst, bDst, sizeof(bDst), 0, "w")))
+		return err;
+
 	while (!(err = EdfReadBlock(&br)))
 	{
+		MemStream_t src = { 0 };
+		if ((err = MemStreamInOpen(&src, br.Block, br.DatLen)))
+			return err;
+
 		switch (br.BlkType)
 		{
 		default: break;
@@ -171,6 +193,56 @@ int EdfToDat(const char* edfFile, const char* datFile)
 					dat.Day = t.Day;
 				}
 				break;
+				case POSITION:
+				{
+					Position_t* p = NULL;
+					if ((err = EdfReadBin(&PositionType, &src, &msDst, &p, &skip)))
+						return err;
+
+					unsigned long ulVal = strtoul(p->Field, NULL, 10);
+					if (ERANGE == errno)
+					{
+						errno = 0;
+						ulVal = 0;
+					}
+					dat.Id.Field = (uint16_t)ulVal;
+
+					uint8_t len = MIN(*((uint8_t*)p->Cluster), FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Cluster));
+					memcpy(dat.Id.Cluster, p->Cluster, len);
+
+					len = MIN(*((uint8_t*)p->Well), FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Well));
+					memcpy(dat.Id.Well, p->Well, len);
+
+					ulVal = strtoul(p->Shop, NULL, 10);
+					if (ERANGE == errno)
+					{
+						errno = 0;
+						ulVal = 0;
+					}
+					dat.Id.Shop = (uint16_t)ulVal;
+				}
+				break;
+				case DEVICEINFO:
+				{
+					DeviceInfo_t* dvc = NULL;
+					if ((err = EdfReadBin(&DeviceInfoType, &src, &msDst, &dvc, &skip)))
+						return err;
+					dat.SensType = (uint16_t)dvc->SwId;
+					dat.SensVer = (uint16_t)dvc->SwModel;
+					dat.SensNum = (uint32_t)dvc->HwNumber;
+				}
+				break;
+				case REGINFO:
+				{
+					DeviceInfo_t* dvc = NULL;
+					if ((err = EdfReadBin(&DeviceInfoType, &src, &msDst, &dvc, &skip)))
+						return err;
+					dat.RegType = (uint16_t)dvc->SwId;
+					dat.RegVer = (uint16_t)dvc->SwModel;
+					dat.RegNum = (uint16_t)dvc->HwNumber;
+				}
+				break;
+
 				case OMEGADATA:
 				{
 					if (0 == recN++)
@@ -202,43 +274,11 @@ int EdfToDat(const char* edfFile, const char* datFile)
 
 			}
 			else if (IsVarName(br.t, "Shop"))
-			{
 				dat.Id.Shop = *((uint16_t*)br.Block);
-			}
-			else if (IsVarName(br.t, "Field"))
-			{
-				dat.Id.Field = *((uint16_t*)br.Block);
-			}
-			else if (IsVarName(br.t, "Cluster"))
-			{
-				uint8_t len = MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Cluster));
-				memcpy(dat.Id.Cluster, &br.Block[1], len);
-			}
-			else if (IsVarName(br.t, "Well"))
-			{
-				uint8_t len = MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(FILES_RESEARCH_ID_V1_0, Well));
-				memcpy(dat.Id.Well, &br.Block[1], len);
-			}
 			else if (IsVarName(br.t, "PlaceId"))
-			{
 				dat.Id.PlaceId = *((uint16_t*)br.Block);
-			}
 			else if (IsVarName(br.t, "Depth"))
-			{
 				dat.Id.Depth = *((int32_t*)br.Block);
-			}
-			else if (IsVarName(br.t, "RegType"))
-				dat.RegType = *((uint16_t*)br.Block);
-			else if (IsVarName(br.t, "RegNum"))
-				dat.RegNum = *((uint16_t*)br.Block);
-			else if (IsVarName(br.t, "RegVer"))
-				dat.RegVer = *((uint16_t*)br.Block);
-			else if (IsVarName(br.t, "SensType"))
-				dat.SensType = *((uint16_t*)br.Block);
-			else if (IsVarName(br.t, "SensNum"))
-				dat.SensNum = *((uint32_t*)br.Block);
-			else if (IsVarName(br.t, "SensVer"))
-				dat.SensVer = *((uint16_t*)br.Block);
 
 		}//case btVarData:
 		break;

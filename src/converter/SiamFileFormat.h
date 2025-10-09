@@ -17,8 +17,8 @@ typedef struct
 {
 	uint16_t Shop;
 	uint16_t Field;
-	uint8_t Cluster[6];
-	uint8_t Well[6];
+	char Cluster[6];
+	char Well[6];
 	uint16_t PlaceId;
 	int32_t Depth;
 } FILES_RESEARCH_ID_V1_0;
@@ -181,11 +181,11 @@ static const TypeInfo_t DeviceInfoType =
 		.Count = 6,
 		.Item = (TypeInfo_t[])
 		{
-			{ UInt16, "HwId" },
-			{ UInt16, "HwModel" },
 			{ UInt16, "SwId" },
 			{ UInt16, "SwModel" },
 			{ UInt16, "SwRevision" },
+			{ UInt16, "HwId" },
+			{ UInt16, "HwModel" },
 			{ UInt64, "HwNumber" },
 		}
 	}
@@ -193,11 +193,11 @@ static const TypeInfo_t DeviceInfoType =
 
 typedef struct
 {
-	uint16_t HwId;
-	uint16_t HwModel;
 	uint16_t SwId;
 	uint16_t SwModel;
 	uint16_t SwRevision;
+	uint16_t HwId;
+	uint16_t HwModel;
 	uint64_t HwNumber;
 } DeviceInfo_t;
 
