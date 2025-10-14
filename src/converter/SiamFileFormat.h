@@ -122,7 +122,6 @@ typedef struct
 typedef enum
 {
 	FILETYPEID = 10,
-	LAYOUTVERSION,
 	FILEDESCRIPTION,
 	BEGINDATETIME,
 	POSITION,
@@ -142,6 +141,27 @@ static const TypeInfo_t FileDescriptionType =
 	.Type = Char, .Name = "FileDescription",
 	.Dims = { 1, (uint32_t[]) { FIELD_SIZEOF(DYN_FILE_V2_0, FileDescription) } }
 };
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+static const TypeInfo_t FileTypeIdType =
+{
+	.Type = Struct, .Name = "FileTypeId", .Dims = { 0, NULL }, .Childs =
+	{
+		.Count = 2,
+		.Item = (TypeInfo_t[])
+		{
+			{ Int16, "Type" },
+			{ Int16, "Version" },
+		}
+	}
+};
+//-----------------------------------------------------------------------------
+typedef struct
+{
+	uint16_t Type;
+	uint16_t Version;
+} FileTypeId_t;
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 static const TypeInfo_t DateTimeType =
 {

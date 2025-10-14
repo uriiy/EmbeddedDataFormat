@@ -1,11 +1,11 @@
 #include "_pch.h"
-#include "converter.h"
-#include "KeyValue.h"
-#include "Charts.h"
-#include "SiamFileFormat.h"
 #include "assert.h"
+#include "Charts.h"
+#include "converter.h"
 #include "edf_cfg.h"
+#include "KeyValue.h"
 #include "math.h"
+#include "SiamFileFormat.h"
 #include "stdlib.h"
 //-----------------------------------------------------------------------------
 /// ECHO
@@ -102,8 +102,8 @@ int EchoToEdf(const char* src, const char* edf, char mode)
 		return err;
 
 	//EdfWriteInfData(&dw, 0, String, "Comment", "ResearchTypeId={ECHOGRAM-5, DYNAMOGRAM-6, SAMT-11}");
-	EdfWriteInfData(&dw, FILETYPEID, UInt32, "FileTypeId", &((uint32_t) { dat.FileType }));
-	EdfWriteInfData(&dw, LAYOUTVERSION, UInt32, "LayoutVersion", &((uint32_t) { 1 }));
+	const TypeRec_t typeInf = { FileTypeIdType, FILETYPEID };
+	EdfWriteInfRecData(&dw, &typeInf, &(FileTypeId_t){ dat.FileType, 1}, sizeof(FileTypeId_t));
 
 	const TypeRec_t beginDtInf = { DateTimeType, BEGINDATETIME, "BeginDateTime" };
 	const DateTime_t beginDtDat =
@@ -200,7 +200,7 @@ int EdfToEcho(const char* edfFile, const char* echoFile)
 
 	double discrete = Discrete3000;
 	ECHO_FILE_V2_0 dat = { 0 };
-	dat.FileType = 6;
+	dat.FileType = 5;
 	dat.Id.ResearchType = 1;
 	memcpy(dat.FileDescription, FileDescEcho, sizeof(FileDescEcho));
 	size_t recN = 0;
@@ -254,7 +254,10 @@ int EdfToEcho(const char* edfFile, const char* echoFile)
 				switch (br.t->Id)
 				{
 				default: break;
-				case FILETYPEID: dat.FileType = *((uint32_t*)br.Block); break;//case FILETYPE:
+				case FILETYPEID:
+					if (dat.FileType != ((FileTypeId_t*)br.Block)->Type)
+						return 0;
+					break;//case FILETYPE:
 				case FILEDESCRIPTION:
 					memcpy(dat.FileDescription, &br.Block[1],
 						MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(SPSK_FILE_V1_1, FileDescription)));
