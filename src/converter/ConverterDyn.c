@@ -203,10 +203,6 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 					if (dat.FileType != ((FileTypeId_t*)br.Block)->Type)
 						return 0;
 					break;//case FILETYPE:
-				case FILEDESCRIPTION:
-					memcpy(dat.FileDescription, &br.Block[1],
-						MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(SPSK_FILE_V1_1, FileDescription)));
-					break;//case FILEDESCRIPTION:
 				case BEGINDATETIME:
 				{
 					DateTime_t* t = (DateTime_t*)br.Block;

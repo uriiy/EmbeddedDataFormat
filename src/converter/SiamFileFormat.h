@@ -122,7 +122,6 @@ typedef struct
 typedef enum
 {
 	FILETYPEID = 10,
-	FILEDESCRIPTION,
 	BEGINDATETIME,
 	POSITION,
 	DEVICEINFO,
