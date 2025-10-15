@@ -351,7 +351,7 @@ int EdfToEcho(const char* edfFile, const char* echoFile)
 			{
 				PointXY_t* s = NULL;
 				while (!(err = EdfReadBin(&Point2DInf, &src, &msDst, &s, &skip))
-					&& recN <= FIELD_SIZEOF(ECHO_FILE_V2_0, Data))
+					&& recN <= FIELD_ITEMS_COUNT(ECHO_FILE_V2_0, Data))
 				{
 					dat.Data[recN] = (int8_t)round(pow(fabs(s->y * 1000), 0.35));
 					if (0 > s->y)

@@ -309,7 +309,7 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 			{
 				PointXY_t* s = NULL;
 				while (!(err = EdfReadBin(&Point2DInf, &src, &msDst, &s, &skip))
-					&& recN <= FIELD_SIZEOF(DYN_FILE_V2_0, Data))
+					&& recN <= FIELD_ITEMS_COUNT(DYN_FILE_V2_0, Data))
 				{
 					double posDif = recN ? s->x - record.x : s->x;
 					//double posDif = s->x;
