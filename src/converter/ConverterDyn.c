@@ -47,8 +47,8 @@ int DynToEdf(const char* src, const char* edf, char mode)
 		return err;
 
 	//EdfWriteInfData(&dw, 0, String, "Comment", "ResearchTypeId={ECHOGRAM-5, DYNAMOGRAM-6, SAMT-11}");
-	EdfWriteInfData(&dw, FILETYPEID, UInt32, "FileTypeId", &((uint32_t) { dat.FileType }));
-	EdfWriteInfData(&dw, LAYOUTVERSION, UInt32, "LayoutVersion", &((uint32_t) { 1 }));
+	const TypeRec_t typeInf = { FileTypeIdType, FILETYPEID };
+	EdfWriteInfRecData(&dw, &typeInf, &(FileTypeId_t){ dat.FileType, 1}, sizeof(FileTypeId_t));
 
 	const TypeRec_t beginDtInf = { DateTimeType, BEGINDATETIME, "BeginDateTime" };
 	const DateTime_t beginDtDat =
@@ -199,11 +199,10 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 				switch (br.t->Id)
 				{
 				default: break;
-				case FILETYPEID: dat.FileType = *((uint32_t*)br.Block); break;//case FILETYPE:
-				case FILEDESCRIPTION:
-					memcpy(dat.FileDescription, &br.Block[1],
-						MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(SPSK_FILE_V1_1, FileDescription)));
-					break;//case FILEDESCRIPTION:
+				case FILETYPEID:
+					if (dat.FileType != ((FileTypeId_t*)br.Block)->Type)
+						return 0;
+					break;//case FILETYPE:
 				case BEGINDATETIME:
 				{
 					DateTime_t* t = (DateTime_t*)br.Block;
@@ -310,7 +309,7 @@ int EdfToDyn(const char* edfFile, const char* dynFile)
 			{
 				PointXY_t* s = NULL;
 				while (!(err = EdfReadBin(&Point2DInf, &src, &msDst, &s, &skip))
-					&& recN <= FIELD_SIZEOF(DYN_FILE_V2_0, Data))
+					&& recN <= FIELD_ITEMS_COUNT(DYN_FILE_V2_0, Data))
 				{
 					double posDif = recN ? s->x - record.x : s->x;
 					//double posDif = s->x;

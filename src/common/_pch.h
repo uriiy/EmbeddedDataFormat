@@ -25,6 +25,7 @@ uint16_t MbCrc16acc(const void* d, size_t len, uint16_t crc);
 #define MbCrc16(data,len) MbCrc16acc((data),(len),0xFFFF)
 
 #define FIELD_SIZEOF(t, f) (sizeof(((t*)0)->f))
+#define FIELD_ITEMS_COUNT(t, f) FIELD_SIZEOF(t, f)/(sizeof(((t*)0)->f[0]))
 
 #ifndef MAX
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))

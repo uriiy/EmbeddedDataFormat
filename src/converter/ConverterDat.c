@@ -1,11 +1,11 @@
 #include "_pch.h"
-#include "converter.h"
-#include "SiamFileFormat.h"
-#include "KeyValue.h"
-#include "Charts.h"
 #include "assert.h"
+#include "Charts.h"
+#include "converter.h"
 #include "edf_cfg.h"
+#include "KeyValue.h"
 #include "math.h"
+#include "SiamFileFormat.h"
 #include "stdlib.h"
 //-----------------------------------------------------------------------------
 /// SPSK
@@ -39,8 +39,8 @@ int DatToEdf(const char* src, const char* edf, char mode)
 		return err;
 
 	//EdfWriteInfData(&dw, 0, String, "Comment", "ResearchTypeId={ECHOGRAM-5, DYNAMOGRAM-6, SAMT-11}");
-	EdfWriteInfData(&dw, FILETYPEID, UInt32, "FileTypeId", &((uint32_t) { dat.FileType }));
-	EdfWriteInfData(&dw, LAYOUTVERSION, UInt32, "LayoutVersion", &((uint32_t) { 1 }));
+	const TypeRec_t typeInf = { FileTypeIdType, FILETYPEID };
+	EdfWriteInfRecData(&dw, &typeInf, &(FileTypeId_t){ dat.FileType, 1}, sizeof(FileTypeId_t));
 
 	const TypeRec_t beginDtInf = { DateTimeType, BEGINDATETIME, "BeginDateTime" };
 	const DateTime_t beginDtDat = { dat.Year + 2000, dat.Month, dat.Day, };
@@ -124,7 +124,7 @@ int EdfToDat(const char* edfFile, const char* datFile)
 	//int* const ptr;  // ptr is a constant pointer to int
 
 	SPSK_FILE_V1_1 dat = { 0 };
-	dat.FileType = 6;
+	dat.FileType = 11;
 	memcpy(dat.FileDescription, FileDescMt, sizeof(FileDescMt));
 
 	OMEGA_DATA_V1_1 record = { 0 };
@@ -180,11 +180,10 @@ int EdfToDat(const char* edfFile, const char* datFile)
 				switch (br.t->Id)
 				{
 				default: break;
-				case FILETYPEID: dat.FileType = *((uint32_t*)br.Block); break;//case FILETYPE:
-				case FILEDESCRIPTION:
-					memcpy(dat.FileDescription, &br.Block[1],
-						MIN(*((uint8_t*)br.Block), FIELD_SIZEOF(SPSK_FILE_V1_1, FileDescription)));
-					break;//case FILEDESCRIPTION:
+				case FILETYPEID:
+					if (dat.FileType != ((FileTypeId_t*)br.Block)->Type)
+						return 0;
+					break;//case FILETYPE:
 				case BEGINDATETIME:
 				{
 					DateTime_t t = *((DateTime_t*)br.Block);
