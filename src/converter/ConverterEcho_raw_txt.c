@@ -14,6 +14,8 @@
 /// Define
 //-----------------------------------------------------------------------------
 #define FILEDESCRIPTION_ECHO "ECHO_FILE"
+#define FILETYPE_ECHO 5
+#define LAYOUTVERSION_ECHO 2
 #define SAMPLE_FREQ (170 * 6) // частота дискретизации АЦП;2000Гц - для локатора муфт, 1020Гц - для 3000м, 510Гц - для 6000м
 #define WRITE_TIME 20			// максимальное время записи в секундах
 #define FIR_ORDER_MAX 1023		// максимальный порядок фильтра, резервируем для массива
@@ -44,67 +46,6 @@ typedef struct
 	uint16_t errors;
 
 } DEV_SIGNAL;
-
-#pragma pack(push, 1)
-static const TypeInfo_t MeasReport =
-	 {
-		  .Type = Struct,
-		  .Name = "MeasReport",
-		  .Dims = {0, NULL},
-		  .Childs = {
-				.Count = 9,
-				.Item = (TypeInfo_t[]){
-					 {Double, "Urov(m)"},
-					 {Single, "Speed(m/s)"},
-					 {UInt16, "Table"},
-					 {Double, "Discrete"},
-					 {Single, "Time(s)"},
-					 {UInt32, "Reflection"},
-					 {Double, "Press(atm)"},
-					 {Int16, "Temper(C)"},
-					 {UInt16, "Err"},
-				}}};
-
-typedef struct
-{
-	double Urov;
-	float Speed;
-	uint16_t Table;
-	double Discrete;
-	float Time;
-	uint32_t Reflection;
-	double Pressure;
-	int16_t Temperature;
-	uint16_t Errors;
-} MeasReport_t;
-
-static const TypeInfo_t DeviceState =
-	 {
-		  .Type = Struct,
-		  .Name = "DeviceState",
-		  .Dims = {0, NULL},
-		  .Childs = {
-				.Count = 6,
-				.Item = (TypeInfo_t[]){
-					 {UInt8, "KU"},
-					 {UInt8, "SHUNT"},
-					 {UInt8, "AWT"},
-					 {UInt32, "DLIT(ms)"},
-					 {Single, "Vbat(V)"},
-					 {UInt8, "Avarkl"},
-				}}};
-
-typedef struct
-{
-	uint8_t KU;
-	uint8_t SHUNT;
-	uint8_t AWT;
-	uint32_t DLIT;
-	float Vbat;
-	uint8_t Avarkl;
-} DeviceState_t;
-
-#pragma pack(pop)
 //-----------------------------------------------------------------------------
 /// typedef
 //-----------------------------------------------------------------------------
@@ -150,12 +91,13 @@ int EchoRawToEdf(const char *src, const char *edf, char mode)
 	if (err = EdfWriteHeader(&dw, &h, &writed))
 		return err;
 	//-----------------------------------------------------------------------------
-	EdfWriteInfDataString(&dw, 0, "FileDescription",
-								 FILEDESCRIPTION_ECHO, sizeof(FILEDESCRIPTION_ECHO));
-	//-----------------------------------------------------------------------------
-	EdfWriteInfo(&dw, &(const TypeRec_t){DeviceInfoType, DEVICEINFO, "DevInfo"}, &writed);
-	EdfWriteDataBlock(&dw, &(DeviceInfo_t){.HwId = 64, .HwModel = 1, .SwId = 64, .SwModel = 1, .SwRevision = 122, .HwNumber = 1234},
-							sizeof(DeviceInfo_t));
+	EdfWriteInfo(&dw, &(const TypeRec_t){FileTypeIdType, 9, "FileTypeId"}, &writed);
+	FileTypeId_t FileTypeId =
+		 {
+			  .Type = FILETYPE_ECHO,
+			  .Version = LAYOUTVERSION_ECHO,
+		 };
+	EdfWriteDataBlock(&dw, &FileTypeId, sizeof(FileTypeId_t));
 	//-----------------------------------------------------------------------------
 	EdfWriteInfo(&dw, &(const TypeRec_t){DateTimeType, BEGINDATETIME, "BeginDateTime"}, &writed);
 	struct tm local_time;
@@ -181,54 +123,28 @@ int EchoRawToEdf(const char *src, const char *edf, char mode)
 	};
 	EdfWriteDataBlock(&dw, &position, sizeof(Position_t));
 	//-----------------------------------------------------------------------------
-	EdfWriteInfo(&dw, &(const TypeRec_t){Point2DInf, 0, "EchoChart"}, &writed);
-	struct PointXY p = {0, 0};
-	float xDiscrete = (1 / (float)SAMPLE_FREQ);
-	int maxDepthMult = 1;
-	float speed = 341.0;
+	EdfWriteInfo(&dw, &(const TypeRec_t){DeviceInfoType, DEVICEINFO, "DevInfo", "прибор"}, &writed);
+	EdfWriteDataBlock(&dw, &(DeviceInfo_t){.HwId = 64, .HwModel = 1, .SwId = 64, .SwModel = 1, .SwRevision = 122, .HwNumber = 1234},
+							sizeof(DeviceInfo_t));
+	//-----------------------------------------------------------------------------
+	EdfWriteInfo(&dw, &(const TypeRec_t){{UInt16}, 0, "EchoRawChart"}, &writed);
 	uint16_t adc_tmp;
 	for (int i = 0; i < sig.num; i++)
 	{
 		adc_tmp = (uint16_t)sig.raw[i];
-		p.x = xDiscrete * i * maxDepthMult * speed / 2.0;
-		p.y = (float)(adc_tmp >> 4);
-		EdfWriteDataBlock(&dw, &p, sizeof(struct PointXY));
+		adc_tmp = adc_tmp >> 4;
+		EdfWriteDataBlock(&dw, &adc_tmp, sizeof(adc_tmp));
 	}
 	//-----------------------------------------------------------------------------
-	EdfWriteInfData(&dw, 0, Double, "Discrete", &((double){xDiscrete})); // 1 / (float)SAMPLE_FREQ
-	EdfWriteInfData(&dw, 0, UInt32, "Reflection", &((uint32_t){3}));		// hu->reflection
-	EdfWriteInfData(&dw, 0, Double, "Urov(m)", &((double){309.45}));		// sdata->distance
-	EdfWriteInfData(&dw, 0, Double, "Pressure(atm)", &((double){-0.1})); // DHReg.mCurrReg.Pressure
+	EdfWriteInfData(&dw, 0, Double, "Discrete", &((double){(1 / (float)SAMPLE_FREQ)})); // 1 / (float)SAMPLE_FREQ
+	EdfWriteInfData(&dw, 0, UInt32, "Reflection", &((uint32_t){3}));							// hu->reflection
+	EdfWriteInfData(&dw, 0, Double, "Urov(m)", &((double){309.45}));							// sdata->distance
+	EdfWriteInfData(&dw, 0, Double, "Pressure(atm)", &((double){-0.1}));						// DHReg.mCurrReg.Pressure
 	EdfWriteInfData(&dw, 0, UInt16, "Table", &((uint16_t){0}));
-	EdfWriteInfData(&dw, 0, Single, "Speed(m/s)", &((float){speed})); // sdata->speed
-
-	// EdfWriteInfo(&dw, &(const TypeRec_t){MeasReport, 0, "MeasReport"}, &writed);
-	// EdfWriteDataBlock(&dw, &(MeasReport_t){
-	// 									.Urov = 309.45,
-	// 									.Speed = speed,
-	// 									.Table = 0,
-	// 									.Discrete = xDiscrete,
-	// 									.Time = 100,
-	// 									.Reflection = 3,
-	// 									.Pressure = -0.1,
-	// 									.Temperature = 23,
-	// 									.Errors = 0,
-	// 							  },
-	// 						sizeof(MeasReport_t));
+	EdfWriteInfData(&dw, 0, Single, "Speed(m/s)", &((float){341.1})); // sdata->speed
 
 	EdfWriteInfData(&dw, 0, Double, "BufPressure", &((double){0}));
 	EdfWriteInfData(&dw, 0, Double, "LinePressure", &((double){0}));
-
-	// EdfWriteInfo(&dw, &(const TypeRec_t){DeviceState, 0, "DeviceState"}, &writed);
-	// EdfWriteDataBlock(&dw, &(DeviceState_t){
-	// 									.KU = 4,
-	// 									.SHUNT = 1,
-	// 									.AWT = 0,
-	// 									.DLIT = 0,
-	// 									.Vbat = 4.137,
-	// 									.Avarkl = false,
-	// 							  },
-	// 						sizeof(DeviceState_t));
 
 	EdfWriteInfData(&dw, 0, UInt8, "KU", &((uint8_t){4}));				  // get_ku()
 	EdfWriteInfData(&dw, 0, UInt8, "SHUNT", &((uint8_t){1}));			  // get_shunt()
