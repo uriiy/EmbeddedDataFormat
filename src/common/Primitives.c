@@ -189,11 +189,19 @@ static int AnyBinToStr(PoType t,
 		*w = xprint(dst, dstLen, "%lu", *((uint32_t*)src));
 		return (dstLen < *w);
 	case Int64:
-		*w = xprint(dst, dstLen, "%lld", *((int64_t*)src));
-		return (dstLen < *w);
+	{
+		int64_t alignedVal;
+		memcpy(&alignedVal, src, sizeof(alignedVal));
+		*w = xprint(dst, dstLen, "%lld", alignedVal);
+	}
+	return (dstLen < *w);
 	case UInt64:
-		*w = xprint(dst, dstLen, "%llu", *((uint64_t*)src));
-		return (dstLen < *w);
+	{
+		uint64_t alignedVal;
+		memcpy(&alignedVal, src, sizeof(alignedVal));
+		w = xprint(dst, dstLen, "%llu", alignedVal);
+	}
+	return (dstLen < *w);
 	case Half:
 		//*w = sprintf_s(dst, dstLen, "%g", *((uint16_t*)src));
 		return 0;
@@ -201,8 +209,12 @@ static int AnyBinToStr(PoType t,
 		*w = xprint(dst, dstLen, "%g", *((float*)src));
 		return (dstLen < *w);
 	case Double:
-		*w = xprint(dst, dstLen, "%g", *((double*)src));
-		return (dstLen < *w);
+	{
+		double alignedVal;
+		memcpy(&alignedVal, src, sizeof(alignedVal));
+		*w = xprint(dst, dstLen, "%.16g", alignedVal);
+	}
+	return (dstLen < *w);
 	case Char:
 		if (dstLen < (*w) + 2)
 			return 1;
