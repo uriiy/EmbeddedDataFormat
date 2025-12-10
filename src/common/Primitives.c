@@ -199,7 +199,7 @@ static int AnyBinToStr(PoType t,
 	{
 		uint64_t alignedVal;
 		memcpy(&alignedVal, src, sizeof(alignedVal));
-		w = xprint(dst, dstLen, "%llu", alignedVal);
+		*w = xprint(dst, dstLen, "%llu", alignedVal);
 	}
 	return (dstLen < *w);
 	case Half:
