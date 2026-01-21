@@ -42,7 +42,7 @@ static int CompareFiles(const char* src, const char* dst)
 			break;
 		}
 
-	} while (!feof(f1) && feof(f2));
+	} while (!feof(f1) && !feof(f2));
 
 
 	fclose(f1);

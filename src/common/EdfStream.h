@@ -4,11 +4,15 @@
 #include "_pch.h"
 //-----------------------------------------------------------------------------
 // Common stream
+#define FSEEK_CUR    1
+#define FSEEK_END    2
+#define FSEEK_SET    0
 
 typedef int(*WriteFn)	(void* stream, size_t* writed, void const* data, size_t len);
 typedef int(*ReadFn)	(void* stream, size_t* readed, void* dst, size_t);
 typedef int(*WriteFmtFn)(void* stream, size_t* writed, const char* format, ...);
 typedef int(*CloseFn)	(void* stream);
+typedef int(*SeekFn)	(void* stream, long offset, int origin);
 
 typedef enum StreamType
 {
@@ -23,6 +27,7 @@ typedef struct StreamFnImpl
 	ReadFn Read;
 	WriteFmtFn WriteFmt;
 	CloseFn Close;
+	SeekFn Seek;
 } StreamFnImpl_t;
 
 typedef struct Stream
@@ -48,6 +53,7 @@ typedef struct Stream
 #define StreamRead(s, r, data, count) (((s)->Impl->Read)((s), (r), data, count))
 #define StreamWriteFmt(s, w, fmt,...) (((s)->Impl->WriteFmt)((s), (w), fmt, __VA_ARGS__))
 #define StreamClose(s) ((s)->Impl->Close)((s))
+#define StreamSeek(s, offset, origin) ((s)->Impl->Seek)((s),offset, origin)
 
 //-----------------------------------------------------------------------------
 // FileStream
