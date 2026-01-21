@@ -51,6 +51,9 @@
     <ClInclude Include="edf_cfg.h" />
     <ClInclude Include="SiamFileFormat.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include=".editorconfig" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
