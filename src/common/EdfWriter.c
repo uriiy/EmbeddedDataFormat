@@ -221,7 +221,7 @@ int EdfOpenStream(EdfWriter_t* f, Stream_t* stream, const char* mode)
 		f->RecEnd = SepRecEnd;
 		if (strchr(mode, 'a'))
 		{
-			//err = SreamSeekEnd(stream);
+			err = StreamSeek(stream, 0, FSEEK_END);
 		}
 		return err;
 	}
@@ -338,7 +338,7 @@ int EdfWriteInfRecData(EdfWriter_t* dw, const TypeRec_t* ir, const void* d, size
 //-----------------------------------------------------------------------------
 int EdfWriteInfData0(EdfWriter_t* dw, PoType pt, uint32_t id, char* name, char* desc, const void* d)
 {
-	const void* data = String == pt? &d : d;
+	const void* data = String == pt ? &d : d;
 	return EdfWriteInfRecData(dw, &(TypeRec_t){{ pt }, id, name, desc}, data, GetSizeOf(pt));
 }
 //-----------------------------------------------------------------------------

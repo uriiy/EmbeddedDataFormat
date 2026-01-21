@@ -82,10 +82,17 @@ static int FileStreamClose(void* stream)
 		((FileStream_t*)stream)->Instance = NULL;
 	return ret;
 }
+//-----------------------------------------------------------------------------
+int FileStreamSeek(FileStream_t* stream, long offset, int origin)
+{
+	FILE* f = (FILE*)(stream->Instance);
+	return fseek(f, offset, origin);
+}
+//-----------------------------------------------------------------------------
 
-const StreamFnImpl_t rwFileSt = { T_FILE_STREAM, StreamWriteImpl ,StreamReadImpl ,StreamWriteFormatImpl,FileStreamClose };
-const StreamFnImpl_t wFileSt = { T_FILE_STREAM, StreamWriteImpl ,NULL ,StreamWriteFormatImpl,FileStreamClose };
-const StreamFnImpl_t rFileSt = { T_FILE_STREAM, NULL ,StreamReadImpl ,NULL,FileStreamClose };
+const StreamFnImpl_t rwFileSt = { T_FILE_STREAM, StreamWriteImpl ,StreamReadImpl ,StreamWriteFormatImpl,FileStreamClose, FileStreamSeek };
+const StreamFnImpl_t wFileSt = { T_FILE_STREAM, StreamWriteImpl ,NULL ,StreamWriteFormatImpl,FileStreamClose, FileStreamSeek };
+const StreamFnImpl_t rFileSt = { T_FILE_STREAM, NULL ,StreamReadImpl ,NULL,FileStreamClose, FileStreamSeek };
 
 //-----------------------------------------------------------------------------
 int FileStreamOpen(FileStream_t* s, const char* file, const char* inMode)
