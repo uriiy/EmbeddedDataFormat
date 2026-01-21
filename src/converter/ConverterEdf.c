@@ -38,7 +38,7 @@ int BinToText(const char* src, const char* dst)
 	EdfWriter_t tw = { 0 };
 	if (EdfOpen(&br, src, "rb"))
 		LOG_ERR();
-	if (EdfOpen(&tw, dst, "wtc"))
+	if (EdfOpen(&tw, dst, "wt"))
 		LOG_ERR();
 
 	size_t writed = 0;
