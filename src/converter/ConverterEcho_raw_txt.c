@@ -127,21 +127,29 @@ int EchoRawToEdf(const char *src, const char *edf, char mode)
 	EdfWriteDataBlock(&dw, &(DeviceInfo_t){.HwId = 64, .HwModel = 1, .SwId = 64, .SwModel = 1, .SwRevision = 122, .HwNumber = 1234},
 							sizeof(DeviceInfo_t));
 	//-----------------------------------------------------------------------------
+	EdfWriteInfData(&dw, 0, UInt32, "SampleFreq", &((uint32_t){SAMPLE_FREQ})); // 1 / (float)SAMPLE_FREQ
+	EdfWriteInfData(&dw, 0, UInt32, "SampleCnt", &((uint32_t){sig.num}));		// 1 / (float)SAMPLE_FREQ
+	//-----------------------------------------------------------------------------
 	EdfWriteInfo(&dw, &(const TypeRec_t){{UInt16}, 0, "EchoRawChart"}, &writed);
 	uint16_t adc_tmp;
+	// sig.num = 10;
 	for (int i = 0; i < sig.num; i++)
 	{
 		adc_tmp = (uint16_t)sig.raw[i];
-		adc_tmp = adc_tmp >> 4;
 		EdfWriteDataBlock(&dw, &adc_tmp, sizeof(adc_tmp));
 	}
 	//-----------------------------------------------------------------------------
-	EdfWriteInfData(&dw, 0, Double, "Discrete", &((double){(1 / (float)SAMPLE_FREQ)})); // 1 / (float)SAMPLE_FREQ
-	EdfWriteInfData(&dw, 0, UInt32, "Reflection", &((uint32_t){3}));							// hu->reflection
-	EdfWriteInfData(&dw, 0, Double, "Urov(m)", &((double){309.45}));							// sdata->distance
-	EdfWriteInfData(&dw, 0, Double, "Pressure(atm)", &((double){-0.1}));						// DHReg.mCurrReg.Pressure
+	EdfWriteInfData(&dw, 0, UInt32, "Reflection", &((uint32_t){3}));		// hu->reflection
+	EdfWriteInfData(&dw, 0, Double, "Urov(m)", &((double){309.45}));		// sdata->distance
+	EdfWriteInfData(&dw, 0, Double, "Pressure(atm)", &((double){-0.1})); // DHReg.mCurrReg.Pressure
 	EdfWriteInfData(&dw, 0, UInt16, "Table", &((uint16_t){0}));
 	EdfWriteInfData(&dw, 0, Single, "Speed(m/s)", &((float){341.1})); // sdata->speed
+
+	EdfWriteInfData(&dw, 0, Double, "ChPiezo", &((double){3}));		// DHReg.mStaticParam.chpiezo
+	EdfWriteInfData(&dw, 0, Double, "NoizeLevel", &((double){3})); // sig->noise_amp
+	EdfWriteInfData(&dw, 0, Double, "SiagnalAmp", &((double){3})); //
+	EdfWriteInfData(&dw, 0, Double, "SiagnalRel", &((double){3})); //
+	EdfWriteInfData(&dw, 0, UInt32, "DetMetod", &((uint32_t){3})); //
 
 	EdfWriteInfData(&dw, 0, Double, "BufPressure", &((double){0}));
 	EdfWriteInfData(&dw, 0, Double, "LinePressure", &((double){0}));
