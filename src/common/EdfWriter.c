@@ -242,17 +242,22 @@ int EdfOpenStream(EdfWriter_t* f, Stream_t* stream, const char* mode)
 	return err;
 }
 //-----------------------------------------------------------------------------
-int EdfOpen(EdfWriter_t* f, const char* file, const char* mode)
+int EdfOpen(EdfWriter_t* edf, const char* file, const char* mode)
+{
+	return EdfOpenWithFs(edf, file, mode, FileStreamOpen);
+}
+//-----------------------------------------------------------------------------
+int EdfOpenWithFs(EdfWriter_t* edf, const char* file, const char* mode, FileStreamOpenFn fnOpen)
 {
 	if (2 > strnlength(mode, 2))
 		return -1;
 	int err = 0;
 	if (0 == strncmp("wb", mode, 2) || 0 == strncmp("ab", mode, 2))
 	{
-		err = FileStreamOpen((FileStream_t*)&f->Stream, file, mode);
+		err = (*fnOpen)((FileStream_t*)&edf->Stream, file, mode);
 		if (err)
 			return -1;
-		return EdfOpenStream(f, &f->Stream, mode);
+		return EdfOpenStream(edf, &edf->Stream, mode);
 	}
 	else if (0 == strncmp("wt", mode, 2) || 0 == strncmp("at", mode, 2))
 	{
@@ -263,17 +268,17 @@ int EdfOpen(EdfWriter_t* f, const char* file, const char* mode)
 			filemode = "ab";
 		else
 			return -1;
-		err = FileStreamOpen((FileStream_t*)&f->Stream, file, filemode);
+		err = (*fnOpen)((FileStream_t*)&edf->Stream, file, filemode);
 		if (err)
 			return -1;
-		return EdfOpenStream(f, &f->Stream, mode);
+		return EdfOpenStream(edf, &edf->Stream, mode);
 	}
 	else if (0 == strncmp("rb", mode, 2))
 	{
-		err = FileStreamOpen((FileStream_t*)&f->Stream, file, "rb");
+		err = (*fnOpen)((FileStream_t*)&edf->Stream, file, "rb");
 		if (err)
 			return -1;
-		return EdfOpenStream(f, &f->Stream, mode);
+		return EdfOpenStream(edf, &edf->Stream, mode);
 	}
 	else if (0 == strncmp("rt", mode, 2))
 	{
