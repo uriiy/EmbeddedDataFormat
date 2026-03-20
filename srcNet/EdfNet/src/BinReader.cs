@@ -281,6 +281,7 @@ public class BinReader : BaseReader
     {
         if (!disposing)
             return;
+        _br.Dispose();
     }
 
     static TypeInf ParseInf(ReadOnlySpan<byte> b, out ReadOnlySpan<byte> rest)
