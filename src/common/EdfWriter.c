@@ -2,25 +2,16 @@
 #include "edf.h"
 
 //-----------------------------------------------------------------------------
-typedef struct EdfBlock
-{
-	uint8_t Type;
-	uint8_t Seq;
-	uint16_t Len;
-	uint8_t* Data;
-} EdfBlock_t;
-//-----------------------------------------------------------------------------
 static int EdfWriteBlockBin(Stream_t* st, const EdfHeader_t* cfg, const EdfBlock_t* blk, size_t* writed)
 {
 	int err = 0;
-	if ((err = StreamWrite(st, NULL, blk, 4 + blk->Len)))
-		return err;
 	if (cfg->Flags & UseCrc)
 	{
-		uint16_t crc = MbCrc16(blk, 4 + blk->Len);
-		if ((err = StreamWrite(st, NULL, &crc, sizeof(uint16_t))))
-			return err;
+		uint16_t* blkCrc = (uint16_t*)((uint8_t*)blk + 4 + blk->Len);
+		*blkCrc = MbCrc16(blk, 4 + blk->Len);
 	}
+	if ((err = StreamWrite(st, NULL, blk, 4 + blk->Len + 2)))
+		return err;
 	*writed = blk->Len;
 	return 0;
 }
@@ -96,7 +87,7 @@ static int EdfWriteInfoBin(EdfWriter_t* dw, const TypeRec_t* t, size_t* writed)
 		(err = StreamWriteInfBin((Stream_t*)&ms, t, &w)))
 		return err;
 	dw->DatLen = (uint16_t)w;// (uint16_t)ms.WPos;
-	if ((EdfWriteBlockBin(&dw->Stream, &dw->h, (EdfBlock_t*)&dw->BlkType, writed)))
+	if ((err = EdfWriteBlockBin(&dw->Stream, &dw->h, (EdfBlock_t*)&dw->BlkType, writed)))
 		return err;
 	return 0;
 }
