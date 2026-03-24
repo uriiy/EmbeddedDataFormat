@@ -9,6 +9,11 @@ int EdfWritePrimitive(EdfWriter_t* dw, PoType pot,
 	size_t* skip, size_t* wqty,
 	size_t* readed, size_t* writed)
 {
+	if (0 < (*skip))
+	{
+		(*skip)--;
+		return ERR_NO;
+	}
 	int err = 0;
 	size_t r = 0, w = 0;
 	if ((err = (*dw->WritePrimitive)(pot, *ppsrc, *srcLen, *ppdst, *dstLen, &r, &w)))
@@ -83,13 +88,8 @@ static int WriteData(const TypeInfo_t* t,
 		}
 		else
 		{
-			if (0 < (*skip))
-				(*skip)--;
-			else
-			{
-				if ((err = EdfWritePrimitive(dw, t->Type, ppsrc, srcLen, ppdst, dstLen, skip, wqty, readed, writed)))
-					return err;
-			}
+			if ((err = EdfWritePrimitive(dw, t->Type, ppsrc, srcLen, ppdst, dstLen, skip, wqty, readed, writed)))
+				return err;
 			if ((err = (EdfWriteSep(dw->SepVarEnd, ppdst, dstLen, skip, wqty, writed))))
 				return err;
 		}
@@ -151,7 +151,7 @@ int EdfWriteDataBlock(EdfWriter_t* dw, const void* vsrc, size_t xsrcLen)
 			srcLen = xsrcLen;
 		}
 
-		int skip = dw->Skip;
+		size_t skip = dw->Skip;
 		size_t r = 0, w = 0, wqty = 0;
 		wr = WriteSingleValue(dw, &src, &srcLen, &dst, &dstLen, &skip, &wqty, &r, &w);
 
