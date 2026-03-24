@@ -250,14 +250,14 @@ int EdfReadBin(const TypeInfo_t* t, MemStream_t* src, MemStream_t* mem, void** p
 		if (0 <= ++(*skip))
 			if ((err = StreamReadString(src, mem, (char**)ti)))
 				return err;
-		ti += itemCLen;
+		ti += itemCLen; // проверить
 	}
 	break;
 	default:
 		if (0 <= ++(*skip))
 			if ((err = StreamRead(src, NULL, ti, itemCLen)))
 				return -1;
-		ti += itemCLen;
+		ti += itemCLen; // проверить
 		break;
 	}//switch
 	return 0;

@@ -335,23 +335,23 @@ int EdfWriteInfRecData(EdfWriter_t* dw, const TypeRec_t* ir, const void* d, size
 int EdfWriteInfData0(EdfWriter_t* dw, PoType pt, uint32_t id, char* name, char* desc, const void* d)
 {
 	const void* data = String == pt ? &d : d;
-	return EdfWriteInfRecData(dw, &(TypeRec_t){{ pt }, id, name, desc}, data, GetSizeOf(pt));
+	TypeRec_t rec = { { pt }, id, name, desc };
+	return EdfWriteInfRecData(dw, &rec, data, GetTypeCSize(&rec.Inf));
 }
 //-----------------------------------------------------------------------------
 int EdfWriteInfData(EdfWriter_t* dw, uint32_t id, PoType pt, char* name, const void* d)
 {
 	const void* data = String == pt ? &d : d;
-	return EdfWriteInfRecData(dw, &(TypeRec_t){{ pt }, id, name}, data, GetSizeOf(pt));
+	TypeRec_t rec = { { pt }, id, name };
+	return EdfWriteInfRecData(dw, &rec, data, GetTypeCSize(&rec.Inf));
 }
 //-----------------------------------------------------------------------------
 int EdfWriteInfDataString(EdfWriter_t* dw, uint32_t id, char* name, void* str, size_t len)
 {
 	int err;
 	size_t writed = 0;
-	if ((err = EdfWriteInfo(dw, &((const TypeRec_t)
-	{
-		.Id = id, .Inf = (TypeInfo_t){ .Type = String, }, .Name = name
-	}), &writed)))
+	TypeRec_t rec = { .Id = id, .Inf = (TypeInfo_t){.Type = String, }, .Name = name };
+	if ((err = EdfWriteInfo(dw, &rec, &writed)))
 		return err;
 	if (NULL == str)
 		return 0;
@@ -366,6 +366,6 @@ int EdfWriteInfDataString(EdfWriter_t* dw, uint32_t id, char* name, void* str, s
 	}
 	else
 		data = str;
-	return EdfWriteDataBlock(dw, &data, GetSizeOf(String));
+	return EdfWriteDataBlock(dw, &data, GetTypeCSize(&rec.Inf));
 }
 //-----------------------------------------------------------------------------
